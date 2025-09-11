@@ -1,0 +1,61 @@
+# Node.js
+node_modules/
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Build output
+/dist
+/build
+
+# Expo/React Native
+.expo/
+.expo-shared/
+*.expo
+
+# Metro
+.cache/
+
+# TypeScript
+*.tsbuildinfo
+
+# VS Code
+.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Misc
+*.swp
+*.swo
+
+# Assets
+assets/*.psd
+assets/*.ai
+assets/*.xcf
+
+# Coverage
+coverage/
+
+# Others
+.idea/
+
+# Ignore test coverage
+coverage/
+
+# Ignore generated files
+*.bak
+*.tmp
+
+.android/
+.ios/
