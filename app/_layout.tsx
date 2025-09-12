@@ -1,4 +1,3 @@
-import './global.css';
 import { Slot } from "expo-router";
 
 const RootLayout = () => {
