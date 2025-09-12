@@ -12,13 +12,36 @@ export default function LoginScreen({ onSwitchToRegister }: LoginScreenProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
-  const handleLogin = async () => {
-    setIsLoading(true);
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    setIsLoading(false);
-    alert(`Logged in with email: ${email}`);
-  };
+ const handleLogin = async () => {
+  // Validación de campos vacíos
+  if (!email || !password) {
+    alert("Por favor completa todos los campos");
+    return;
+  }
 
+  setIsLoading(true);
+  await new Promise((resolve) => setTimeout(resolve, 1000)); // simulando llamada a API
+  setIsLoading(false);
+
+  // Ejemplo de usuario registrado (puedes reemplazarlo con tu API)
+  const usuariosRegistrados = [
+    { email: "test@example.com", password: "123456" },
+    { email: "demo@example.com", password: "abcdef" },
+  ];
+
+  const usuarioValido = usuariosRegistrados.find(
+    (u) => u.email === email && u.password === password
+  );
+
+  if (usuarioValido) {
+    // Aquí navegarías a la siguiente pantalla usando tu router
+    // router.push("/home"); // descomenta si usas expo-router
+    alert(`¡Bienvenido, ${email}!`);
+  } else {
+    alert("Usuario no registrado o contraseña incorrecta");
+  }
+};
+  
   return (
     <SafeAreaView style={styles.container}>
 
@@ -102,8 +125,18 @@ export default function LoginScreen({ onSwitchToRegister }: LoginScreenProps) {
           </TouchableOpacity>
 
           {/* Forgot password */}
-          <TouchableOpacity style={styles.forgotButton}>
-            <Text style={styles.forgotText}>Olvidaste tu contraseña?</Text>
+          <TouchableOpacity
+            style={styles.forgotButton}
+          onPress={() => {
+            if (!email) {
+            alert("Por favor ingresa tu email para recuperar la contraseña");
+              } else {
+              // Aquí podrías llamar a tu API real de recuperación
+            alert(`Se ha enviado un enlace de recuperación a ${email}`);
+            }
+          }}
+          >
+          <Text style={styles.forgotText}>Olvidaste tu contraseña?</Text>
           </TouchableOpacity>
 
           {/* Switch to register */}

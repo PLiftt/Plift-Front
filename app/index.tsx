@@ -6,19 +6,19 @@ import { Link, useRouter } from 'expo-router';
 import RegisterScreen from './components/registerScreen';
 
 
- const IndexHomeScreen = () => {
-  return <IndexScreen />;
-};
+// const IndexHomeScreen = () => {
+  //return <IndexScreen />;
+//};
 
- export default IndexHomeScreen;
+ //export default IndexHomeScreen;
 
 
- //export default function LoginPage() {
-   // const router = useRouter();
-    //return (
-      //<LoginScreen onSwitchToRegister={() => router.push('/register')} />
-    //);
-// }
+ export default function LoginPage() {
+    const router = useRouter();
+    return (
+      <LoginScreen onSwitchToRegister={() => router.push('/register')} />
+    );
+ }
 
 
 //  export default function RegisterPage() {
