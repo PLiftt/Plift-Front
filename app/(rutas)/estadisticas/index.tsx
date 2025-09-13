@@ -1,16 +1,14 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 
-const ChatScreen: React.FC = () => {
-  return (
+export default function EstadisticasPage() {
+    return (
     <View style={styles.container}>
-      <Text style={styles.title}>💬 Chat con tu Coach</Text>
-      <Text style={styles.subtitle}>Aquí podrás conversar con tu entrenador</Text>
+        <Text style={styles.title}>📊 Estadísticas</Text>
+        <Text style={styles.subtitle}>Aquí verás tu progreso y métricas</Text>
     </View>
-  );
-};
-
-export default ChatScreen;
+    );
+}
 
 const styles = StyleSheet.create({
   container: {

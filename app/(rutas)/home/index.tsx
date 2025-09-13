@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { View, Text, StyleSheet, Pressable, ScrollView, Switch, Dimensions, Image } from "react-native";
 import { Ionicons, MaterialIcons, FontAwesome5 } from "@expo/vector-icons";
-import { router } from "expo-router";
+import { router, Link } from "expo-router";
 
 const { width, height } = Dimensions.get("window");
 
@@ -106,19 +106,19 @@ const IndexScreen: React.FC = () => {
             <Text style={[styles.historyText, { color: colors.textPrimary }]}>5 7 8 1 9 6</Text>
           </View>
         </View>
-
+{/* 
         <View style={styles.logoContainer}>
           <Image
             source={require('../../assets/logoplift.png')}
             style={styles.logo}
             resizeMode="contain"
           />
-        </View>
+        </View> */}
       </ScrollView>
 
       <View style={[styles.bottomNav, { backgroundColor: colors.navBackground }]}>
         {renderNavButton("home", <Ionicons name="home-outline" size={28} color="#EF233C" />, "Home", "/home")}
-        {renderNavButton("stats", <Ionicons name="stats-chart-outline" size={28} color="#EF233C" />, "Estadísticas", "/stats")}
+        {renderNavButton("stats", <Ionicons name="stats-chart-outline" size={28} color="#EF233C" />, "Estadísticas", "/estadisticas")}
 
         <Pressable
           onPress={() => router.push("/fit")}

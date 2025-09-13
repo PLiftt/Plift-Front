@@ -1,16 +1,14 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 
-const FitnessScreen: React.FC = () => {
-  return (
+export default function ChatPage() {
+    return (
     <View style={styles.container}>
-      <Text style={styles.title}>🏋️ Fitness</Text>
-      <Text style={styles.subtitle}>Aquí podrás registrar y seguir tus entrenamientos</Text>
-    </View>
-  );
-};
-
-export default FitnessScreen;
+      <Text style={styles.title}>💬 Chat con tu Coach</Text>
+      <Text style={styles.subtitle}>Aquí podrás conversar con tu entrenador</Text>
+    </View> 
+    );
+}
 
 const styles = StyleSheet.create({
   container: {
@@ -28,7 +26,5 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: 16,
     color: "#aaa",
-    textAlign: "center",
-    paddingHorizontal: 20,
   },
 });

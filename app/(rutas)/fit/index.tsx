@@ -1,16 +1,14 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 
-const EstadisticasScreen: React.FC = () => {
+export default function FitPage() {
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>📊 Estadísticas</Text>
-      <Text style={styles.subtitle}>Aquí verás tu progreso y métricas</Text>
+      <Text style={styles.title}>🏋️ Fitness</Text>
+      <Text style={styles.subtitle}>Aquí podrás registrar y seguir tus entrenamientos</Text>
     </View>
   );
 };
-
-export default EstadisticasScreen;
 
 const styles = StyleSheet.create({
   container: {
@@ -28,5 +26,7 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: 16,
     color: "#aaa",
+    textAlign: "center",
+    paddingHorizontal: 20,
   },
 });

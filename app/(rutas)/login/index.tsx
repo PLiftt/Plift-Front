@@ -1,52 +1,31 @@
+import { Link, useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { SafeAreaView, View, Text, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, ActivityIndicator, StyleSheet, Image, ImageBackground } from 'react-native';
+import { Button, SafeAreaView, View, Text, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, ActivityIndicator, StyleSheet, Image, ImageBackground } from 'react-native';
 import { Eye, EyeOff, Lock, Mail } from 'lucide-react';
 
-type LoginScreenProps = {
-  onSwitchToRegister: () => void;
-};
+// type LoginScreenProps = {
+//   onSwitchToRegister: () => void;
+// };
 
-export default function LoginScreen({ onSwitchToRegister }: LoginScreenProps) {
+export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-
- const handleLogin = async () => {
+  const router = useRouter();
+  const handleLogin = async () => {
   // Validación de campos vacíos
-  if (!email || !password) {
-    alert("Por favor completa todos los campos");
-    return;
+    if (!email || !password) {
+      alert("Por favor completa todos los campos");
+      return;
+    }
   }
 
-  setIsLoading(true);
-  await new Promise((resolve) => setTimeout(resolve, 1000)); // simulando llamada a API
-  setIsLoading(false);
-
-  // Ejemplo de usuario registrado (puedes reemplazarlo con tu API)
-  const usuariosRegistrados = [
-    { email: "test@example.com", password: "123456" },
-    { email: "demo@example.com", password: "abcdef" },
-  ];
-
-  const usuarioValido = usuariosRegistrados.find(
-    (u) => u.email === email && u.password === password
-  );
-
-  if (usuarioValido) {
-    // Aquí navegarías a la siguiente pantalla usando tu router
-    // router.push("/home"); // descomenta si usas expo-router
-    alert(`¡Bienvenido, ${email}!`);
-  } else {
-    alert("Usuario no registrado o contraseña incorrecta");
-  }
-};
-  
   return (
     <SafeAreaView style={styles.container}>
 
       <ImageBackground
-        source={require("../../assets/fondobg.jpg")}
+        source={require("../../../assets/fondobg.jpg")}
         style={styles.backgroundImage}
         resizeMode="cover" // ajusta la imagen sin deformarla
       ></ImageBackground>
@@ -59,7 +38,7 @@ export default function LoginScreen({ onSwitchToRegister }: LoginScreenProps) {
         <View style={styles.card}>
           {/* Logo */}
           <Image
-            source={require('../../assets/logoplift.png')}
+            source={require('../../../assets/logoplift.png')}
             style={styles.logo}
             resizeMode="contain"
           />
@@ -116,7 +95,7 @@ export default function LoginScreen({ onSwitchToRegister }: LoginScreenProps) {
             disabled={isLoading}
             onPress={handleLogin}
             style={styles.button}
-          >
+          > 
             {isLoading ? (
               <ActivityIndicator color="#fff" />
             ) : (
@@ -142,16 +121,16 @@ export default function LoginScreen({ onSwitchToRegister }: LoginScreenProps) {
           {/* Switch to register */}
           <View style={styles.switchContainer}>
             <Text style={styles.switchText}>No tienes una cuenta?</Text>
-            <TouchableOpacity onPress={onSwitchToRegister}>
-              <Text style={styles.switchButton}>Crea tu cuenta aquÍ</Text>
-            </TouchableOpacity>
+              <Link href={"/register"} asChild>
+                <Text style={styles.switchButton}>Crea tu cuenta aquÍ</Text>
+              </Link>
           </View>
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
-}
 
+}
 const styles = StyleSheet.create({
   container: {
     flex: 1,

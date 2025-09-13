@@ -1,33 +1,12 @@
 import React, { useState } from "react";
 import { Link } from 'expo-router';
 import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-  ActivityIndicator,
-  ImageBackground,
-  Platform,
-} from "react-native";
-import {
-  Eye,
-  EyeOff,
-  Lock,
-  Mail,
-  User,
-  UserCheck,
-  Calendar,
-  Users,
-} from "lucide-react";
+View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, ImageBackground, Platform, } from "react-native";
+import { Eye, EyeOff, Lock, Mail, User, UserCheck, Calendar, Users,} from "lucide-react";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { Picker } from "@react-native-picker/picker";
 
-interface RegisterScreenProps {
-  onSwitchToLogin: () => void;
-}
-
-const RegisterScreen: React.FC<RegisterScreenProps> = ({ onSwitchToLogin }) => {
+export default function RegisterPage (){
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -47,11 +26,10 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ onSwitchToLogin }) => {
     await new Promise((resolve) => setTimeout(resolve, 1000));
     setIsLoading(false);
   };
-
   return (
     <View style={styles.container}>
       <ImageBackground
-        source={require("../../assets/fondobg.jpg")}
+        source={require("../../../assets/fondobg.jpg")}
         style={styles.backgroundImage}
         resizeMode="cover"
       />
@@ -242,18 +220,14 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ onSwitchToLogin }) => {
 
         <View style={styles.switchWrapper}>
           <Text style={styles.switchText}>¿Ya tienes una cuenta?</Text>
-          <TouchableOpacity onPress={onSwitchToLogin}>
             <Link href="/login" asChild>
               <Text style={styles.switchLink}> Inicia sesión aquí</Text>
             </Link>
-          </TouchableOpacity>
         </View>
       </View>
     </View>
   );
-};
-
-export default RegisterScreen;
+}
 
 const styles = StyleSheet.create({
   // mismos estilos que antes...
