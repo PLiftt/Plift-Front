@@ -2,6 +2,7 @@ import { Link, useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { Button, SafeAreaView, View, Text, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, ActivityIndicator, StyleSheet, Image, ImageBackground } from 'react-native';
 import { Eye, EyeOff, Lock, Mail } from 'lucide-react';
+import { loginUser } from 'services/authService';
 
 // type LoginScreenProps = {
 //   onSwitchToRegister: () => void;
@@ -13,14 +14,28 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const router = useRouter();
+  
   const handleLogin = async () => {
-  // Validación de campos vacíos
-    if (!email || !password) {
-      alert("Por favor completa todos los campos");
-      return;
-    }
-  }
+  try {
+    setIsLoading(true);
+    const payload = { email, password };
+    const user = await loginUser(payload);
 
+    console.log("Respuesta login:", user);
+
+    if (user && (user.token || user.access)) { 
+      alert("Inicio de sesión exitoso");
+      router.push('/(rutas)/home');
+    } else {
+      alert("Contraseña o usuario incorrecto");
+    }
+  } catch (error: any) {
+    console.error("Error en login:", error.response?.data || error.message);
+    alert("Hubo un error al iniciar sesión");
+  } finally {
+    setIsLoading(false);
+  }
+};
   return (
     <SafeAreaView style={styles.container}>
 
