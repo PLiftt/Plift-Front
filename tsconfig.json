@@ -1,6 +1,57 @@
 {
   "extends": "expo/tsconfig.base",
   "compilerOptions": {
-    "strict": true
-  }
+    // Lenguaje/JSX
+    "target": "ES2020",
+    "jsx": "react-jsx",
+
+    // Resolución de módulos para Metro + TS 5
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+
+    // Paths y base
+    "baseUrl": ".",
+    "paths": {
+      "~/": ["app/"],            // alias típico de expo-router
+      "@/": ["app/"]             // alias adicional opcional
+    },
+
+    // Interop y compatibilidad
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+
+    // JS support (el repo tiene algo de JS)
+    "allowJs": true,
+    "checkJs": false,
+
+    // Emisión (build lo hace Metro)
+    "noEmit": true,
+    "sourceMap": true,
+
+    // Reglas estrictas
+    "strict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "noImplicitReturns": true,
+    "noImplicitOverride": true,
+    "noUnusedParameters": true,
+
+    // Rendimiento
+    "skipLibCheck": true,
+
+    // Tipos globales usados en el repo
+    "types": ["react", "react-native", "expo-router"]
+  },
+  "include": [
+    "app",
+    "index.ts",
+    "nativewind-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    "**/*.js",
+    "**/*.jsx"
+  ],
+  "exclude": ["node_modules", "dist", "android"]
 }
