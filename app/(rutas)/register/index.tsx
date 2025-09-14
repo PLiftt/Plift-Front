@@ -18,14 +18,14 @@ export default function RegisterPage () {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [gender, setGender] = useState("");
 
-  const [nombres, setNombres] = useState("");
-  const [apellidos, setApellidos] = useState("");
+  const [names, setNames] = useState("");
+  const [lastNames, setLastNames] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [password2, setPassword2] = useState("");
 
-  const nombresArray = nombres.trim().split(" ");
-  const apellidosArray = apellidos.trim().split(" ");
+  const namesArray = names.trim().split(" ");
+  const lastNamesArray = lastNames.trim().split(" ");
 
   const handleRegister = async () => {
     try {
@@ -35,10 +35,10 @@ export default function RegisterPage () {
         email,
         password,
         password2,
-        first_name: nombresArray[0] || "",
-        second_name: nombresArray[1] || null,
-        last_name: apellidosArray[0] || "",
-        second_last_name: apellidosArray[1] || null,
+        first_name: namesArray[0] || "",
+        second_name: namesArray[1] || null,
+        last_name: lastNamesArray[0] || "",
+        second_last_name: lastNamesArray[1] || null,
         gender,
         date_of_birth: dob.toISOString().split("T")[0], // YYYY-MM-DD
         role: selectedRole, // "COACH" o "ATHLETE"
@@ -72,8 +72,8 @@ export default function RegisterPage () {
             <User size={18} color="#888" style={styles.icon} />
             <TextInput
               placeholder="Nombres"
-              value={nombres}
-              onChangeText={setNombres}
+              value={names}
+              onChangeText={setNames}
               style={styles.input}
               placeholderTextColor="#888"
             />
@@ -84,8 +84,8 @@ export default function RegisterPage () {
             <User size={18} color="#888" style={styles.icon} />
             <TextInput
               placeholder="Apellidos"
-              value={apellidos}
-              onChangeText={setApellidos}
+              value={lastNames}
+              onChangeText={setLastNames}
               style={styles.input}
               placeholderTextColor="#888"
             />
