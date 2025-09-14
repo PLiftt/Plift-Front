@@ -1,31 +1,59 @@
 import React, { useState } from "react";
 import { Link } from 'expo-router';
 import {
-View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, ImageBackground, Platform, } from "react-native";
-import { Eye, EyeOff, Lock, Mail, User, UserCheck, Calendar, Users,} from "lucide-react";
+  View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, ImageBackground, Platform, Alert
+} from "react-native";
+import { Eye, EyeOff, Lock, Mail, User, UserCheck, Calendar, Users } from "lucide-react";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { Picker } from "@react-native-picker/picker";
+import { registerUser } from "services/authService";
 
-export default function RegisterPage (){
+export default function RegisterPage () {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
   const [selectedRole, setSelectedRole] = useState("");
   const [dob, setDob] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [gender, setGender] = useState("");
 
-  // campos separados
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
+  const [nombres, setNombres] = useState("");
+  const [apellidos, setApellidos] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [password2, setPassword2] = useState("");
+
+  const nombresArray = nombres.trim().split(" ");
+  const apellidosArray = apellidos.trim().split(" ");
 
   const handleRegister = async () => {
-    setIsLoading(true);
-    // Simula API call
-    console.log({ firstName, lastName, dob, gender, selectedRole });
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    setIsLoading(false);
+    try {
+      setIsLoading(true);
+
+      const payload = {
+        email,
+        password,
+        password2,
+        first_name: nombresArray[0] || "",
+        second_name: nombresArray[1] || null,
+        last_name: apellidosArray[0] || "",
+        second_last_name: apellidosArray[1] || null,
+        gender,
+        date_of_birth: dob.toISOString().split("T")[0], // YYYY-MM-DD
+        role: selectedRole, // "COACH" o "ATHLETE"
+      };
+
+      const user = await registerUser(payload);
+      Alert.alert("Registro exitoso", `Bienvenido ${user.email}`);
+    } catch (err: any) {
+      console.error(err);
+      Alert.alert("Error", JSON.stringify(err));
+    } finally {
+      setIsLoading(false);
+    }
   };
+
   return (
     <View style={styles.container}>
       <ImageBackground
@@ -44,8 +72,8 @@ export default function RegisterPage (){
             <User size={18} color="#888" style={styles.icon} />
             <TextInput
               placeholder="Nombres"
-              value={firstName}
-              onChangeText={setFirstName}
+              value={nombres}
+              onChangeText={setNombres}
               style={styles.input}
               placeholderTextColor="#888"
             />
@@ -56,8 +84,8 @@ export default function RegisterPage (){
             <User size={18} color="#888" style={styles.icon} />
             <TextInput
               placeholder="Apellidos"
-              value={lastName}
-              onChangeText={setLastName}
+              value={apellidos}
+              onChangeText={setApellidos}
               style={styles.input}
               placeholderTextColor="#888"
             />
@@ -68,9 +96,12 @@ export default function RegisterPage (){
             <Mail size={18} color="#888" style={styles.icon} />
             <TextInput
               placeholder="Ingresa tu email"
+              value={email}
+              onChangeText={setEmail}
               style={styles.input}
               placeholderTextColor="#888"
               keyboardType="email-address"
+              autoCapitalize="none"
             />
           </View>
 
@@ -79,6 +110,8 @@ export default function RegisterPage (){
             <Lock size={18} color="#888" style={styles.icon} />
             <TextInput
               placeholder="Crea tu contraseña"
+              value={password}
+              onChangeText={setPassword}
               secureTextEntry={!showPassword}
               style={styles.input}
               placeholderTextColor="#888"
@@ -87,11 +120,7 @@ export default function RegisterPage (){
               style={styles.iconRight}
               onPress={() => setShowPassword(!showPassword)}
             >
-              {showPassword ? (
-                <EyeOff size={18} color="#888" />
-              ) : (
-                <Eye size={18} color="#888" />
-              )}
+              {showPassword ? <EyeOff size={18} color="#888" /> : <Eye size={18} color="#888" />}
             </TouchableOpacity>
           </View>
 
@@ -100,6 +129,8 @@ export default function RegisterPage (){
             <Lock size={18} color="#888" style={styles.icon} />
             <TextInput
               placeholder="Confirma tu contraseña"
+              value={password2}
+              onChangeText={setPassword2}
               secureTextEntry={!showConfirmPassword}
               style={styles.input}
               placeholderTextColor="#888"
@@ -108,11 +139,7 @@ export default function RegisterPage (){
               style={styles.iconRight}
               onPress={() => setShowConfirmPassword(!showConfirmPassword)}
             >
-              {showConfirmPassword ? (
-                <EyeOff size={18} color="#888" />
-              ) : (
-                <Eye size={18} color="#888" />
-              )}
+              {showConfirmPassword ? <EyeOff size={18} color="#888" /> : <Eye size={18} color="#888" />}
             </TouchableOpacity>
           </View>
 
@@ -120,53 +147,28 @@ export default function RegisterPage (){
           <Text style={styles.label}>Rol</Text>
           <View style={styles.roleWrapper}>
             <TouchableOpacity
-              style={[
-                styles.roleButton,
-                selectedRole === "coach" && styles.roleButtonActive,
-              ]}
+              style={[styles.roleButton, selectedRole === "coach" && styles.roleButtonActive]}
               onPress={() => setSelectedRole("coach")}
             >
-              <UserCheck
-                size={18}
-                color={selectedRole === "coach" ? "#fff" : "#888"}
-              />
-              <Text
-                style={[
-                  styles.roleText,
-                  selectedRole === "coach" && styles.roleTextActive,
-                ]}
-              >
+              <UserCheck size={18} color={selectedRole === "coach" ? "#fff" : "#888"} />
+              <Text style={[styles.roleText, selectedRole === "coach" && styles.roleTextActive]}>
                 Coach
               </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[
-                styles.roleButton,
-                selectedRole === "atleta" && styles.roleButtonActive,
-              ]}
-              onPress={() => setSelectedRole("atleta")}
+              style={[styles.roleButton, selectedRole === "athlete" && styles.roleButtonActive]}
+              onPress={() => setSelectedRole("athlete")}
             >
-              <User
-                size={18}
-                color={selectedRole === "atleta" ? "#fff" : "#888"}
-              />
-              <Text
-                style={[
-                  styles.roleText,
-                  selectedRole === "atleta" && styles.roleTextActive,
-                ]}
-              >
+              <User size={18} color={selectedRole === "athlete" ? "#fff" : "#888"} />
+              <Text style={[styles.roleText, selectedRole === "athlete" && styles.roleTextActive]}>
                 Atleta
               </Text>
             </TouchableOpacity>
           </View>
 
-          {/* Date of Birth */}
-          <TouchableOpacity
-            style={styles.inputWrapper}
-            onPress={() => setShowDatePicker(true)}
-          >
+          {/* Fecha de nacimiento */}
+          <TouchableOpacity style={styles.inputWrapper} onPress={() => setShowDatePicker(true)}>
             <Calendar size={18} color="#888" style={styles.icon} />
             <Text style={[styles.input, { paddingVertical: 12 }]}>
               {dob.toLocaleDateString()}
@@ -185,18 +187,11 @@ export default function RegisterPage (){
             />
           )}
 
-          {/* Gender */}
+          {/* Género */}
           <View style={[styles.inputWrapper, { paddingHorizontal: 0 }]}>
-            <Users
-              size={18}
-              color="#888"
-              style={{ ...styles.icon, marginLeft: 10 }}
-            />
+            <Users size={18} color="#888" style={{ ...styles.icon, marginLeft: 10 }} />
             <View style={{ flex: 1 }}>
-              <Picker
-                selectedValue={gender}
-                onValueChange={(val) => setGender(val)}
-              >
+              <Picker selectedValue={gender} onValueChange={(val) => setGender(val)}>
                 <Picker.Item label="Selecciona género" value="" />
                 <Picker.Item label="Masculino" value="male" />
                 <Picker.Item label="Femenino" value="female" />
@@ -206,23 +201,15 @@ export default function RegisterPage (){
           </View>
         </View>
 
-        <TouchableOpacity
-          style={styles.submitButton}
-          onPress={handleRegister}
-          disabled={isLoading}
-        >
-          {isLoading ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <Text style={styles.submitText}>Crear cuenta</Text>
-          )}
+        <TouchableOpacity style={styles.submitButton} onPress={handleRegister} disabled={isLoading}>
+          {isLoading ? <ActivityIndicator color="#fff" /> : <Text style={styles.submitText}>Crear cuenta</Text>}
         </TouchableOpacity>
 
         <View style={styles.switchWrapper}>
           <Text style={styles.switchText}>¿Ya tienes una cuenta?</Text>
-            <Link href="/login" asChild>
-              <Text style={styles.switchLink}> Inicia sesión aquí</Text>
-            </Link>
+          <Link href="/login" asChild>
+            <Text style={styles.switchLink}> Inicia sesión aquí</Text>
+          </Link>
         </View>
       </View>
     </View>
@@ -230,7 +217,6 @@ export default function RegisterPage (){
 }
 
 const styles = StyleSheet.create({
-  // mismos estilos que antes...
   container: {
     flex: 1,
     backgroundColor: "#111111",
