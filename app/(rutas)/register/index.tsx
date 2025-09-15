@@ -1,9 +1,17 @@
 import React, { useState } from "react";
 import { Link } from 'expo-router';
 import {
-  View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, ImageBackground, Platform, Alert
+  View, 
+  Text, 
+  TextInput, 
+  TouchableOpacity, 
+  StyleSheet, 
+  ActivityIndicator, 
+  ImageBackground, 
+  Platform, 
+  Alert
 } from "react-native";
-import { Eye, EyeOff, Lock, Mail, User, UserCheck, Calendar, Users } from "lucide-react";
+import { Eye, EyeOff, Lock, Mail, User, UserCheck, Calendar, Users } from "lucide-react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { Picker } from "@react-native-picker/picker";
 import { registerUser } from "services/authService";
