@@ -1,7 +1,19 @@
 import { Link, useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { Button, SafeAreaView, View, Text, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, ActivityIndicator, StyleSheet, Image, ImageBackground } from 'react-native';
-import { Eye, EyeOff, Lock, Mail } from 'lucide-react';
+import { Button, 
+  SafeAreaView, 
+  View, 
+  Text, 
+  TextInput, 
+  TouchableOpacity, 
+  KeyboardAvoidingView, 
+  Platform, 
+  ActivityIndicator, 
+  StyleSheet, 
+  Image, 
+  ImageBackground 
+} from 'react-native';
+import { Eye, EyeOff, Lock, Mail } from 'lucide-react-native';
 import { loginUser } from 'services/authService';
 
 // type LoginScreenProps = {
