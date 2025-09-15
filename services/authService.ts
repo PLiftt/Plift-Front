@@ -1,7 +1,7 @@
 import axios from "axios";
 import { saveToken, deleteToken, getToken } from "./secureStore";
 
-const API_URL = "http://192.168.1.88:8000"; 
+const API_URL = "http://:8000"; 
 
 export const registerUser = async (data: any) => {
   try {
