@@ -1,22 +1,32 @@
 import React, { useState } from "react";
-import { Link } from 'expo-router';
+import { Link } from "expo-router";
 import {
-  View, 
-  Text, 
-  TextInput, 
-  TouchableOpacity, 
-  StyleSheet, 
-  ActivityIndicator, 
-  ImageBackground, 
-  Platform, 
-  Alert
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  ActivityIndicator,
+  ImageBackground,
+  Platform,
+  Alert,
+  Modal,
 } from "react-native";
-import { Eye, EyeOff, Lock, Mail, User, UserCheck, Calendar, Users } from "lucide-react-native";
+import {
+  Eye,
+  EyeOff,
+  Lock,
+  Mail,
+  User,
+  UserCheck,
+  Calendar,
+  Users,
+} from "lucide-react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { Picker } from "@react-native-picker/picker";
 import { registerUser } from "services/authService";
 
-export default function RegisterPage () {
+export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -128,7 +138,11 @@ export default function RegisterPage () {
               style={styles.iconRight}
               onPress={() => setShowPassword(!showPassword)}
             >
-              {showPassword ? <EyeOff size={18} color="#888" /> : <Eye size={18} color="#888" />}
+              {showPassword ? (
+                <EyeOff size={18} color="#888" />
+              ) : (
+                <Eye size={18} color="#888" />
+              )}
             </TouchableOpacity>
           </View>
 
@@ -147,7 +161,11 @@ export default function RegisterPage () {
               style={styles.iconRight}
               onPress={() => setShowConfirmPassword(!showConfirmPassword)}
             >
-              {showConfirmPassword ? <EyeOff size={18} color="#888" /> : <Eye size={18} color="#888" />}
+              {showConfirmPassword ? (
+                <EyeOff size={18} color="#888" />
+              ) : (
+                <Eye size={18} color="#888" />
+              )}
             </TouchableOpacity>
           </View>
 
@@ -155,51 +173,116 @@ export default function RegisterPage () {
           <Text style={styles.label}>Rol</Text>
           <View style={styles.roleWrapper}>
             <TouchableOpacity
-              style={[styles.roleButton, selectedRole === "coach" && styles.roleButtonActive]}
+              style={[
+                styles.roleButton,
+                selectedRole === "coach" && styles.roleButtonActive,
+              ]}
               onPress={() => setSelectedRole("coach")}
             >
-              <UserCheck size={18} color={selectedRole === "coach" ? "#fff" : "#888"} />
-              <Text style={[styles.roleText, selectedRole === "coach" && styles.roleTextActive]}>
+              <UserCheck
+                size={18}
+                color={selectedRole === "coach" ? "#fff" : "#888"}
+              />
+              <Text
+                style={[
+                  styles.roleText,
+                  selectedRole === "coach" && styles.roleTextActive,
+                ]}
+              >
                 Coach
               </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.roleButton, selectedRole === "athlete" && styles.roleButtonActive]}
+              style={[
+                styles.roleButton,
+                selectedRole === "athlete" && styles.roleButtonActive,
+              ]}
               onPress={() => setSelectedRole("athlete")}
             >
-              <User size={18} color={selectedRole === "athlete" ? "#fff" : "#888"} />
-              <Text style={[styles.roleText, selectedRole === "athlete" && styles.roleTextActive]}>
+              <User
+                size={18}
+                color={selectedRole === "athlete" ? "#fff" : "#888"}
+              />
+              <Text
+                style={[
+                  styles.roleText,
+                  selectedRole === "athlete" && styles.roleTextActive,
+                ]}
+              >
                 Atleta
               </Text>
             </TouchableOpacity>
           </View>
 
           {/* Fecha de nacimiento */}
-          <TouchableOpacity style={styles.inputWrapper} onPress={() => setShowDatePicker(true)}>
+          <TouchableOpacity
+            style={styles.inputWrapper}
+            onPress={() => setShowDatePicker(true)}
+          >
             <Calendar size={18} color="#888" style={styles.icon} />
             <Text style={[styles.input, { paddingVertical: 12 }]}>
               {dob.toLocaleDateString()}
             </Text>
           </TouchableOpacity>
 
-          {showDatePicker && (
-            <DateTimePicker
-              value={dob}
-              mode="date"
-              display={Platform.OS === "ios" ? "spinner" : "default"}
-              onChange={(event, selected) => {
-                if (Platform.OS !== "ios") setShowDatePicker(false);
-                if (selected) setDob(selected);
-              }}
-            />
-          )}
+          {showDatePicker &&
+            (Platform.OS === "ios" ? (
+              <Modal transparent animationType="slide" visible={showDatePicker}>
+                <View
+                  style={{
+                    flex: 1,
+                    justifyContent: "flex-end",
+                    backgroundColor: "rgba(0,0,0,0.3)",
+                  }}
+                >
+                  <View style={styles.dateStyle}>
+                    <DateTimePicker
+                      value={dob}
+                      mode="date"
+                      display="spinner"
+                      onChange={(_, selectedDate) => {
+                        if (selectedDate) setDob(selectedDate);
+                      }}
+                      maximumDate={new Date()}
+                    />
+                    <TouchableOpacity
+                      onPress={() => setShowDatePicker(false)}
+                      style={{ padding: 10, alignItems: "center" }}
+                    >
+                      <Text style={{ color: "#FFF", fontWeight: "bold" }}>
+                        Confirmar
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </Modal>
+            ) : (
+              <DateTimePicker
+                value={dob}
+                mode="date"
+                display="default"
+                onChange={(_, selectedDate) => {
+                  setShowDatePicker(false);
+                  if (selectedDate) setDob(selectedDate);
+                }}
+                maximumDate={new Date()}
+              />
+            ))}
 
           {/* Género */}
           <View style={[styles.inputWrapper, { paddingHorizontal: 0 }]}>
-            <Users size={18} color="#888" style={{ ...styles.icon, marginLeft: 10 }} />
+            <Users
+              size={18}
+              color="#888"
+              style={{ ...styles.icon, marginLeft: 10 }}
+            />
             <View style={{ flex: 1 }}>
-              <Picker selectedValue={gender} onValueChange={(val) => setGender(val)}>
+              <Picker
+                selectedValue={gender}
+                onValueChange={(val) => setGender(val)}
+                style={{ height: "auto" }}
+              >
                 <Picker.Item label="Selecciona género" value="" />
                 <Picker.Item label="Masculino" value="male" />
                 <Picker.Item label="Femenino" value="female" />
@@ -209,8 +292,16 @@ export default function RegisterPage () {
           </View>
         </View>
 
-        <TouchableOpacity style={styles.submitButton} onPress={handleRegister} disabled={isLoading}>
-          {isLoading ? <ActivityIndicator color="#fff" /> : <Text style={styles.submitText}>Crear cuenta</Text>}
+        <TouchableOpacity
+          style={styles.submitButton}
+          onPress={handleRegister}
+          disabled={isLoading}
+        >
+          {isLoading ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={styles.submitText}>Crear cuenta</Text>
+          )}
         </TouchableOpacity>
 
         <View style={styles.switchWrapper}>
@@ -344,5 +435,9 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: "#f0344a",
     fontWeight: "600",
+  },
+  dateStyle: {
+    backgroundColor: "#353535ff",
+    padding: 20,
   },
 });
