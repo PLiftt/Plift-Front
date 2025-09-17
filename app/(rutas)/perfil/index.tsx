@@ -11,6 +11,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { getUserProfile } from "../../../services/userService";
 import { deleteToken } from "../../../services/secureStore";
 import { useRouter } from 'expo-router';
+import bottomNav from "../../components/bottomNav";
 
 interface UserProfile {
   first_name?: string;
@@ -147,8 +148,9 @@ const PerfilScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
           <Ionicons name="log-out-outline" size={20} color="#fff" />
           <Text style={styles.buttonText}>Cerrar Sesión</Text>
         </TouchableOpacity>
-
       </View>
+      
+      {bottomNav()}
     </View>
   );
 };

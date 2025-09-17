@@ -13,6 +13,7 @@ import { Ionicons, MaterialIcons, FontAwesome5 } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { getUserProfile } from "../../../services/userService";
 import { deleteToken } from "../../../services/secureStore";
+import bottomNav from "../../components/bottomNav";
 
 const { width, height } = Dimensions.get("window");
 
@@ -117,7 +118,7 @@ const HomeScreen: React.FC = () => {
       <Text style={[styles.watermark, { color: colors.watermark }]}>PL</Text>
 
       {/* Switch modo oscuro */}
-      <View style={styles.modeSwitch}>
+      {/* <View style={styles.modeSwitch}>
         {isDarkMode ? (
           <Ionicons
             name="moon"
@@ -134,7 +135,7 @@ const HomeScreen: React.FC = () => {
           />
         )}
         <Switch value={isDarkMode} onValueChange={toggleMode} />
-      </View>
+      </View> */}
 
       <ScrollView contentContainerStyle={{ paddingBottom: 20, paddingTop: 5 }}>
         {/* Avatar arriba */}
@@ -228,7 +229,8 @@ const HomeScreen: React.FC = () => {
       </ScrollView>
 
       {/* Bottom nav */}
-      <View style={[styles.bottomNav, { backgroundColor: colors.navBackground }]}>
+      
+      {/* <View style={[styles.bottomNav, { backgroundColor: colors.navBackground }]}>
         {renderNavButton(
           "home",
           <Ionicons name="home-outline" size={28} color="#EF233C" />,
@@ -262,7 +264,9 @@ const HomeScreen: React.FC = () => {
           "Perfil",
           "/perfil"
         )}
-      </View>
+      </View> */}
+      
+      {bottomNav()}
     </View>
   );
 };

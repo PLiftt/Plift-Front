@@ -1,11 +1,13 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
+import bottomNav from "../../components/bottomNav";
 
 export default function ChatPage() {
     return (
     <View style={styles.container}>
       <Text style={styles.title}>💬 Chat con tu Coach</Text>
       <Text style={styles.subtitle}>Aquí podrás conversar con tu entrenador</Text>
+      {bottomNav()}
     </View> 
     );
 }
