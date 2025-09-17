@@ -1,13 +1,41 @@
-import React, { useState } from "react";
-import { View, Text, StyleSheet, Pressable, ScrollView, Switch, Dimensions, Image } from "react-native";
+import React, { useEffect, useState } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  ActivityIndicator,
+  Switch,
+  Dimensions,
+} from "react-native";
 import { Ionicons, MaterialIcons, FontAwesome5 } from "@expo/vector-icons";
-import { router, Link } from "expo-router";
+import { useRouter } from "expo-router";
+import { getUserProfile } from "../../../services/userService";
+import { deleteToken } from "../../../services/secureStore";
 
 const { width, height } = Dimensions.get("window");
 
-const IndexScreen: React.FC = () => {
+interface UserProfile {
+  first_name?: string;
+  second_name?: string | null;
+  last_name?: string;
+  second_last_name?: string | null;
+  email: string;
+  role: "ATHLETE" | "COACH" | string;
+  coach?: { coach?: { email?: string } };
+  athletes?: {
+    id: number;
+    athlete_name: string;
+    athlete_email: string;
+  }[];
+}
+
+const HomeScreen: React.FC = () => {
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [loading, setLoading] = useState(true);
   const [isDarkMode, setIsDarkMode] = useState(true);
-  const [hoveredButton, setHoveredButton] = useState<string | null>(null);
+  const router = useRouter();
 
   const toggleMode = () => setIsDarkMode(!isDarkMode);
 
@@ -21,127 +49,229 @@ const IndexScreen: React.FC = () => {
     navText: isDarkMode ? "#fff" : "#000",
     floatingButton: "#EF233C",
     watermark: isDarkMode ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)",
-    hoverRed: "rgba(239,35,60,0.2)",
   };
 
-  const renderNavButton = (name: string, icon: React.ReactNode, label: string, route: string) => {
-    const isHovered = hoveredButton === name;
-    return (
-      <Pressable
-        key={name}
-        onPress={() => router.push(route)}
-        onHoverIn={() => setHoveredButton(name)}
-        onHoverOut={() => setHoveredButton(null)}
-        style={({ pressed }) => [
-          styles.navButton,
-          (pressed || isHovered) && {
-            backgroundColor: colors.hoverRed,
-            borderRadius: 10,
-            shadowColor: "#EF233C",
-            shadowOffset: { width: 0, height: 0 },
-            shadowOpacity: 0.8,
-            shadowRadius: 10,
-            elevation: 10,
-          },
-        ]}
-      >
-        {icon}
-        <Text style={[styles.navText, { color: colors.navText }]}>{label}</Text>
-      </Pressable>
-    );
+  const fetchProfile = async () => {
+    try {
+      const data = await getUserProfile();
+      setProfile(data);
+    } catch (error) {
+      console.error("Error cargando perfil:", error);
+      await deleteToken("accessToken");
+      await deleteToken("refreshToken");
+      router.replace("/login");
+    } finally {
+      setLoading(false);
+    }
   };
+
+  useEffect(() => {
+    fetchProfile();
+  }, []);
+
+  if (loading) {
+    return (
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <ActivityIndicator size="large" color="#007AFF" />
+      </View>
+    );
+  }
+
+  if (!profile) {
+    return (
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <Text style={{ color: colors.textPrimary }}>
+          No se pudo cargar el perfil.
+        </Text>
+      </View>
+    );
+  }
+
+  const fullName = `${profile.first_name || ""} ${profile.second_name || ""} ${
+    profile.last_name || ""
+  } ${profile.second_last_name || ""}`.trim();
+  const initials = fullName
+    ? fullName[0].toUpperCase()
+    : profile.email[0].toUpperCase();
+
+  // Render nav button
+  const renderNavButton = (
+    name: string,
+    icon: React.ReactNode,
+    label: string,
+    route: string
+  ) => (
+    <TouchableOpacity
+      key={name}
+      onPress={() => router.push(route)}
+      style={styles.navButton}
+    >
+      {icon}
+      <Text style={[styles.navText, { color: colors.navText }]}>{label}</Text>
+    </TouchableOpacity>
+  );
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Watermark */}
       <Text style={[styles.watermark, { color: colors.watermark }]}>PL</Text>
 
-      {/* Switch modo oscuro/claro */}
+      {/* Switch modo oscuro */}
       <View style={styles.modeSwitch}>
         {isDarkMode ? (
-          <Ionicons name="moon" size={24} color={colors.textPrimary} style={{ marginRight: 8 }} />
+          <Ionicons
+            name="moon"
+            size={24}
+            color={colors.textPrimary}
+            style={{ marginRight: 8 }}
+          />
         ) : (
-          <Ionicons name="sunny" size={24} color={colors.textPrimary} style={{ marginRight: 8 }} />
+          <Ionicons
+            name="sunny"
+            size={24}
+            color={colors.textPrimary}
+            style={{ marginRight: 8 }}
+          />
         )}
         <Switch value={isDarkMode} onValueChange={toggleMode} />
       </View>
 
       <ScrollView contentContainerStyle={{ paddingBottom: 20, paddingTop: 5 }}>
-        <View style={[styles.header, { zIndex: 2 }]}>
-          <View style={[styles.avatarCircle, { backgroundColor: colors.cardBackground }]}>
-            <Text style={[styles.avatarText, { color: colors.textPrimary }]}>JP</Text>
+        {/* Avatar arriba */}
+        <View style={styles.avatarContainer}>
+          <View
+            style={[styles.avatar, { backgroundColor: colors.cardBackground }]}
+          >
+            <Text style={[styles.avatarText, { color: colors.textPrimary }]}>
+              {initials}
+            </Text>
           </View>
-          <Text style={[styles.userName, { color: colors.textPrimary }]}>Hola, Juan Perez</Text>
+          <Text
+            style={[styles.userName, { color: colors.textPrimary }]}
+          >{`Hola, ${profile.first_name || "Sin nombre"}`}</Text>
         </View>
 
+        {/* Dashboard según rol */}
         <View style={[styles.mainRectangle, { backgroundColor: colors.rectangle }]}>
-          <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>DASHBOARD</Text>
-          <Text style={[styles.time, { color: colors.textPrimary }]}>11:00</Text>
+          <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>
+            {profile.role.toUpperCase() === "ATHLETE"
+              ? "Mi Progreso"
+              : profile.role.toUpperCase() === "COACH"
+              ? "Mis Atletas"
+              : "Panel Principal"}
+          </Text>
 
-          <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>PERSONAL RECORDS</Text>
-          <View style={[styles.records, { backgroundColor: colors.cardBackground }]}>
-            <View style={styles.recordItem}>
-              <Text style={[styles.recordName, { color: colors.textPrimary }]}>SQUAT</Text>
-              <Text style={[styles.recordValue, { color: colors.textSecondary }]}>160 kg</Text>
-            </View>
-            <View style={styles.recordItem}>
-              <Text style={[styles.recordName, { color: colors.textPrimary }]}>BENCH</Text>
-              <Text style={[styles.recordValue, { color: colors.textSecondary }]}>125 kg</Text>
-            </View>
-            <View style={styles.recordItem}>
-              <Text style={[styles.recordName, { color: colors.textPrimary }]}>DEADLIFT</Text>
-              <Text style={[styles.recordValue, { color: colors.textSecondary }]}>200 kg</Text>
-            </View>
-          </View>
+          {/* ATHLETE: ver Entrenamientos y Tracking */}
+          {profile.role.toUpperCase() === "ATHLETE" && (
+            <View>
+              {profile.coach?.coach?.email && (
+                <Text style={[styles.info, { color: colors.textPrimary }]}>
+                  Coach: {profile.coach.coach.email}
+                </Text>
+              )}
 
-          <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>ENTRENAMIENTOS RECIENTES</Text>
-          <View style={[styles.recentWorkout, { backgroundColor: colors.cardBackground }]}>
-            <Text style={[styles.workoutDate, { color: colors.textPrimary }]}>Mar 8, 2024</Text>
-            <Text style={[styles.workoutName, { color: colors.textPrimary }]}>SQUAT</Text>
-            <Text style={[styles.workoutDetails, { color: colors.textSecondary }]}>4 sets x 5 reps @ 160 kg</Text>
-          </View>
+              <View
+                style={[styles.block, { backgroundColor: colors.cardBackground }]}
+              >
+                <Ionicons name="barbell-outline" size={22} color="#EF233C" />
+                <Text
+                  style={[styles.blockText, { color: colors.textPrimary }]}
+                >
+                  Entrenamientos
+                </Text>
+              </View>
 
-          <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>HISTORIAL</Text>
-          <View style={[styles.history, { backgroundColor: colors.cardBackground }]}>
-            <Text style={[styles.historyText, { color: colors.textPrimary }]}>5 7 8 1 9 6</Text>
-          </View>
+              <View
+                style={[styles.block, { backgroundColor: colors.cardBackground }]}
+              >
+                <Ionicons name="pulse-outline" size={22} color="#EF233C" />
+                <Text
+                  style={[styles.blockText, { color: colors.textPrimary }]}
+                >
+                  Tracking
+                </Text>
+              </View>
+            </View>
+          )}
+
+          {/* COACH: ver Atletas en bloques */}
+          {profile.role.toUpperCase() === "COACH" &&
+            profile.athletes?.length && (
+              <View>
+                {profile.athletes.map((a) => (
+                  <View
+                    key={a.id}
+                    style={[styles.block, { backgroundColor: colors.cardBackground }]}
+                  >
+                    <Ionicons
+                      name="person-circle-outline"
+                      size={22}
+                      color="#EF233C"
+                    />
+                    <View>
+                      <Text
+                        style={[styles.blockText, { color: colors.textPrimary }]}
+                      >
+                        {a.athlete_name}
+                      </Text>
+                      <Text
+                        style={[styles.info, { color: colors.textPrimary }]}
+                      >
+                        {a.athlete_email}
+                      </Text>
+                    </View>
+                  </View>
+                ))}
+              </View>
+            )}
         </View>
-{/* 
-        <View style={styles.logoContainer}>
-          <Image
-            source={require('../../assets/logoplift.png')}
-            style={styles.logo}
-            resizeMode="contain"
-          />
-        </View> */}
       </ScrollView>
 
+      {/* Bottom nav */}
       <View style={[styles.bottomNav, { backgroundColor: colors.navBackground }]}>
-        {renderNavButton("home", <Ionicons name="home-outline" size={28} color="#EF233C" />, "Home", "/home")}
-        {renderNavButton("stats", <Ionicons name="stats-chart-outline" size={28} color="#EF233C" />, "Estadísticas", "/estadisticas")}
-
-        <Pressable
-          onPress={() => router.push("/fit")}
-          style={({ pressed }) => [
+        {renderNavButton(
+          "home",
+          <Ionicons name="home-outline" size={28} color="#EF233C" />,
+          "Home",
+          "/home"
+        )}
+        {renderNavButton(
+          "stats",
+          <Ionicons name="stats-chart-outline" size={28} color="#EF233C" />,
+          "Estadísticas",
+          "/estadisticas"
+        )}
+        <TouchableOpacity
+          style={[
             styles.floatingButton,
             { backgroundColor: colors.floatingButton },
-            pressed && { backgroundColor: colors.hoverRed, shadowColor: "#EF233C", shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.8, shadowRadius: 10, elevation: 10 },
           ]}
+          onPress={() => router.push("/fit")}
         >
           <FontAwesome5 name="dumbbell" size={36} color="#fff" />
-        </Pressable>
-
-        {renderNavButton("chat", <MaterialIcons name="chat" size={28} color="#EF233C" />, "Chat Coach", "/chat")}
-        {renderNavButton("perfil", <Ionicons name="person-circle-outline" size={28} color="#EF233C" />, "Perfil", "/perfil")}
+        </TouchableOpacity>
+        {renderNavButton(
+          "chat",
+          <MaterialIcons name="chat" size={28} color="#EF233C" />,
+          "Chat Coach",
+          "/chat"
+        )}
+        {renderNavButton(
+          "perfil",
+          <Ionicons name="person-circle-outline" size={28} color="#EF233C" />,
+          "Perfil",
+          "/perfil"
+        )}
       </View>
     </View>
   );
 };
 
-export default IndexScreen;
+export default HomeScreen;
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
+
   watermark: {
     position: "absolute",
     fontSize: 200,
@@ -151,6 +281,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
     zIndex: 0,
   },
+
   modeSwitch: {
     flexDirection: "row",
     justifyContent: "flex-end",
@@ -158,23 +289,27 @@ const styles = StyleSheet.create({
     alignItems: "center",
     zIndex: 1,
   },
-  header: {
-    flexDirection: "row",
+
+  avatarContainer: {
     alignItems: "center",
-    paddingHorizontal: 20,
+    marginBottom: 20,
     marginTop: 10,
-    marginBottom: 10,
   },
-  avatarCircle: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
+
+  avatar: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
     justifyContent: "center",
     alignItems: "center",
-    marginRight: 12,
   },
-  avatarText: { fontWeight: "bold", fontSize: 18 },
-  userName: { fontSize: 18, fontWeight: "600" },
+
+  avatarText: { fontWeight: "bold", fontSize: 40 },
+
+  userName: { fontSize: 18, fontWeight: "600", marginTop: 8 },
+
+  info: { fontSize: 14, marginBottom: 5 },
+
   mainRectangle: {
     borderRadius: 20,
     padding: 20,
@@ -183,20 +318,19 @@ const styles = StyleSheet.create({
     marginTop: 0,
     zIndex: 1,
   },
-  sectionTitle: { fontSize: 18, fontWeight: "bold", marginTop: 20, marginBottom: 10 },
-  time: { fontSize: 16 },
-  records: { borderRadius: 12, padding: 15 },
-  recordItem: { flexDirection: "row", justifyContent: "space-between", marginBottom: 10 },
-  recordName: { fontWeight: "500" },
-  recordValue: { fontWeight: "bold" },
-  recentWorkout: { borderRadius: 12, padding: 15 },
-  workoutDate: { marginBottom: 5 },
-  workoutName: { fontWeight: "500", marginBottom: 3 },
-  workoutDetails: { fontWeight: "bold" },
-  history: { borderRadius: 12, padding: 15, marginBottom: 10 },
-  historyText: { fontWeight: "500" },
-  logoContainer: { alignItems: "center", marginTop: 5, marginBottom: 20 },
-  logo: { width: 80, height: 40 },
+
+  sectionTitle: { fontSize: 18, fontWeight: "bold", marginTop: 10 },
+
+  block: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 12,
+    borderRadius: 12,
+    marginTop: 10,
+  },
+
+  blockText: { fontSize: 16, fontWeight: "600", marginLeft: 10 },
+
   bottomNav: {
     position: "absolute",
     bottom: 0,
@@ -208,7 +342,9 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
   },
+
   navButton: { flex: 1, alignItems: "center", paddingVertical: 5 },
+
   floatingButton: {
     width: 80,
     height: 80,
@@ -222,5 +358,6 @@ const styles = StyleSheet.create({
     shadowRadius: 5,
     elevation: 8,
   },
+
   navText: { fontSize: 12, marginTop: 4, fontWeight: "500" },
 });
