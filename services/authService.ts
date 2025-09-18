@@ -1,7 +1,7 @@
 import axios from "axios";
 import { saveToken, deleteToken, getToken } from "./secureStore";
 
-const API_URL = "http://:8000"; 
+const API_URL = "http://:8000";
 
 export const registerUser = async (data: any) => {
   try {
@@ -9,12 +9,17 @@ export const registerUser = async (data: any) => {
     console.log("Respuesta del servidor:", response.data);
 
     // Guardamos solo si existen
-    if (response.data.access) await saveToken("accessToken", response.data.access);
-    if (response.data.refresh) await saveToken("refreshToken", response.data.refresh);
+    if (response.data.access)
+      await saveToken("accessToken", response.data.access);
+    if (response.data.refresh)
+      await saveToken("refreshToken", response.data.refresh);
 
     return response.data;
   } catch (error: any) {
-    console.error("Error en registerUser:", error.response?.data || error.message);
+    console.error(
+      "Error en registerUser:",
+      error.response?.data || error.message
+    );
     throw error;
   }
 };
@@ -25,8 +30,10 @@ export const loginUser = async (data: { email: string; password: string }) => {
     console.log("Respuesta login:", response.data);
 
     // Guardamos tokens en SecureStore
-    if (response.data.access) await saveToken("accessToken", response.data.access);
-    if (response.data.refresh) await saveToken("refreshToken", response.data.refresh);
+    if (response.data.access)
+      await saveToken("accessToken", response.data.access);
+    if (response.data.refresh)
+      await saveToken("refreshToken", response.data.refresh);
 
     return response.data;
   } catch (error: any) {

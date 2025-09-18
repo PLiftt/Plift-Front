@@ -1,11 +1,13 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
+import bottomNav from "../../components/bottomNav";
 
 export default function FitPage() {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>🏋️ Fitness</Text>
       <Text style={styles.subtitle}>Aquí podrás registrar y seguir tus entrenamientos</Text>
+      {bottomNav()}
     </View>
   );
 };

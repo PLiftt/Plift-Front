@@ -1,11 +1,13 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
+import bottomNav from "../../components/bottomNav";
 
 export default function EstadisticasPage() {
     return (
     <View style={styles.container}>
         <Text style={styles.title}>📊 Estadísticas</Text>
         <Text style={styles.subtitle}>Aquí verás tu progreso y métricas</Text>
+        {bottomNav()}
     </View>
     );
 }

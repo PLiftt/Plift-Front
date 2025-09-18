@@ -10,7 +10,8 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { getUserProfile } from "../../../services/userService";
 import { deleteToken } from "../../../services/secureStore";
-import { useRouter } from 'expo-router';
+import { useRouter } from "expo-router";
+import BottomNav from "../../components/bottomNav";
 
 interface UserProfile {
   first_name?: string;
@@ -42,7 +43,10 @@ const PerfilScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
       const data = await getUserProfile();
       setProfile(data);
     } catch (error: any) {
-      console.error("Error cargando perfil:", error.response?.data || error.message);
+      console.error(
+        "Error cargando perfil:",
+        error.response?.data || error.message
+      );
 
       if (
         error.response?.data?.code === "token_not_valid" ||
@@ -90,19 +94,23 @@ const PerfilScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
   }
 
   // Nombre completo
-  const fullName = `${profile.first_name || ""} ${profile.second_name || ""} ${profile.last_name || ""} ${profile.second_last_name || ""}`.trim();
+  const fullName = `${profile.first_name || ""} ${profile.second_name || ""} ${
+    profile.last_name || ""
+  } ${profile.second_last_name || ""}`.trim();
 
   return (
     <View style={styles.container}>
       {/* Avatar con inicial */}
-    <View style={styles.avatarContainer}>
-      <View style={styles.avatar}>
-        <Text style={styles.avatarText}>
-          {fullName ? fullName[0].toUpperCase() : profile.email[0].toUpperCase()}
-        </Text>
+      <View style={styles.avatarContainer}>
+        <View style={styles.avatar}>
+          <Text style={styles.avatarText}>
+            {fullName
+              ? fullName[0].toUpperCase()
+              : profile.email[0].toUpperCase()}
+          </Text>
+        </View>
+        <Text style={styles.name}>{profile.first_name || "Sin nombre"}</Text>
       </View>
-      <Text style={styles.name}>{profile.first_name || "Sin nombre"}</Text>
-    </View>
 
       {/* Datos del usuario */}
       <Text style={styles.email}>{profile.email}</Text>
@@ -141,14 +149,15 @@ const PerfilScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
           onPress={async () => {
             await deleteToken("accessToken");
             await deleteToken("refreshToken");
-            router.replace("/login"); 
+            router.replace("/login");
           }}
         >
           <Ionicons name="log-out-outline" size={20} color="#fff" />
           <Text style={styles.buttonText}>Cerrar Sesión</Text>
         </TouchableOpacity>
-
       </View>
+
+      <BottomNav />
     </View>
   );
 };
@@ -156,7 +165,7 @@ const PerfilScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
 export default PerfilScreen;
 
 const styles = StyleSheet.create({
-container: {
+  container: {
     flex: 1,
     backgroundColor: "#000",
     alignItems: "center",
@@ -165,8 +174,8 @@ container: {
 
   // Contenedor que engloba el círculo y el nombre
   avatarContainer: {
-    alignItems: "center",  // centra horizontalmente
-    marginBottom: 20,      // espacio debajo del avatar
+    alignItems: "center", // centra horizontalmente
+    marginBottom: 20, // espacio debajo del avatar
   },
 
   avatar: {
@@ -188,7 +197,7 @@ container: {
     fontSize: 22,
     fontWeight: "bold",
     color: "#fff",
-    marginTop: 8,  // separa el nombre del círculo
+    marginTop: 8, // separa el nombre del círculo
   },
 
   email: {
