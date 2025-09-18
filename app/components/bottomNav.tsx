@@ -16,40 +16,40 @@ import { useRouter } from "expo-router";
 
 const { width, height } = Dimensions.get("window");
 
-export default function bottomNav() {
+export default function BottomNav() {
   interface UserProfile {
-  first_name?: string;
-  second_name?: string | null;
-  last_name?: string;
-  second_last_name?: string | null;
-  email: string;
-  role: "ATHLETE" | "COACH" | string;
-  coach?: { coach?: { email?: string } };
-  athletes?: {
-    id: number;
-    athlete_name: string;
-    athlete_email: string;
-  }[];
-}
+    first_name?: string;
+    second_name?: string | null;
+    last_name?: string;
+    second_last_name?: string | null;
+    email: string;
+    role: "ATHLETE" | "COACH" | string;
+    coach?: { coach?: { email?: string } };
+    athletes?: {
+      id: number;
+      athlete_name: string;
+      athlete_email: string;
+    }[];
+  }
 
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [isDarkMode, setIsDarkMode] = useState(true);
   const router = useRouter();
 
-const colors = {
-  background: isDarkMode ? "#000" : "#f9f9f9",
-  rectangle: isDarkMode ? "rgba(26,26,26,0.9)" : "#fff",
-  textPrimary: isDarkMode ? "#fff" : "#000",
-  textSecondary: "#EF233C",
-  cardBackground: isDarkMode ? "#1a1a1a" : "#e0e0e0",
-  navBackground: isDarkMode ? "#1a1a1a" : "#ddd",
-  navText: isDarkMode ? "#fff" : "#000",
-  floatingButton: "#EF233C",
-  watermark: isDarkMode ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)",
-};
+  const colors = {
+    background: isDarkMode ? "#000" : "#f9f9f9",
+    rectangle: isDarkMode ? "rgba(26,26,26,0.9)" : "#fff",
+    textPrimary: isDarkMode ? "#fff" : "#000",
+    textSecondary: "#EF233C",
+    cardBackground: isDarkMode ? "#1a1a1a" : "#e0e0e0",
+    navBackground: isDarkMode ? "#1a1a1a" : "#ddd",
+    navText: isDarkMode ? "#fff" : "#000",
+    floatingButton: "#EF233C",
+    watermark: isDarkMode ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)",
+  };
 
-const renderNavButton = (
+  const renderNavButton = (
     name: string,
     icon: React.ReactNode,
     label: string,

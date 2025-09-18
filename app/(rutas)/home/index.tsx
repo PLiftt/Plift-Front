@@ -13,7 +13,7 @@ import { Ionicons, MaterialIcons, FontAwesome5 } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { getUserProfile } from "../../../services/userService";
 import { deleteToken } from "../../../services/secureStore";
-import bottomNav from "../../components/bottomNav";
+import BottomNav from "../../components/bottomNav";
 
 const { width, height } = Dimensions.get("window");
 
@@ -153,7 +153,9 @@ const HomeScreen: React.FC = () => {
         </View>
 
         {/* Dashboard según rol */}
-        <View style={[styles.mainRectangle, { backgroundColor: colors.rectangle }]}>
+        <View
+          style={[styles.mainRectangle, { backgroundColor: colors.rectangle }]}
+        >
           <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>
             {profile.role.toUpperCase() === "ATHLETE"
               ? "Mi Progreso"
@@ -172,23 +174,25 @@ const HomeScreen: React.FC = () => {
               )}
 
               <View
-                style={[styles.block, { backgroundColor: colors.cardBackground }]}
+                style={[
+                  styles.block,
+                  { backgroundColor: colors.cardBackground },
+                ]}
               >
                 <Ionicons name="barbell-outline" size={22} color="#EF233C" />
-                <Text
-                  style={[styles.blockText, { color: colors.textPrimary }]}
-                >
+                <Text style={[styles.blockText, { color: colors.textPrimary }]}>
                   Entrenamientos
                 </Text>
               </View>
 
               <View
-                style={[styles.block, { backgroundColor: colors.cardBackground }]}
+                style={[
+                  styles.block,
+                  { backgroundColor: colors.cardBackground },
+                ]}
               >
                 <Ionicons name="pulse-outline" size={22} color="#EF233C" />
-                <Text
-                  style={[styles.blockText, { color: colors.textPrimary }]}
-                >
+                <Text style={[styles.blockText, { color: colors.textPrimary }]}>
                   Tracking
                 </Text>
               </View>
@@ -202,7 +206,10 @@ const HomeScreen: React.FC = () => {
                 {profile.athletes.map((a) => (
                   <View
                     key={a.id}
-                    style={[styles.block, { backgroundColor: colors.cardBackground }]}
+                    style={[
+                      styles.block,
+                      { backgroundColor: colors.cardBackground },
+                    ]}
                   >
                     <Ionicons
                       name="person-circle-outline"
@@ -211,7 +218,10 @@ const HomeScreen: React.FC = () => {
                     />
                     <View>
                       <Text
-                        style={[styles.blockText, { color: colors.textPrimary }]}
+                        style={[
+                          styles.blockText,
+                          { color: colors.textPrimary },
+                        ]}
                       >
                         {a.athlete_name}
                       </Text>
@@ -229,8 +239,10 @@ const HomeScreen: React.FC = () => {
       </ScrollView>
 
       {/* Bottom nav */}
-      
-      {/* <View style={[styles.bottomNav, { backgroundColor: colors.navBackground }]}>
+
+      {/* <View
+        style={[styles.bottomNav, { backgroundColor: colors.navBackground }]}
+      >
         {renderNavButton(
           "home",
           <Ionicons name="home-outline" size={28} color="#EF233C" />,
@@ -265,8 +277,8 @@ const HomeScreen: React.FC = () => {
           "/perfil"
         )}
       </View> */}
-      
-      {bottomNav()}
+
+      <BottomNav />
     </View>
   );
 };
