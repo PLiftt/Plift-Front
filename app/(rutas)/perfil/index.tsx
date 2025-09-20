@@ -6,12 +6,15 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Alert,
+  Modal,
+  TextInput,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { getUserProfile } from "../../../services/userService";
-import { deleteToken } from "../../../services/secureStore";
+import { deleteToken, getToken } from "../../../services/secureStore";
 import { useRouter } from "expo-router";
 import BottomNav from "../../components/bottomNav";
+import { acceptInvitation } from "../../../services/invitationService";
 
 interface UserProfile {
   first_name?: string;
@@ -23,7 +26,7 @@ interface UserProfile {
   coach?: { coach?: { email?: string } };
   athletes?: {
     id: number;
-    athlete: number; // ID del atleta
+    athlete: number;
     athlete_name: string;
     athlete_email: string;
     coach: number;
@@ -38,6 +41,11 @@ const PerfilScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const [modalVisible, setModalVisible] = useState(false);
+  const [inviteCode, setInviteCode] = useState("");
+
+  const router = useRouter();
+
   const fetchProfile = async () => {
     try {
       const data = await getUserProfile();
@@ -47,7 +55,6 @@ const PerfilScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
         "Error cargando perfil:",
         error.response?.data || error.message
       );
-
       if (
         error.response?.data?.code === "token_not_valid" ||
         error.message?.includes("No hay token de acceso")
@@ -71,7 +78,33 @@ const PerfilScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
       setLoading(false);
     }
   };
-  const router = useRouter();
+
+  const handleAcceptCode = async () => {
+    try {
+      const token = await getToken("accessToken");
+      if (!token) throw new Error("Token no disponible");
+
+      if (!inviteCode.trim()) {
+        Alert.alert("Error", "Debes ingresar un código válido");
+        return;
+      }
+
+      const result = await acceptInvitation(token, inviteCode.trim());
+      Alert.alert("¡Éxito!", "Invitación aceptada correctamente");
+      setInviteCode("");
+      setModalVisible(false);
+      fetchProfile(); // refresca el perfil
+    } catch (error: any) {
+      console.error(error);
+      if (error.response?.data?.code) {
+        Alert.alert("Error", error.response.data.code);
+      } else if (error.response?.data?.detail) {
+        Alert.alert("Error", error.response.data.detail);
+      } else {
+        Alert.alert("Error", "No se pudo aceptar la invitación");
+      }
+    }
+  };
 
   useEffect(() => {
     fetchProfile();
@@ -93,45 +126,65 @@ const PerfilScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
     );
   }
 
-  // Nombre completo
   const fullName = `${profile.first_name || ""} ${profile.second_name || ""} ${
     profile.last_name || ""
   } ${profile.second_last_name || ""}`.trim();
 
   return (
     <View style={styles.container}>
-      {/* Avatar con inicial */}
+      {/* Avatar */}
       <View style={styles.avatarContainer}>
         <View style={styles.avatar}>
           <Text style={styles.avatarText}>
-            {fullName
-              ? fullName[0].toUpperCase()
-              : profile.email[0].toUpperCase()}
+            {fullName ? fullName[0].toUpperCase() : profile.email[0].toUpperCase()}
           </Text>
         </View>
         <Text style={styles.name}>{profile.first_name || "Sin nombre"}</Text>
       </View>
 
-      {/* Datos del usuario */}
       <Text style={styles.email}>{profile.email}</Text>
       <Text style={styles.info}>Rol: {profile.role}</Text>
 
-      {/* Si es atleta, muestra su coach
-      {profile.role === "ATHLETE" && profile.coach?.coach?.email && (
-        <Text style={styles.info}>Coach: {profile.coach.coach.email}</Text>
-      )} */}
+      {/* BOTÓN INGRESAR CÓDIGO SOLO PARA ATHLETE */}
+      {profile.role.toUpperCase() === "ATHLETE" && (
+        <TouchableOpacity
+          style={[styles.button, { backgroundColor: "#EF233C" }]}
+          onPress={() => setModalVisible(true)}
+        >
+          <Ionicons name="key-outline" size={20} color="#fff" />
+          <Text style={styles.buttonText}>Ingresar Código de Coach</Text>
+        </TouchableOpacity>
+      )}
 
-      {/* Si es coach, muestra sus atletas
-      {profile.role.toUpperCase() === "COACH" && profile.athletes?.length ? (
-        <View>
-          <Text style={styles.info}>Atletas:</Text>
-          {profile.athletes.map((a) => (
-            <Text key={a.id} style={styles.info}>
-              {a.athlete_name} ({a.athlete_email})
-            </Text>
-          ))}
+      {/* Modal para ingresar código */}
+      <Modal
+        visible={modalVisible}
+        animationType="slide"
+        transparent
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View style={styles.modalBackground}>
+          <View style={styles.modalContainer}>
+            <Text style={styles.modalTitle}>Ingresar Código del Coach</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Código"
+              value={inviteCode}
+              onChangeText={setInviteCode}
+              autoCapitalize="none"
+            />
+            <View style={{ flexDirection: "row", justifyContent: "space-between", marginTop: 15 }}>
+              <TouchableOpacity style={styles.modalButton} onPress={handleAcceptCode}>
+                <Text style={styles.generateButtonText}>Aceptar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.modalButton, { backgroundColor: "#888" }]} onPress={() => setModalVisible(false)}>
+                <Text style={styles.generateButtonText}>Cancelar</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
         </View>
-      ) : null} */}
+      </Modal>
+
       {/* Botones de acciones */}
       <View style={styles.buttonContainer}>
         <TouchableOpacity style={styles.button} onPress={() => {}}>
@@ -165,76 +218,121 @@ const PerfilScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
 export default PerfilScreen;
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#000",
-    alignItems: "center",
-    paddingTop: 80,
+  container: { 
+    flex: 1, 
+    backgroundColor: "#000", 
+    alignItems: "center", 
+    paddingTop: 80 
   },
 
-  // Contenedor que engloba el círculo y el nombre
-  avatarContainer: {
-    alignItems: "center", // centra horizontalmente
-    marginBottom: 20, // espacio debajo del avatar
+  avatarContainer: { 
+    alignItems: "center", 
+    marginBottom: 20 
   },
 
-  avatar: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: "#d00000",
-    justifyContent: "center",
-    alignItems: "center",
+  avatar: { 
+    width: 100, 
+    height: 100, 
+    borderRadius: 50, 
+    backgroundColor: "#d00000", 
+    justifyContent: "center", 
+    alignItems: "center" 
+  },
+  
+  avatarText: { 
+    color: "#fff", 
+    fontSize: 40, 
+    fontWeight: "bold" 
   },
 
-  avatarText: {
+  name: { 
+    fontSize: 22, 
+    fontWeight: "bold", 
+    color: "#fff", 
+    marginTop: 8 
+  },
+
+  email: { 
+    fontSize: 16, 
+    color: "#ccc", 
+    marginBottom: 10 
+  },
+
+  info: { 
+    fontSize: 16, 
+    color: "#fff", 
+    marginBottom: 20 
+  },
+
+  buttonContainer: { 
+    marginTop: 40, 
+    width: "80%" 
+  },
+
+  button: { 
+    flexDirection: "row", 
+    alignItems: "center", 
+    backgroundColor: "#1a1a1a", 
+    paddingVertical: 12, 
+    paddingHorizontal: 20, 
+    borderRadius: 10, 
+    marginBottom: 15 
+  },
+  
+  logoutButton: { 
+    backgroundColor: "#d00000" 
+  },
+
+  buttonText: { 
     color: "#fff",
-    fontSize: 40,
-    fontWeight: "bold",
+    fontSize: 16, 
+    marginLeft: 10, 
+    fontWeight: "600" 
   },
 
-  name: {
-    fontSize: 22,
-    fontWeight: "bold",
-    color: "#fff",
-    marginTop: 8, // separa el nombre del círculo
+  modalBackground: { 
+    flex: 1, 
+    justifyContent: "center", 
+    alignItems: "center", 
+    backgroundColor: "rgba(0,0,0,0.5)" 
   },
 
-  email: {
-    fontSize: 16,
-    color: "#ccc",
-    marginBottom: 20,
+  modalContainer: { 
+    width: 300, 
+    padding: 20, 
+    borderRadius: 12, 
+    backgroundColor: "#fff" 
   },
 
-  info: {
-    fontSize: 16,
-    color: "#fff",
-    marginBottom: 5,
+  modalTitle: { 
+    fontSize: 18, 
+    fontWeight: "bold", 
+    marginBottom: 10, 
+    textAlign: "center" 
   },
 
-  buttonContainer: {
-    marginTop: 40,
-    width: "80%",
+  input: { 
+    borderWidth: 1, 
+    borderColor: "#ccc", 
+    borderRadius: 10, 
+    padding: 10, 
+    fontSize: 14, 
+    marginTop: 10, 
+    backgroundColor: "#fff" 
   },
 
-  button: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#1a1a1a",
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 10,
-    marginBottom: 15,
+  modalButton: { 
+    flex: 1, 
+    backgroundColor: "#EF233C", 
+    paddingVertical: 12, 
+    borderRadius: 10, 
+    alignItems: "center", 
+    marginHorizontal: 5 
   },
 
-  logoutButton: {
-    backgroundColor: "#d00000",
-  },
-
-  buttonText: {
-    color: "#fff",
-    fontSize: 16,
-    marginLeft: 10,
-    fontWeight: "600",
+  generateButtonText: { 
+    color: "#fff", 
+    fontWeight: "600", 
+    fontSize: 16 
   },
 });
