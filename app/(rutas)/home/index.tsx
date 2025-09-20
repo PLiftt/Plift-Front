@@ -6,13 +6,15 @@ import {
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
-  Switch,
   Dimensions,
+  Alert,
+  TextInput,
 } from "react-native";
-import { Ionicons, MaterialIcons, FontAwesome5 } from "@expo/vector-icons";
+import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { getUserProfile } from "../../../services/userService";
-import { deleteToken } from "../../../services/secureStore";
+import { deleteToken, getToken } from "../../../services/secureStore";
+import { createInvitation } from "../../../services/invitationService";
 import BottomNav from "../../components/bottomNav";
 
 const { width, height } = Dimensions.get("window");
@@ -36,6 +38,7 @@ const HomeScreen: React.FC = () => {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [isDarkMode, setIsDarkMode] = useState(true);
+  const [athleteEmail, setAthleteEmail] = useState<string>("");
   const router = useRouter();
 
   const toggleMode = () => setIsDarkMode(!isDarkMode);
@@ -49,7 +52,6 @@ const HomeScreen: React.FC = () => {
     navBackground: isDarkMode ? "#1a1a1a" : "#ddd",
     navText: isDarkMode ? "#fff" : "#000",
     floatingButton: "#EF233C",
-    watermark: isDarkMode ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)",
   };
 
   const fetchProfile = async () => {
@@ -63,6 +65,28 @@ const HomeScreen: React.FC = () => {
       router.replace("/login");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleGenerateCode = async () => {
+    try {
+      const token = await getToken("accessToken");
+      if (!token) throw new Error("Token no disponible");
+
+      const payload = athleteEmail.trim() ? athleteEmail.trim() : undefined;
+
+      const result = await createInvitation(token, payload);
+      Alert.alert("Código generado", `El código es: ${result.code}`);
+      setAthleteEmail(""); // limpiar input
+    } catch (error: any) {
+      console.error(error);
+      if (error.response?.data?.athlete) {
+        Alert.alert("Error", error.response.data.athlete);
+      } else if (error.response?.data?.detail) {
+        Alert.alert("Error", error.response.data.detail);
+      } else {
+        Alert.alert("Error", "No se pudo generar la invitación");
+      }
     }
   };
 
@@ -91,71 +115,23 @@ const HomeScreen: React.FC = () => {
   const fullName = `${profile.first_name || ""} ${profile.second_name || ""} ${
     profile.last_name || ""
   } ${profile.second_last_name || ""}`.trim();
-  const initials = fullName
-    ? fullName[0].toUpperCase()
-    : profile.email[0].toUpperCase();
-
-  // Render nav button
-  const renderNavButton = (
-    name: string,
-    icon: React.ReactNode,
-    label: string,
-    route: string
-  ) => (
-    <TouchableOpacity
-      key={name}
-      onPress={() => router.push(route)}
-      style={styles.navButton}
-    >
-      {icon}
-      <Text style={[styles.navText, { color: colors.navText }]}>{label}</Text>
-    </TouchableOpacity>
-  );
+  const initials = fullName ? fullName[0].toUpperCase() : profile.email[0].toUpperCase();
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      {/* Watermark */}
-      <Text style={[styles.watermark, { color: colors.watermark }]}>PL</Text>
-
-      {/* Switch modo oscuro */}
-      {/* <View style={styles.modeSwitch}>
-        {isDarkMode ? (
-          <Ionicons
-            name="moon"
-            size={24}
-            color={colors.textPrimary}
-            style={{ marginRight: 8 }}
-          />
-        ) : (
-          <Ionicons
-            name="sunny"
-            size={24}
-            color={colors.textPrimary}
-            style={{ marginRight: 8 }}
-          />
-        )}
-        <Switch value={isDarkMode} onValueChange={toggleMode} />
-      </View> */}
-
       <ScrollView contentContainerStyle={{ paddingBottom: 20, paddingTop: 5 }}>
-        {/* Avatar arriba */}
+        {/* Avatar */}
         <View style={styles.avatarContainer}>
-          <View
-            style={[styles.avatar, { backgroundColor: colors.cardBackground }]}
-          >
-            <Text style={[styles.avatarText, { color: colors.textPrimary }]}>
-              {initials}
-            </Text>
+          <View style={[styles.avatar, { backgroundColor: colors.cardBackground }]}>
+            <Text style={[styles.avatarText, { color: colors.textPrimary }]}>{initials}</Text>
           </View>
-          <Text
-            style={[styles.userName, { color: colors.textPrimary }]}
-          >{`Hola, ${profile.first_name || "Sin nombre"}`}</Text>
+          <Text style={[styles.userName, { color: colors.textPrimary }]}>
+            {`Hola, ${profile.first_name || "Sin nombre"}`}
+          </Text>
         </View>
 
-        {/* Dashboard según rol */}
-        <View
-          style={[styles.mainRectangle, { backgroundColor: colors.rectangle }]}
-        >
+        {/* Dashboard */}
+        <View style={[styles.mainRectangle, { backgroundColor: colors.rectangle }]}>
           <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>
             {profile.role.toUpperCase() === "ATHLETE"
               ? "Mi Progreso"
@@ -164,119 +140,37 @@ const HomeScreen: React.FC = () => {
               : "Panel Principal"}
           </Text>
 
-          {/* ATHLETE: ver Entrenamientos y Tracking */}
-          {profile.role.toUpperCase() === "ATHLETE" && (
+          {/* COACH: mostrar atletas y botón */}
+          {profile.role.toUpperCase() === "COACH" && (
             <View>
-              {profile.coach?.coach?.email && (
-                <Text style={[styles.info, { color: colors.textPrimary }]}>
-                  Coach: {profile.coach.coach.email}
-                </Text>
-              )}
+              {profile.athletes?.map((a) => (
+                <View key={a.id} style={[styles.block, { backgroundColor: colors.cardBackground }]}>
+                  <Ionicons name="person-circle-outline" size={22} color="#EF233C" />
+                  <View>
+                    <Text style={[styles.blockText, { color: colors.textPrimary }]}>{a.athlete_name}</Text>
+                    <Text style={[styles.info, { color: colors.textPrimary }]}>{a.athlete_email}</Text>
+                  </View>
+                </View>
+              ))}
 
-              <View
-                style={[
-                  styles.block,
-                  { backgroundColor: colors.cardBackground },
-                ]}
-              >
-                <Ionicons name="barbell-outline" size={22} color="#EF233C" />
-                <Text style={[styles.blockText, { color: colors.textPrimary }]}>
-                  Entrenamientos
-                </Text>
-              </View>
+              {/* Input para correo */}
+              <TextInput
+                style={styles.input}
+                placeholder="Correo del atleta (opcional)"
+                value={athleteEmail}
+                onChangeText={setAthleteEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
+              />
 
-              <View
-                style={[
-                  styles.block,
-                  { backgroundColor: colors.cardBackground },
-                ]}
-              >
-                <Ionicons name="pulse-outline" size={22} color="#EF233C" />
-                <Text style={[styles.blockText, { color: colors.textPrimary }]}>
-                  Tracking
-                </Text>
-              </View>
+              {/* Botón generar código */}
+              <TouchableOpacity style={[styles.generateButton]} onPress={handleGenerateCode}>
+                <Text style={styles.generateButtonText}>Generar Código</Text>
+              </TouchableOpacity>
             </View>
           )}
-
-          {/* COACH: ver Atletas en bloques */}
-          {profile.role.toUpperCase() === "COACH" &&
-            profile.athletes?.length && (
-              <View>
-                {profile.athletes.map((a) => (
-                  <View
-                    key={a.id}
-                    style={[
-                      styles.block,
-                      { backgroundColor: colors.cardBackground },
-                    ]}
-                  >
-                    <Ionicons
-                      name="person-circle-outline"
-                      size={22}
-                      color="#EF233C"
-                    />
-                    <View>
-                      <Text
-                        style={[
-                          styles.blockText,
-                          { color: colors.textPrimary },
-                        ]}
-                      >
-                        {a.athlete_name}
-                      </Text>
-                      <Text
-                        style={[styles.info, { color: colors.textPrimary }]}
-                      >
-                        {a.athlete_email}
-                      </Text>
-                    </View>
-                  </View>
-                ))}
-              </View>
-            )}
         </View>
       </ScrollView>
-
-      {/* Bottom nav */}
-
-      {/* <View
-        style={[styles.bottomNav, { backgroundColor: colors.navBackground }]}
-      >
-        {renderNavButton(
-          "home",
-          <Ionicons name="home-outline" size={28} color="#EF233C" />,
-          "Home",
-          "/home"
-        )}
-        {renderNavButton(
-          "stats",
-          <Ionicons name="stats-chart-outline" size={28} color="#EF233C" />,
-          "Estadísticas",
-          "/estadisticas"
-        )}
-        <TouchableOpacity
-          style={[
-            styles.floatingButton,
-            { backgroundColor: colors.floatingButton },
-          ]}
-          onPress={() => router.push("/fit")}
-        >
-          <FontAwesome5 name="dumbbell" size={36} color="#fff" />
-        </TouchableOpacity>
-        {renderNavButton(
-          "chat",
-          <MaterialIcons name="chat" size={28} color="#EF233C" />,
-          "Chat Coach",
-          "/chat"
-        )}
-        {renderNavButton(
-          "perfil",
-          <Ionicons name="person-circle-outline" size={28} color="#EF233C" />,
-          "Perfil",
-          "/perfil"
-        )}
-      </View> */}
 
       <BottomNav />
     </View>
@@ -296,6 +190,7 @@ const styles = StyleSheet.create({
     top: height / 3,
     textAlign: "center",
     zIndex: 0,
+    opacity: 0.05, 
   },
 
   modeSwitch: {
@@ -318,13 +213,14 @@ const styles = StyleSheet.create({
     borderRadius: 50,
     justifyContent: "center",
     alignItems: "center",
+    backgroundColor: "#ccc",
   },
 
   avatarText: { fontWeight: "bold", fontSize: 40 },
 
   userName: { fontSize: 18, fontWeight: "600", marginTop: 8 },
 
-  info: { fontSize: 14, marginBottom: 5 },
+  info: { fontSize: 14, marginBottom: 5, textAlign: "center" },
 
   mainRectangle: {
     borderRadius: 20,
@@ -333,6 +229,12 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     marginTop: 0,
     zIndex: 1,
+    backgroundColor: "#fff", // fondo por defecto
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
 
   sectionTitle: { fontSize: 18, fontWeight: "bold", marginTop: 10 },
@@ -343,6 +245,7 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 12,
     marginTop: 10,
+    backgroundColor: "#f5f5f5",
   },
 
   blockText: { fontSize: 16, fontWeight: "600", marginLeft: 10 },
@@ -357,6 +260,12 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
+    backgroundColor: "#fff",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: -3 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 6,
   },
 
   navButton: { flex: 1, alignItems: "center", paddingVertical: 5 },
@@ -368,6 +277,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     marginTop: -30,
+    backgroundColor: "#007AFF",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 5 },
     shadowOpacity: 0.3,
@@ -376,4 +286,56 @@ const styles = StyleSheet.create({
   },
 
   navText: { fontSize: 12, marginTop: 4, fontWeight: "500" },
+
+  input: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 10,
+    padding: 10,
+    fontSize: 14,
+    marginTop: 10,
+    backgroundColor: "#fff",
+  },
+
+  primaryButton: {
+    backgroundColor: "#007AFF",
+    paddingVertical: 12,
+    borderRadius: 12,
+    alignItems: "center",
+    marginTop: 15,
+  },
+
+  primaryButtonText: {
+    color: "#fff",
+    fontWeight: "600",
+    fontSize: 16,
+  },
+
+  emptyState: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+
+  emptyText: {
+    fontSize: 16,
+    color: "#888",
+    textAlign: "center",
+  },
+
+  generateButton: {
+  backgroundColor: "#28a745", 
+  paddingVertical: 12,
+  paddingHorizontal: 20,
+  borderRadius: 12,
+  alignItems: "center",
+  marginTop: 15,
+},
+
+generateButtonText: {
+  color: "#fff",
+  fontWeight: "600",
+  fontSize: 16,
+},
 });
