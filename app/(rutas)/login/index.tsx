@@ -1,75 +1,78 @@
-import { Link, useRouter } from 'expo-router';
-import React, { useState } from 'react';
-import { Button, 
-  SafeAreaView, 
-  View, 
-  Text, 
-  TextInput, 
-  TouchableOpacity, 
-  KeyboardAvoidingView, 
-  Platform, 
-  ActivityIndicator, 
-  StyleSheet, 
-  Image, 
-  ImageBackground 
-} from 'react-native';
-import { Eye, EyeOff, Lock, Mail } from 'lucide-react-native';
-import { loginUser } from 'services/authService';
+import { Link, useRouter } from "expo-router";
+import React, { useState } from "react";
+import {
+  Button,
+  SafeAreaView,
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  KeyboardAvoidingView,
+  Platform,
+  ActivityIndicator,
+  StyleSheet,
+  Image,
+  ImageBackground,
+} from "react-native";
+import { Eye, EyeOff, Lock, Mail } from "lucide-react-native";
+import { loginUser } from "services/authService";
+import { Switch } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
-// type LoginScreenProps = {
-//   onSwitchToRegister: () => void;
-// };
+type LoginScreenProps = {
+  onSwitchToRegister: () => void;
+};
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const router = useRouter();
-  
+
+  const [rememberMe, setRememberMe] = useState(false); // 👈 Estado del switch
+
   const handleLogin = async () => {
-  try {
-    setIsLoading(true);
-    const payload = { email, password };
-    const user = await loginUser(payload);
+    try {
+      setIsLoading(true);
+      const payload = { email, password };
 
-    console.log("Respuesta login:", user);
+      // 👈 PASAMOS EL FLAG rememberMe AL SERVICIO
+      const user = await loginUser(payload, rememberMe);
 
-    if (user && (user.token || user.access)) { 
-      alert("Inicio de sesión exitoso");
-      router.push('/(rutas)/home');
-    } else {
-      alert("Contraseña o usuario incorrecto");
+      if (user && (user.token || user.access)) {
+        alert("Inicio de sesión exitoso");
+        router.push("/(rutas)/home");
+      } else {
+        alert("Contraseña o usuario incorrecto");
+      }
+    } catch (error: any) {
+      console.error("Error en login:", error.response?.data || error.message);
+      alert("Hubo un error al iniciar sesión");
+    } finally {
+      setIsLoading(false);
     }
-  } catch (error: any) {
-    console.error("Error en login:", error.response?.data || error.message);
-    alert("Hubo un error al iniciar sesión");
-  } finally {
-    setIsLoading(false);
-  }
-};
+  };
   return (
     <SafeAreaView style={styles.container}>
-
       <ImageBackground
         source={require("../../../assets/fondobg.jpg")}
         style={styles.backgroundImage}
         resizeMode="cover" // ajusta la imagen sin deformarla
       ></ImageBackground>
 
-
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
         style={styles.keyboardView}
       >
         <View style={styles.card}>
           {/* Logo */}
           <Image
-            source={require('../../../assets/logoplift.png')}
+            source={require("../../../assets/logoplift.png")}
             style={styles.logo}
             resizeMode="contain"
           />
-            <Text style={styles.title}>Bienvenido a PLift</Text>
+          <Text style={styles.title}>Bienvenido a PLift</Text>
 
           {/* Subtitle */}
           <Text style={styles.subtitle}>Únete a Nosotros</Text>
@@ -117,12 +120,27 @@ export default function LoginPage() {
             </View>
           </View>
 
+          {/* Remember Me Switch */}
+          <View
+            style={{ flexDirection: "row", alignItems: "center", marginTop: 8 }}
+          >
+            <Switch
+              value={rememberMe}
+              onValueChange={setRememberMe}
+              trackColor={{ false: "#374151", true: "#EF233C" }}
+              thumbColor={rememberMe ? "#fff" : "#9CA3AF"}
+            />
+            <Text style={{ color: "#E5E7EB", marginLeft: 8 }}>
+              Mantener sesión iniciada
+            </Text>
+          </View>
+
           {/* Sign In Button */}
           <TouchableOpacity
             disabled={isLoading}
             onPress={handleLogin}
             style={styles.button}
-          > 
+          >
             {isLoading ? (
               <ActivityIndicator color="#fff" />
             ) : (
@@ -133,40 +151,41 @@ export default function LoginPage() {
           {/* Forgot password */}
           <TouchableOpacity
             style={styles.forgotButton}
-          onPress={() => {
-            if (!email) {
-            alert("Por favor ingresa tu email para recuperar la contraseña");
+            onPress={() => {
+              if (!email) {
+                alert(
+                  "Por favor ingresa tu email para recuperar la contraseña"
+                );
               } else {
-              // Aquí podrías llamar a tu API real de recuperación
-            alert(`Se ha enviado un enlace de recuperación a ${email}`);
-            }
-          }}
+                // Aquí podrías llamar a tu API real de recuperación
+                alert(`Se ha enviado un enlace de recuperación a ${email}`);
+              }
+            }}
           >
-          <Text style={styles.forgotText}>Olvidaste tu contraseña?</Text>
+            <Text style={styles.forgotText}>Olvidaste tu contraseña?</Text>
           </TouchableOpacity>
 
           {/* Switch to register */}
           <View style={styles.switchContainer}>
             <Text style={styles.switchText}>No tienes una cuenta?</Text>
-              <Link href={"/register"} asChild>
-                <Text style={styles.switchButton}>Crea tu cuenta aquÍ</Text>
-              </Link>
+            <Link href={"/register"} asChild>
+              <Text style={styles.switchButton}>Crea tu cuenta aquÍ</Text>
+            </Link>
           </View>
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
-
 }
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#111111', // fondo negro
+    backgroundColor: "#111111", // fondo negro
   },
   keyboardView: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     padding: 24,
   },
 
@@ -177,12 +196,12 @@ const styles = StyleSheet.create({
   },
 
   card: {
-    width: '100%',
+    width: "100%",
     maxWidth: 400,
-    backgroundColor: '#1F1F1F', // card oscuro
+    backgroundColor: "#1F1F1F", // card oscuro
     borderRadius: 20,
     padding: 32,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOpacity: 0.4,
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 4 },
@@ -191,9 +210,9 @@ const styles = StyleSheet.create({
 
   title: {
     fontSize: 32,
-    fontWeight: 'bold',
-    color: '#E5E7EB',
-    textAlign: 'center',
+    fontWeight: "bold",
+    color: "#E5E7EB",
+    textAlign: "center",
     paddingVertical: 8,
     marginBottom: 4,
   },
@@ -201,14 +220,14 @@ const styles = StyleSheet.create({
   logo: {
     width: 120,
     height: 120,
-    alignSelf: 'center',
+    alignSelf: "center",
     marginBottom: 16,
   },
   subtitle: {
     fontSize: 16,
-    color: '#9CA3AF',
-    fontWeight: '600',
-    textAlign: 'center',
+    color: "#9CA3AF",
+    fontWeight: "600",
+    textAlign: "center",
     marginBottom: 24,
   },
   inputContainer: {
@@ -217,69 +236,69 @@ const styles = StyleSheet.create({
 
   label: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#E5E7EB',
+    fontWeight: "600",
+    color: "#E5E7EB",
     marginBottom: 4,
   },
   inputWrapper: {
-    position: 'relative',
+    position: "relative",
   },
   icon: {
-    position: 'absolute',
+    position: "absolute",
     marginTop: 4,
     left: 12,
     top: 12,
   },
   input: {
     height: 48,
-    backgroundColor: '#1F1F1F',
-    borderColor: '#374151',
+    backgroundColor: "#1F1F1F",
+    borderColor: "#374151",
     borderWidth: 1,
     borderRadius: 12,
     fontSize: 16,
-    color: '#E5E7EB',
-    textAlign: 'center',
+    color: "#E5E7EB",
+    textAlign: "center",
   },
   eyeButton: {
-    position: 'absolute',
+    position: "absolute",
     marginTop: 4,
     right: 12,
     top: 12,
   },
   button: {
     height: 48,
-    backgroundColor: '#EF233C', // rojo
+    backgroundColor: "#EF233C", // rojo
     borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     marginTop: 8,
   },
   buttonText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   forgotButton: {
     marginTop: 12,
-    alignItems: 'center',
+    alignItems: "center",
   },
   forgotText: {
     fontSize: 14,
-    color: '#9CA3AF',
+    color: "#9CA3AF",
   },
   switchContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
+    flexDirection: "row",
+    justifyContent: "center",
     marginTop: 24,
   },
   switchText: {
     fontSize: 14,
-    color: '#9CA3AF',
+    color: "#9CA3AF",
     marginRight: 4,
   },
   switchButton: {
     fontSize: 14,
-    color: '#EF233C',
-    fontWeight: '600',
+    color: "#EF233C",
+    fontWeight: "600",
   },
 });

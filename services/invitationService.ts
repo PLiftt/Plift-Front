@@ -4,15 +4,11 @@ const API_URL = "http://:8000";
 
 export const createInvitation = async (token: string, athleteMail?: string) => {
   const payload = athleteMail ? { athlete: athleteMail } : { athlete: "" };
-  const response = await axios.post(
-    `${API_URL}/invitations/`,
-    payload,
-    {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    }
-  );
+  const response = await axios.post(`${API_URL}/invitations/`, payload, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
   return response.data;
 };
 

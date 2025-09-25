@@ -2,7 +2,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as SecureStore from "expo-secure-store";
 import axios from "axios";
 
-const API_URL = "http://192.168.1.13:8000";
+const API_URL = "http://:8000";
 
 // Función para obtener perfil del usuario
 export const getUserProfile = async () => {
