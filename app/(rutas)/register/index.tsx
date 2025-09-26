@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link } from "expo-router";
+import { Link, useRouter } from "expo-router";
 import {
   View,
   Text,
@@ -28,6 +28,8 @@ import { Picker } from "@react-native-picker/picker";
 import { registerUser } from "services/authService";
 
 export default function RegisterPage() {
+  const router = useRouter();
+
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -44,12 +46,57 @@ export default function RegisterPage() {
   const [password, setPassword] = useState("");
   const [password2, setPassword2] = useState("");
 
+  const [submitted, setSubmitted] = useState(false);
+
   const namesArray = names.trim().split(" ");
   const lastNamesArray = lastNames.trim().split(" ");
 
   const handleRegister = async () => {
+    setSubmitted(true);
+
+    // 1. Campos vacíos
+    if (!names || !lastNames || !email || !password || !password2) {
+      Alert.alert("Campos Vacíos", "Completa todos los campos requeridos");
+      return;
+    }
+
+    // 2. Rol obligatorio
+    if (!selectedRole) {
+      Alert.alert("Rol requerido", "Selecciona tu rol (Coach o Atleta)");
+      return;
+    }
+
+    // 3. Género obligatorio
+    if (!gender) {
+      Alert.alert("Género requerido", "Selecciona tu género");
+      return;
+    }
+
+    // 4. Email válido
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      Alert.alert("Email inválido", "Ingresa un email válido");
+      return;
+    }
+
+    // 5. Contraseñas coinciden
+    if (password !== password2) {
+      Alert.alert("Contraseñas no coinciden", "Verifica tu contraseña");
+      return;
+    }
+
+    // 6. Contraseña mínima
+    if (password.length < 6) {
+      Alert.alert(
+        "Contraseña débil",
+        "La contraseña debe tener al menos 6 caracteres"
+      );
+      return;
+    }
+
     try {
       setIsLoading(true);
+
       const payload = {
         email,
         password,
@@ -62,11 +109,28 @@ export default function RegisterPage() {
         date_of_birth: dob.toISOString().split("T")[0],
         role: selectedRole,
       };
+
       const user = await registerUser(payload);
-      Alert.alert("Registro exitoso", `Bienvenido ${user.email}`);
+
+      Alert.alert(
+        "Registro exitoso",
+        `Cuenta registrada exitosamente. Bienvenido/a`,
+        [{ text: "OK", onPress: () => router.push("/login") }],
+        { cancelable: false }
+      );
     } catch (err: any) {
       console.error(err);
-      Alert.alert("Error", JSON.stringify(err));
+
+      if (err.response?.data?.email?.[0]) {
+        Alert.alert("Error", "El email ya está en uso");
+      } else if (err.response?.data?.password?.[0]) {
+        Alert.alert(
+          "Error",
+          "La contraseña no cumple con los requisitos del sistema"
+        );
+      } else {
+        Alert.alert("Error", "Ocurrió un error, intenta nuevamente");
+      }
     } finally {
       setIsLoading(false);
     }
@@ -74,7 +138,6 @@ export default function RegisterPage() {
 
   return (
     <View style={styles.container}>
-      {/* StatusBar clara */}
       <StatusBar
         barStyle="light-content"
         backgroundColor="transparent"
@@ -93,7 +156,12 @@ export default function RegisterPage() {
 
             <View style={styles.form}>
               {/* Nombres */}
-              <View style={styles.inputWrapper}>
+              <View
+                style={[
+                  styles.inputWrapper,
+                  submitted && !names && { borderColor: "red" },
+                ]}
+              >
                 <User size={18} color="#888" style={styles.icon} />
                 <TextInput
                   placeholder="Nombres"
@@ -105,7 +173,12 @@ export default function RegisterPage() {
               </View>
 
               {/* Apellidos */}
-              <View style={styles.inputWrapper}>
+              <View
+                style={[
+                  styles.inputWrapper,
+                  submitted && !lastNames && { borderColor: "red" },
+                ]}
+              >
                 <User size={18} color="#888" style={styles.icon} />
                 <TextInput
                   placeholder="Apellidos"
@@ -117,7 +190,12 @@ export default function RegisterPage() {
               </View>
 
               {/* Email */}
-              <View style={styles.inputWrapper}>
+              <View
+                style={[
+                  styles.inputWrapper,
+                  submitted && !email && { borderColor: "red" },
+                ]}
+              >
                 <Mail size={18} color="#888" style={styles.icon} />
                 <TextInput
                   placeholder="Ingresa tu email"
@@ -131,7 +209,12 @@ export default function RegisterPage() {
               </View>
 
               {/* Password */}
-              <View style={styles.inputWrapper}>
+              <View
+                style={[
+                  styles.inputWrapper,
+                  submitted && !password && { borderColor: "red" },
+                ]}
+              >
                 <Lock size={18} color="#888" style={styles.icon} />
                 <TextInput
                   placeholder="Crea tu contraseña"
@@ -154,7 +237,12 @@ export default function RegisterPage() {
               </View>
 
               {/* Confirm Password */}
-              <View style={styles.inputWrapper}>
+              <View
+                style={[
+                  styles.inputWrapper,
+                  submitted && !password2 && { borderColor: "red" },
+                ]}
+              >
                 <Lock size={18} color="#888" style={styles.icon} />
                 <TextInput
                   placeholder="Confirma tu contraseña"
@@ -375,16 +463,10 @@ export default function RegisterPage() {
   );
 }
 
+// Tus estilos originales
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#111111",
-  },
-  backgroundImage: {
-    flex: 1,
-    width: "100%",
-    height: "100%",
-  },
+  container: { flex: 1, backgroundColor: "#111111" },
+  backgroundImage: { flex: 1, width: "100%", height: "100%" },
   overlay: {
     flex: 1,
     justifyContent: "center",
@@ -452,17 +534,10 @@ const styles = StyleSheet.create({
   },
   roleButtonActive: {
     backgroundColor: "#EF233C",
-    borderColor: "#EF233C"
+    borderColor: "#EF233C",
   },
-  roleText: {
-    marginLeft: 6,
-    color: "#fff",
-    fontSize: 14
-  },
-  roleTextActive: {
-    color: "#fff",
-    fontWeight: "600"
-  },
+  roleText: { marginLeft: 6, color: "#fff", fontSize: 14 },
+  roleTextActive: { color: "#fff", fontWeight: "600" },
   submitButton: {
     backgroundColor: "#EF233C",
     paddingVertical: 14,
@@ -470,26 +545,18 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginTop: 20,
   },
-  submitText: {
-    color: "#fff",
-    fontWeight: "600",
-    fontSize: 16
-  },
+  submitText: { color: "#fff", fontWeight: "600", fontSize: 16 },
   switchWrapper: {
     flexDirection: "row",
     justifyContent: "center",
     marginTop: 12,
   },
-  switchText: {
-    paddingTop: 6,
-    fontSize: 14,
-    color: "#fff"
-  },
+  switchText: { paddingTop: 6, fontSize: 14, color: "#fff" },
   switchLink: {
     paddingTop: 6,
     fontSize: 14,
     color: "#f0344a",
-    fontWeight: "600"
+    fontWeight: "600",
   },
   modalBackdrop: {
     flex: 1,
