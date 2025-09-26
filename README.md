@@ -1,8 +1,8 @@
-# 🏋️ Plift-Front
+#  Plift-Front
 
 **Plift** es una aplicación móvil de fitness desarrollada con React Native y Expo Router, diseñada para ayudar a los usuarios a gestionar sus entrenamientos, hacer seguimiento de estadísticas y mantener una vida saludable.
 
-## 📱 Descripción
+##  Descripción
 
 Plift-Front es el frontend de la aplicación Plift, una plataforma integral de fitness que incluye:
 - Gestión de perfiles de usuario
@@ -12,55 +12,55 @@ Plift-Front es el frontend de la aplicación Plift, una plataforma integral de f
 - Sistema de autenticación completo
 - Interfaz moderna con modo oscuro/claro
 
-## 🏗️ Estructura del Proyecto
+##  Estructura del Proyecto
 
 ```
 Plift-Front/
-├── 📱 app/                          # Directorio principal de la aplicación (Expo Router)
+├──  app/                          # Directorio principal de la aplicación (Expo Router)
 │   ├── _layout.tsx                  # Layout raíz de la aplicación
 │   ├── global.css                   # Estilos globales con TailwindCSS
 │   ├── index.tsx                    # Pantalla de inicio/splash
-│   ├── 🛣️ (rutas)/                  # Grupo de rutas principales
+│   ├──  (rutas)/                  # Grupo de rutas principales
 │   │   ├── _layout.tsx              # Layout para las rutas principales
-│   │   ├── 💬 chat/                 # Funcionalidad de chat
+│   │   ├──  chat/                 # Funcionalidad de chat
 │   │   │   ├── _layout.tsx
 │   │   │   └── index.tsx            # Pantalla principal del chat
-│   │   ├── 📊 estadisticas/         # Estadísticas y métricas
+│   │   ├──  estadisticas/         # Estadísticas y métricas
 │   │   │   ├── _layout.tsx
 │   │   │   └── index.tsx            # Dashboard de estadísticas
-│   │   ├── 🏋️ fit/                  # Rutinas y entrenamientos
+│   │   ├──  fit/                  # Rutinas y entrenamientos
 │   │   │   ├── _layout.tsx
 │   │   │   └── index.tsx            # Gestión de entrenamientos
-│   │   ├── 🏠 home/                 # Pantalla principal
+│   │   ├──  home/                 # Pantalla principal
 │   │   │   ├── _layout.tsx
 │   │   │   └── index.tsx            # Dashboard principal
-│   │   ├── 🔐 login/                # Autenticación
+│   │   ├──  login/                # Autenticación
 │   │   │   ├── _layout.tsx
 │   │   │   └── index.tsx            # Pantalla de inicio de sesión
-│   │   ├── 👤 perfil/               # Gestión de perfil
+│   │   ├──  perfil/               # Gestión de perfil
 │   │   │   ├── _layout.tsx
 │   │   │   └── index.tsx            # Configuración de usuario
-│   │   └── 📝 register/             # Registro de usuarios
+│   │   └──  register/             # Registro de usuarios
 │   │       ├── _layout.tsx
 │   │       └── index.tsx            # Formulario de registro
-│   └── 🧩 components/               # Componentes reutilizables
-├── 🎨 assets/                       # Recursos estáticos
+│   └──  components/               # Componentes reutilizables
+├──  assets/                       # Recursos estáticos
 │   ├── adaptive-icon.png            # Icono adaptativo para Android
 │   ├── favicon.png                  # Favicon para web
 │   ├── fondobg.jpg                  # Imagen de fondo
 │   ├── icon.png                     # Icono principal
 │   ├── logoplift.png               # Logo de la aplicación
 │   └── splash-icon.png              # Icono del splash screen
-├── 🤖 android/                      # Configuración nativa de Android
+├──  android/                      # Configuración nativa de Android
 │   ├── build.gradle                 # Configuración de build principal
 │   ├── settings.gradle              # Configuración de módulos
 │   └── app/                         # Módulo principal de Android
 │       ├── build.gradle             # Configuración del módulo app
 │       └── src/main/                # Código fuente nativo
-├── 📚 docs/                         # Documentación del proyecto
+├──  docs/                         # Documentación del proyecto
 │   ├── docs.md                      # Documentación general
 │   └── Guia-git.md                  # Guía de uso de Git
-├── ⚙️ Archivos de configuración
+├──  Archivos de configuración
 │   ├── app.json                     # Configuración de Expo
 │   ├── babel.config.js              # Configuración de Babel
 │   ├── metro.config.js              # Configuración de Metro bundler
@@ -71,7 +71,7 @@ Plift-Front/
 └── README.md                        # Este archivo
 ```
 
-## 🚀 Comandos de Inicialización
+##  Comandos de Inicialización
 
 Sigue estos pasos para configurar el proyecto después de clonarlo:
 
@@ -118,7 +118,7 @@ npm run ios
 npm run web
 ```
 
-## 🛠️ Tecnologías Utilizadas
+##  Tecnologías Utilizadas
 
 - **React Native** `0.79.6` - Framework principal
 - **Expo** `~53.0.22` - Plataforma de desarrollo
@@ -128,7 +128,7 @@ npm run web
 - **React Native Reanimated** `~3.17.4` - Animaciones fluidas
 - **Lucide React** `0.544.0` - Iconos modernos
 
-## 📋 Requisitos del Sistema
+##  Requisitos del Sistema
 
 - **Node.js** >= 16.0.0
 - **npm** o **yarn**
@@ -136,7 +136,7 @@ npm run web
 - Para Android: **Android Studio** y **Android SDK**
 - Para iOS: **Xcode** (solo macOS)
 
-## 🔗 Enlaces Útiles
+##  Enlaces Útiles
 
 - [Documentación de Expo](https://docs.expo.dev/)
 - [Expo Router](https://docs.expo.dev/router/introduction/)
