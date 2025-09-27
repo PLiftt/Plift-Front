@@ -207,12 +207,20 @@ const PerfilScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
 
       {/* Botones de acciones */}
       <View style={styles.buttonContainer}>
-        <TouchableOpacity style={styles.button} onPress={() => {}}>
+        {/* Editar Perfil */}
+        <TouchableOpacity
+          style={styles.button}
+          onPress={() => router.push("/editarperfil")}
+        >
           <Ionicons name="create-outline" size={20} color="#fff" />
           <Text style={styles.buttonText}>Editar Perfil</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.button} onPress={() => {}}>
+        {/* Configuración */}
+        <TouchableOpacity
+          style={styles.button}
+          onPress={() => router.push("/configuracion")} // si tienes pantalla de configuración
+        >
           <Ionicons name="settings-outline" size={20} color="#fff" />
           <Text style={styles.buttonText}>Configuración</Text>
         </TouchableOpacity>

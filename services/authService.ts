@@ -2,7 +2,7 @@ import axios from "axios";
 import { saveToken, deleteToken, getToken } from "./secureStore";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-const API_URL = "http://:8000";
+const API_URL = "https://plift-prod-production.up.railway.app";
 
 export const registerUser = async (data: any) => {
   try {
