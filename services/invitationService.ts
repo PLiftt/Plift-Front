@@ -1,6 +1,5 @@
 import axios from "axios";
-
-const API_URL = "https://8000";
+import { API_URL } from "@env";
 
 export const createInvitation = async (token: string, athleteMail?: string) => {
   const payload = athleteMail ? { athlete: athleteMail } : { athlete: "" };

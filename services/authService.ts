@@ -1,8 +1,8 @@
 import axios from "axios";
 import { saveToken, deleteToken, getToken } from "./secureStore";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-
-const API_URL = "https://8000";
+import { API_URL } from "@env";
+console.log(API_URL); // http://192.168.1.50:8000
 
 export const registerUser = async (data: any) => {
   try {
