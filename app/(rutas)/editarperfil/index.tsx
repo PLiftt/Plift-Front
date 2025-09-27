@@ -1,82 +1,156 @@
 import React, { useState, useEffect } from "react";
 import {
-View,
-Text,
-TextInput,
-TouchableOpacity,
-ScrollView,
-StyleSheet,
-KeyboardAvoidingView,
-Platform,
-Alert,
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  ScrollView,
+  StyleSheet,
+  KeyboardAvoidingView,
+  Platform,
+  Alert,
 } from "react-native";
 import { User, Lock, Dumbbell } from "lucide-react-native";
+import { getUserProfile, updateProfile } from "../../../services/userService";
+import { useRouter } from "expo-router";
 
 export default function ProfileForm() {
-  // simular carga desde API
-const [userData, setUserData] = useState({ firstName: "", middleName: "" });
-
-useEffect(() => {
-    // Simular fetch de datos del usuario
-    setUserData({ firstName: "Alonso", middleName: "Barrera" });
-}, []);
-
-const [formData, setFormData] = useState({
+  const router = useRouter();
+  // Estado del formulario
+  const [formData, setFormData] = useState({
     firstName: "",
     middleName: "",
-    password: "",
-    confirmPassword: "",
+    lastName: "",
+    secondLastName: "",
     weight: "",
-    initialOneRM: "",
-});
+    initialOneRM: {
+      squat: "",
+      benchPress: "",
+      deadlift: "",
+    },
+  });
 
-const [errors, setErrors] = useState<Record<string, string>>({});
+  const [errors, setErrors] = useState<any>({});
+  const [loading, setLoading] = useState(false);
 
-useEffect(() => {
-    // al cargar datos del usuario, setear los campos no editables
-    setFormData((prev) => ({
-      ...prev,
-      firstName: userData.firstName,
-      middleName: userData.middleName,
-    }));
-  }, [userData]);
+  // 🔹 Cargar datos del perfil al montar el componente
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const data = await getUserProfile();
+        setFormData({
+          firstName: data.first_name || "",
+          middleName: data.second_name || "", // 🔹 mapeo correcto
+          lastName: data.last_name || "",
+          secondLastName: data.second_last_name || "",
+          weight: data.bodyweight_kg ? String(data.bodyweight_kg) : "", // 🔹 mapeo correcto
+          initialOneRM: {
+            squat: data.squat_1rm ? String(data.squat_1rm) : "", // 🔹 mapeo correcto
+            benchPress: data.bench_1rm ? String(data.bench_1rm) : "",
+            deadlift: data.deadlift_1rm ? String(data.deadlift_1rm) : "",
+          },
+        });
+      } catch (err) {
+        console.error("Error al cargar perfil:", err);
+      }
+    };
 
-const handleInputChange = (field: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-    if (errors[field]) setErrors((prev) => ({ ...prev, [field]: "" }));
+    fetchProfile();
+  }, []);
+
+  // 🔹 Manejo de cambios en inputs
+  const handleInputChange = (field: string, value: string) => {
+    if (field.startsWith("initialOneRM.")) {
+      const key = field.split(".")[1];
+      setFormData((prev) => ({
+        ...prev,
+        initialOneRM: { ...prev.initialOneRM, [key]: value },
+      }));
+    } else {
+      setFormData((prev) => ({ ...prev, [field]: value }));
+    }
   };
 
-const validateForm = () => {
-    const newErrors: Record<string, string> = {};
-    if (!formData.firstName.trim()) newErrors.firstName = "Primer Nombre es obligatorio";
-    if (formData.password && formData.password.length < 8)
-      newErrors.password = "La contraseña debe tener al menos 8 caracteres";
-    if (formData.password !== formData.confirmPassword)
-      newErrors.confirmPassword = "Las contraseñas no coinciden";
-    if (formData.weight && (isNaN(Number(formData.weight)) || Number(formData.weight) <= 0))
+  // 🔹 Validación
+  const validateForm = () => {
+    const newErrors: any = {};
+
+    // Campos de texto obligatorios
+    if (!formData.firstName.trim())
+      newErrors.firstName = "Primer Nombre es obligatorio";
+    if (!formData.middleName.trim())
+      newErrors.middleName = "Segundo Nombre es obligatorio";
+    if (!formData.lastName.trim())
+      newErrors.lastName = "Apellido es obligatorio";
+    if (!formData.secondLastName.trim())
+      newErrors.secondLastName = "Segundo Apellido es obligatorio";
+
+    // Peso obligatorio y positivo
+    if (!formData.weight.trim()) {
+      newErrors.weight = "El peso es obligatorio";
+    } else if (isNaN(Number(formData.weight)) || Number(formData.weight) <= 0) {
       newErrors.weight = "Por favor, ingresa un peso válido";
-    if (formData.initialOneRM && (isNaN(Number(formData.initialOneRM)) || Number(formData.initialOneRM) <= 0))
-      newErrors.initialOneRM = "Por favor, ingresa un 1RM válido";
+    }
+
+    // 1RM obligatorios y positivos
+    const { squat, benchPress, deadlift } = formData.initialOneRM;
+    if (!squat.trim() || isNaN(Number(squat)) || Number(squat) <= 0) {
+      newErrors.initialOneRM = {
+        ...(newErrors.initialOneRM || {}),
+        squat: "Squat obligatorio y positivo",
+      };
+    }
+    if (
+      !benchPress.trim() ||
+      isNaN(Number(benchPress)) ||
+      Number(benchPress) <= 0
+    ) {
+      newErrors.initialOneRM = {
+        ...(newErrors.initialOneRM || {}),
+        benchPress: "Bench Press obligatorio y positivo",
+      };
+    }
+    if (!deadlift.trim() || isNaN(Number(deadlift)) || Number(deadlift) <= 0) {
+      newErrors.initialOneRM = {
+        ...(newErrors.initialOneRM || {}),
+        deadlift: "Deadlift obligatorio y positivo",
+      };
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = () => {
-    if (validateForm()) {
-      Alert.alert("Perfil actualizado", JSON.stringify(formData));
-    }
-  };
+  // 🔹 Enviar cambios al backend
+  const handleSubmit = async () => {
+    if (!validateForm()) return;
 
-  const handleReset = () => {
-    setFormData({
-      firstName: userData.firstName,
-      middleName: userData.middleName,
-      password: "",
-      confirmPassword: "",
-      weight: "",
-      initialOneRM: "",
-    });
-    setErrors({});
+    setLoading(true);
+    try {
+      const payload = {
+        first_name: formData.firstName,
+        second_name: formData.middleName,
+        last_name: formData.lastName,
+        second_last_name: formData.secondLastName,
+        bodyweight_kg: Number(formData.weight),
+        squat_1rm: Number(formData.initialOneRM.squat),
+        bench_1rm: Number(formData.initialOneRM.benchPress),
+        deadlift_1rm: Number(formData.initialOneRM.deadlift),
+      };
+
+      await updateProfile(payload);
+
+      Alert.alert(
+        "✅ Perfil actualizado",
+        "Tus cambios se guardaron con éxito"
+      );
+      router.push("/home"); // Redirigir a la página de inicio
+    } catch (err) {
+      Alert.alert("❌ Error", "No se pudo actualizar el perfil");
+      console.error("Error en handleSubmit:", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -111,22 +185,43 @@ const validateForm = () => {
                 placeholder="Primer Nombre"
                 placeholderTextColor="#888"
                 value={formData.firstName}
-                editable={false}
-                style={[styles.input, { opacity: 0.6 }]}
+                onChangeText={(val) => handleInputChange("firstName", val)}
+                style={[styles.input, errors.firstName && styles.inputError]}
               />
-              {errors.firstName && <Text style={styles.error}>{errors.firstName}</Text>}
+              {errors.firstName && (
+                <Text style={styles.error}>{errors.firstName}</Text>
+              )}
 
               <TextInput
                 placeholder="Segundo Nombre"
                 placeholderTextColor="#888"
                 value={formData.middleName}
-                editable={false}
-                style={[styles.input, { opacity: 0.6 }]}
+                onChangeText={(val) => handleInputChange("middleName", val)}
+                style={styles.input}
+              />
+
+              <TextInput
+                placeholder="Apellido"
+                placeholderTextColor="#888"
+                value={formData.lastName}
+                onChangeText={(val) => handleInputChange("lastName", val)}
+                style={[styles.input, errors.lastName && styles.inputError]}
+              />
+              {errors.lastName && (
+                <Text style={styles.error}>{errors.lastName}</Text>
+              )}
+
+              <TextInput
+                placeholder="Segundo Apellido"
+                placeholderTextColor="#888"
+                value={formData.secondLastName}
+                onChangeText={(val) => handleInputChange("secondLastName", val)}
+                style={styles.input}
               />
             </View>
 
             {/* Security */}
-            <View style={styles.section}>
+            {/* <View style={styles.section}>
               <View style={styles.sectionHeader}>
                 <Lock size={20} color="#EF233C" />
                 <Text style={styles.sectionTitle}>Seguridad</Text>
@@ -139,24 +234,26 @@ const validateForm = () => {
                 onChangeText={(val) => handleInputChange("password", val)}
                 style={[styles.input, errors.password && styles.inputError]}
               />
-              {errors.password && <Text style={styles.error}>{errors.password}</Text>}
-
               <TextInput
                 placeholder="Confirmar contraseña"
                 placeholderTextColor="#888"
                 secureTextEntry
                 value={formData.confirmPassword}
-                onChangeText={(val) => handleInputChange("confirmPassword", val)}
-                style={[styles.input, errors.confirmPassword && styles.inputError]}
+                onChangeText={(val) =>
+                  handleInputChange("confirmPassword", val)
+                }
+                style={[
+                  styles.input,
+                  errors.confirmPassword && styles.inputError,
+                ]}
               />
-              {errors.confirmPassword && <Text style={styles.error}>{errors.confirmPassword}</Text>}
-            </View>
+            </View> */}
 
-            {/* Fitness Metrics */}
+            {/* Peso */}
             <View style={styles.section}>
               <View style={styles.sectionHeader}>
                 <Dumbbell size={20} color="#EF233C" />
-                <Text style={styles.sectionTitle}>Metricas de Entrenamiento</Text>
+                <Text style={styles.sectionTitle}>Modificar Peso</Text>
               </View>
               <TextInput
                 placeholder="Peso (kg)"
@@ -166,26 +263,67 @@ const validateForm = () => {
                 onChangeText={(val) => handleInputChange("weight", val)}
                 style={[styles.input, errors.weight && styles.inputError]}
               />
-              {errors.weight && <Text style={styles.error}>{errors.weight}</Text>}
+            </View>
 
+            {/* 1RM */}
+            <View style={styles.section}>
+              <View style={styles.sectionHeader}>
+                <Dumbbell size={20} color="#EF233C" />
+                <Text style={styles.sectionTitle}>1RM Inicial</Text>
+              </View>
               <TextInput
-                placeholder="1RM Inicial (kg)"
+                placeholder="Squat (kg)"
                 placeholderTextColor="#888"
                 keyboardType="numeric"
-                value={formData.initialOneRM}
-                onChangeText={(val) => handleInputChange("initialOneRM", val)}
-                style={[styles.input, errors.initialOneRM && styles.inputError]}
+                value={formData.initialOneRM.squat}
+                onChangeText={(val) =>
+                  handleInputChange("initialOneRM.squat", val)
+                }
+                style={[
+                  styles.input,
+                  errors.initialOneRM?.squat && styles.inputError,
+                ]}
               />
-              {errors.initialOneRM && <Text style={styles.error}>{errors.initialOneRM}</Text>}
+              <TextInput
+                placeholder="Bench Press (kg)"
+                placeholderTextColor="#888"
+                keyboardType="numeric"
+                value={formData.initialOneRM.benchPress}
+                onChangeText={(val) =>
+                  handleInputChange("initialOneRM.benchPress", val)
+                }
+                style={[
+                  styles.input,
+                  errors.initialOneRM?.benchPress && styles.inputError,
+                ]}
+              />
+              <TextInput
+                placeholder="Deadlift (kg)"
+                placeholderTextColor="#888"
+                keyboardType="numeric"
+                value={formData.initialOneRM.deadlift}
+                onChangeText={(val) =>
+                  handleInputChange("initialOneRM.deadlift", val)
+                }
+                style={[
+                  styles.input,
+                  errors.initialOneRM?.deadlift && styles.inputError,
+                ]}
+              />
             </View>
 
             {/* Buttons */}
             <View style={styles.buttonContainer}>
-              <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
+              <TouchableOpacity
+                style={styles.submitButton}
+                onPress={handleSubmit}
+              >
                 <Text style={styles.buttonText}>Guardar Cambios</Text>
               </TouchableOpacity>
-
-              <TouchableOpacity style={[styles.submitButton, styles.resetButton]} onPress={handleReset}>
+              <TouchableOpacity
+                style={[styles.submitButton, styles.resetButton]}
+                onPress={handleSubmit}
+              >
                 <Text style={styles.buttonText}>Restablecer</Text>
               </TouchableOpacity>
             </View>
@@ -196,6 +334,7 @@ const validateForm = () => {
   );
 }
 
+// Estilos (se mantienen igual)
 const styles = StyleSheet.create({
   card: {
     width: "100%",
@@ -203,10 +342,26 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 20,
   },
-  title: { fontSize: 26, fontWeight: "700", color: "#fff", marginBottom: 4, textAlign: "center" },
-  subtitle: { fontSize: 16, color: "#ccc", marginBottom: 20, textAlign: "center" },
+  title: {
+    fontSize: 26,
+    fontWeight: "700",
+    color: "#fff",
+    marginBottom: 4,
+    textAlign: "center",
+  },
+  subtitle: {
+    fontSize: 16,
+    color: "#ccc",
+    marginBottom: 20,
+    textAlign: "center",
+  },
   section: { marginBottom: 24 },
-  sectionHeader: { flexDirection: "row", alignItems: "center", marginBottom: 12, gap: 8 },
+  sectionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 12,
+    gap: 8,
+  },
   sectionTitle: { fontSize: 18, fontWeight: "600", color: "#fff" },
   input: {
     backgroundColor: "#111",
@@ -218,7 +373,11 @@ const styles = StyleSheet.create({
   },
   inputError: { borderWidth: 1, borderColor: "#d00000" },
   error: { color: "#d00000", marginBottom: 6 },
-  buttonContainer: { flexDirection: "row", justifyContent: "space-between", marginTop: 10 },
+  buttonContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 10,
+  },
   submitButton: {
     flex: 1,
     backgroundColor: "#EF233C",

@@ -52,6 +52,40 @@ export const logoutUser = async () => {
   }
 };
 
+export const updateProfile = async (data: {
+  first_name?: string;
+  second_name?: string;
+  last_name?: string;
+  second_last_name?: string;
+  peso?: number;
+  rm1?: {
+    squat?: number;
+    benchPress?: number;
+    deadlift?: number;
+  };
+}) => {
+  try {
+    let token = await AsyncStorage.getItem("access");
+    if (!token) token = await SecureStore.getItemAsync("accessToken");
+
+    const res = await fetch(`${API_URL}/update-profile/`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(data),
+    });
+
+    if (!res.ok) throw new Error("Error al actualizar perfil");
+
+    return await res.json();
+  } catch (err) {
+    console.error("Error en updateProfile:", err);
+    throw err;
+  }
+};
+
 export const validateToken = async () => {
   const token = await AsyncStorage.getItem("access");
   if (token) {
