@@ -1,17 +1,15 @@
+// app/_layout.tsx
 import { Slot } from "expo-router";
-import { StatusBar } from "react-native";
+import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
+import { StatusBar } from "expo-status-bar";
 
-const RootLayout = () => {
-    return (
-        <>
-            <StatusBar
-                barStyle="light-content" // iconos blancos
-                backgroundColor="transparent" // transparente para que se vea el fondo
-                translucent={true} // que el contenido suba debajo de la barra
-            />
-            <Slot />
-        </>
-    );
+export default function RootLayout() {
+  return (
+    <SafeAreaProvider>
+      <StatusBar style="light" backgroundColor="#000" translucent={false} />
+      <SafeAreaView style={{ flex: 1, backgroundColor: "#000" }} edges={["top"]}>
+        <Slot />
+      </SafeAreaView>
+    </SafeAreaProvider>
+  );
 }
-
-export default RootLayout

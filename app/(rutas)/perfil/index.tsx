@@ -15,6 +15,7 @@ import { deleteToken, getToken } from "../../../services/secureStore";
 import { useRouter } from "expo-router";
 import BottomNav from "../../components/bottomNav";
 import { acceptInvitation } from "../../../services/invitationService";
+import { logoutUser } from "../../../services/userService";
 
 interface UserProfile {
   first_name?: string;
@@ -45,6 +46,11 @@ const PerfilScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
   const [inviteCode, setInviteCode] = useState("");
 
   const router = useRouter();
+
+  const handleLogout = async () => {
+    await logoutUser();
+    router.replace("/(rutas)/login"); // redirige al login
+  };
 
   const fetchProfile = async () => {
     try {
@@ -136,7 +142,9 @@ const PerfilScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
       <View style={styles.avatarContainer}>
         <View style={styles.avatar}>
           <Text style={styles.avatarText}>
-            {fullName ? fullName[0].toUpperCase() : profile.email[0].toUpperCase()}
+            {fullName
+              ? fullName[0].toUpperCase()
+              : profile.email[0].toUpperCase()}
           </Text>
         </View>
         <Text style={styles.name}>{profile.first_name || "Sin nombre"}</Text>
@@ -173,11 +181,23 @@ const PerfilScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
               onChangeText={setInviteCode}
               autoCapitalize="none"
             />
-            <View style={{ flexDirection: "row", justifyContent: "space-between", marginTop: 15 }}>
-              <TouchableOpacity style={styles.modalButton} onPress={handleAcceptCode}>
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "space-between",
+                marginTop: 15,
+              }}
+            >
+              <TouchableOpacity
+                style={styles.modalButton}
+                onPress={handleAcceptCode}
+              >
                 <Text style={styles.generateButtonText}>Aceptar</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={[styles.modalButton, { backgroundColor: "#888" }]} onPress={() => setModalVisible(false)}>
+              <TouchableOpacity
+                style={[styles.modalButton, { backgroundColor: "#888" }]}
+                onPress={() => setModalVisible(false)}
+              >
                 <Text style={styles.generateButtonText}>Cancelar</Text>
               </TouchableOpacity>
             </View>
@@ -187,23 +207,27 @@ const PerfilScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
 
       {/* Botones de acciones */}
       <View style={styles.buttonContainer}>
-        <TouchableOpacity style={styles.button} onPress={() => {}}>
+        {/* Editar Perfil */}
+        <TouchableOpacity
+          style={styles.button}
+          onPress={() => router.push("/editarperfil")}
+        >
           <Ionicons name="create-outline" size={20} color="#fff" />
           <Text style={styles.buttonText}>Editar Perfil</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.button} onPress={() => {}}>
+        {/* Configuración */}
+        <TouchableOpacity
+          style={styles.button}
+          onPress={() => router.push("/configuracion")} // si tienes pantalla de configuración
+        >
           <Ionicons name="settings-outline" size={20} color="#fff" />
           <Text style={styles.buttonText}>Configuración</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
           style={[styles.button, styles.logoutButton]}
-          onPress={async () => {
-            await deleteToken("accessToken");
-            await deleteToken("refreshToken");
-            router.replace("/login");
-          }}
+          onPress={handleLogout}
         >
           <Ionicons name="log-out-outline" size={20} color="#fff" />
           <Text style={styles.buttonText}>Cerrar Sesión</Text>
@@ -218,121 +242,121 @@ const PerfilScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
 export default PerfilScreen;
 
 const styles = StyleSheet.create({
-  container: { 
-    flex: 1, 
-    backgroundColor: "#000", 
-    alignItems: "center", 
-    paddingTop: 80 
+  container: {
+    flex: 1,
+    backgroundColor: "#000",
+    alignItems: "center",
+    paddingTop: 80,
   },
 
-  avatarContainer: { 
-    alignItems: "center", 
-    marginBottom: 20 
+  avatarContainer: {
+    alignItems: "center",
+    marginBottom: 20,
   },
 
-  avatar: { 
-    width: 100, 
-    height: 100, 
-    borderRadius: 50, 
-    backgroundColor: "#d00000", 
-    justifyContent: "center", 
-    alignItems: "center" 
-  },
-  
-  avatarText: { 
-    color: "#fff", 
-    fontSize: 40, 
-    fontWeight: "bold" 
+  avatar: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: "#d00000",
+    justifyContent: "center",
+    alignItems: "center",
   },
 
-  name: { 
-    fontSize: 22, 
-    fontWeight: "bold", 
-    color: "#fff", 
-    marginTop: 8 
-  },
-
-  email: { 
-    fontSize: 16, 
-    color: "#ccc", 
-    marginBottom: 10 
-  },
-
-  info: { 
-    fontSize: 16, 
-    color: "#fff", 
-    marginBottom: 20 
-  },
-
-  buttonContainer: { 
-    marginTop: 40, 
-    width: "80%" 
-  },
-
-  button: { 
-    flexDirection: "row", 
-    alignItems: "center", 
-    backgroundColor: "#1a1a1a", 
-    paddingVertical: 12, 
-    paddingHorizontal: 20, 
-    borderRadius: 10, 
-    marginBottom: 15 
-  },
-  
-  logoutButton: { 
-    backgroundColor: "#d00000" 
-  },
-
-  buttonText: { 
+  avatarText: {
     color: "#fff",
-    fontSize: 16, 
-    marginLeft: 10, 
-    fontWeight: "600" 
+    fontSize: 40,
+    fontWeight: "bold",
   },
 
-  modalBackground: { 
-    flex: 1, 
-    justifyContent: "center", 
-    alignItems: "center", 
-    backgroundColor: "rgba(0,0,0,0.5)" 
+  name: {
+    fontSize: 22,
+    fontWeight: "bold",
+    color: "#fff",
+    marginTop: 8,
   },
 
-  modalContainer: { 
-    width: 300, 
-    padding: 20, 
-    borderRadius: 12, 
-    backgroundColor: "#fff" 
+  email: {
+    fontSize: 16,
+    color: "#ccc",
+    marginBottom: 10,
   },
 
-  modalTitle: { 
-    fontSize: 18, 
-    fontWeight: "bold", 
-    marginBottom: 10, 
-    textAlign: "center" 
+  info: {
+    fontSize: 16,
+    color: "#fff",
+    marginBottom: 20,
   },
 
-  input: { 
-    borderWidth: 1, 
-    borderColor: "#ccc", 
-    borderRadius: 10, 
-    padding: 10, 
-    fontSize: 14, 
-    marginTop: 10, 
-    backgroundColor: "#fff" 
+  buttonContainer: {
+    marginTop: 40,
+    width: "80%",
   },
 
-  modalButton: { 
-    flex: 1, 
-    backgroundColor: "#EF233C", 
-    paddingVertical: 12, 
-    borderRadius: 10, 
-    alignItems: "center", 
-    marginHorizontal: 5 
+  button: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#1a1a1a",
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 10,
+    marginBottom: 15,
   },
 
-  generateButtonText: { 
-    color: "#fff", 
-    fontWeight: "600", 
-    fontSize: 16 
+  logoutButton: {
+    backgroundColor: "#d00000",
+  },
+
+  buttonText: {
+    color: "#fff",
+    fontSize: 16,
+    marginLeft: 10,
+    fontWeight: "600",
+  },
+
+  modalBackground: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0,0,0,0.5)",
+  },
+
+  modalContainer: {
+    width: 300,
+    padding: 20,
+    borderRadius: 12,
+    backgroundColor: "#fff",
+  },
+
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 10,
+    textAlign: "center",
+  },
+
+  input: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 10,
+    padding: 10,
+    fontSize: 14,
+    marginTop: 10,
+    backgroundColor: "#fff",
+  },
+
+  modalButton: {
+    flex: 1,
+    backgroundColor: "#EF233C",
+    paddingVertical: 12,
+    borderRadius: 10,
+    alignItems: "center",
+    marginHorizontal: 5,
+  },
+
+  generateButtonText: {
+    color: "#fff",
+    fontWeight: "600",
+    fontSize: 16,
   },
 });
