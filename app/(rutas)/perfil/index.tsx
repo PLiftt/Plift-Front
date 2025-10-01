@@ -118,8 +118,8 @@ const PerfilScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
 
   if (loading) {
     return (
-      <View style={styles.container}>
-        <ActivityIndicator size="large" color="#007AFF" />
+      <View style={[styles.container, { backgroundColor: "#000" }]}>
+        <ActivityIndicator size="large" color="#EF233C" />
       </View>
     );
   }
