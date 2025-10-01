@@ -56,3 +56,19 @@ export const logoutUser = async () => {
   await deleteToken("accessToken");
   await deleteToken("refreshToken");
 };
+
+export async function requestPasswordResetCode(email: string) {
+  return axios.post(`${API_URL}/reset-password-request/`, { email });
+}
+
+export async function confirmPasswordResetCode(
+  email: string,
+  code: string,
+  new_password: string
+) {
+  return axios.post(`${API_URL}/reset-password-confirm/`, {
+    email,
+    code,
+    new_password,
+  });
+}

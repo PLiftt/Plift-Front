@@ -58,7 +58,10 @@ export default function LoginPage() {
       if (error.response?.status === 404) {
         Alert.alert("Usuario no encontrado", "El correo ingresado no existe");
       } else if (error.response?.status === 401) {
-        Alert.alert("Credenciales inválidas", "Correo o contraseña incorrectas");
+        Alert.alert(
+          "Credenciales inválidas",
+          "Correo o contraseña incorrectas"
+        );
       } else if (error.response?.status === 500) {
         Alert.alert("Error del servidor", "Inténtalo más tarde");
       } else {
@@ -134,14 +137,19 @@ export default function LoginPage() {
           </View>
 
           {/* Remember Me Switch */}
-          <View style={{ flexDirection: "row", alignItems: "center", marginTop: 8 }}>
+          <View
+            style={{ flexDirection: "row", alignItems: "center", marginTop: 8 }}
+          >
             <Switch
               value={rememberMe}
               onValueChange={setRememberMe}
               trackColor={{ false: "#374151", true: "#EF233C" }}
               thumbColor={rememberMe ? "#fff" : "#9CA3AF"}
             />
-            <Text style={{ color: "#E5E7EB", marginLeft: 8 }}> Mantener sesión iniciada </Text>
+            <Text style={{ color: "#E5E7EB", marginLeft: 8 }}>
+              {" "}
+              Mantener sesión iniciada{" "}
+            </Text>
           </View>
 
           {/* Sign In Button */}
@@ -160,13 +168,7 @@ export default function LoginPage() {
           {/* Forgot password */}
           <TouchableOpacity
             style={styles.forgotButton}
-            onPress={() => {
-              if (!email.trim()) {
-                Alert.alert("Recuperar contraseña", "Por favor ingresa tu email para recuperar la contraseña");
-              } else {
-                Alert.alert("Recuperar contraseña", `Se ha enviado un enlace de recuperación a ${email}`);
-              }
-            }}
+            onPress={() => router.push("../fotgot-password")}
           >
             <Text style={styles.forgotText}>Olvidaste tu contraseña?</Text>
           </TouchableOpacity>
@@ -186,7 +188,12 @@ export default function LoginPage() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#111111" },
-  keyboardView: { flex: 1, justifyContent: "center", alignItems: "center", padding: 24 },
+  keyboardView: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 24,
+  },
   backgroundImage: { position: "absolute", width: "100%", height: "100%" },
   card: {
     width: "100%",
@@ -200,20 +207,53 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 4 },
     elevation: 5,
   },
-  title: { fontSize: 32, fontWeight: "bold", color: "#E5E7EB", textAlign: "center", paddingVertical: 8, marginBottom: 4 },
+  title: {
+    fontSize: 32,
+    fontWeight: "bold",
+    color: "#E5E7EB",
+    textAlign: "center",
+    paddingVertical: 8,
+    marginBottom: 4,
+  },
   logo: { width: 120, height: 120, alignSelf: "center", marginBottom: 16 },
-  subtitle: { fontSize: 16, color: "#9CA3AF", fontWeight: "600", textAlign: "center", marginBottom: 24 },
+  subtitle: {
+    fontSize: 16,
+    color: "#9CA3AF",
+    fontWeight: "600",
+    textAlign: "center",
+    marginBottom: 24,
+  },
   inputContainer: { marginBottom: 16 },
   label: { fontSize: 14, fontWeight: "600", color: "#E5E7EB", marginBottom: 4 },
   inputWrapper: { position: "relative" },
   icon: { position: "absolute", marginTop: 4, left: 12, top: 12 },
-  input: { height: 48, backgroundColor: "#1F1F1F", borderColor: "#374151", borderWidth: 1, borderRadius: 12, fontSize: 16, color: "#E5E7EB", textAlign: "center" },
+  input: {
+    height: 48,
+    backgroundColor: "#1F1F1F",
+    borderColor: "#374151",
+    borderWidth: 1,
+    borderRadius: 12,
+    fontSize: 16,
+    color: "#E5E7EB",
+    textAlign: "center",
+  },
   eyeButton: { position: "absolute", marginTop: 4, right: 12, top: 12 },
-  button: { height: 48, backgroundColor: "#EF233C", borderRadius: 12, justifyContent: "center", alignItems: "center", marginTop: 8 },
+  button: {
+    height: 48,
+    backgroundColor: "#EF233C",
+    borderRadius: 12,
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 8,
+  },
   buttonText: { color: "#fff", fontSize: 16, fontWeight: "600" },
   forgotButton: { marginTop: 12, alignItems: "center" },
   forgotText: { fontSize: 14, color: "#9CA3AF" },
-  switchContainer: { flexDirection: "row", justifyContent: "center", marginTop: 24 },
+  switchContainer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    marginTop: 24,
+  },
   switchText: { fontSize: 14, color: "#9CA3AF", marginRight: 4 },
   switchButton: { fontSize: 14, color: "#EF233C", fontWeight: "600" },
 });
