@@ -17,7 +17,7 @@ import { deleteToken, getToken } from "../../../services/secureStore";
 import { createInvitation } from "../../../services/invitationService";
 import BottomNav from "../../components/bottomNav";
 
-const { width, height } = Dimensions.get("window");
+const { width } = Dimensions.get("window");
 
 interface UserProfile {
   first_name?: string;
@@ -37,22 +37,8 @@ interface UserProfile {
 const HomeScreen: React.FC = () => {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
-  const [isDarkMode, setIsDarkMode] = useState(true);
   const [athleteEmail, setAthleteEmail] = useState<string>("");
   const router = useRouter();
-
-  const toggleMode = () => setIsDarkMode(!isDarkMode);
-
-  const colors = {
-    background: isDarkMode ? "#000" : "#f9f9f9",
-    rectangle: isDarkMode ? "rgba(26,26,26,0.9)" : "#fff",
-    textPrimary: isDarkMode ? "#fff" : "#000",
-    textSecondary: "#EF233C",
-    cardBackground: isDarkMode ? "#1a1a1a" : "#e0e0e0",
-    navBackground: isDarkMode ? "#1a1a1a" : "#ddd",
-    navText: isDarkMode ? "#fff" : "#000",
-    floatingButton: "#EF233C",
-  };
 
   const fetchProfile = async () => {
     try {
@@ -77,7 +63,7 @@ const HomeScreen: React.FC = () => {
 
       const result = await createInvitation(token, payload);
       Alert.alert("Código generado", `El código es: ${result.code}`);
-      setAthleteEmail(""); // limpiar input
+      setAthleteEmail("");
     } catch (error: any) {
       console.error(error);
       if (error.response?.data?.athlete) {
@@ -96,7 +82,7 @@ const HomeScreen: React.FC = () => {
 
   if (loading) {
     return (
-      <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <View style={styles.centered}>
         <ActivityIndicator size="large" color="#EF233C" />
       </View>
     );
@@ -104,71 +90,124 @@ const HomeScreen: React.FC = () => {
 
   if (!profile) {
     return (
-      <View style={[styles.container, { backgroundColor: colors.background }]}>
-        <Text style={{ color: colors.textPrimary }}>
-          No se pudo cargar el perfil.
-        </Text>
+      <View style={styles.centered}>
+        <Text style={{ color: "#fff" }}>No se pudo cargar el perfil.</Text>
       </View>
     );
   }
 
-  const fullName = `${profile.first_name || ""} ${profile.second_name || ""} ${
-    profile.last_name || ""
-  } ${profile.second_last_name || ""}`.trim();
-  const initials = fullName ? fullName[0].toUpperCase() : profile.email[0].toUpperCase();
+  const greeting = (() => {
+    const hour = new Date().getHours();
+    if (hour < 12) return "Buenos días";
+    if (hour < 18) return "Buenas tardes";
+    return "Buenas noches";
+  })();
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <ScrollView contentContainerStyle={{ paddingBottom: 20, paddingTop: 5 }}>
-        {/* Avatar */}
-        <View style={styles.avatarContainer}>
-          <View style={[styles.avatar, { backgroundColor: colors.cardBackground }]}>
-            <Text style={[styles.avatarText, { color: colors.textPrimary }]}>{initials}</Text>
-          </View>
-          <Text style={[styles.userName, { color: colors.textPrimary }]}>
-            {`Hola, ${profile.first_name || "Sin nombre"}`}
+    <View style={styles.container}>
+      <ScrollView contentContainerStyle={{ paddingBottom: 120 }}>
+        {/* Hero Section */}
+        <View style={styles.hero}>
+          <Text style={styles.greeting}>{greeting},</Text>
+          <Text style={styles.heroName}>{profile.first_name || profile.email}</Text>
+          <Text style={styles.heroSubtitle}>
+            ¿Listo para tus metas? ¡Haz que hoy cuente!
           </Text>
         </View>
 
-        {/* Dashboard */}
-        <View style={[styles.mainRectangle, { backgroundColor: colors.rectangle }]}>
-          <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>
-            {profile.role.toUpperCase() === "ATHLETE"
-              ? "Mi Progreso"
-              : profile.role.toUpperCase() === "COACH"
-              ? "Mis Atletas"
-              : "Panel Principal"}
-          </Text>
-
-          {/* COACH: mostrar atletas y botón */}
-          {profile.role.toUpperCase() === "COACH" && (
-            <View>
-              {profile.athletes?.map((a) => (
-                <View key={a.id} style={[styles.block, { backgroundColor: colors.cardBackground }]}>
-                  <Ionicons name="person-circle-outline" size={22} color="#EF233C" />
-                  <View>
-                    <Text style={[styles.blockText, { color: colors.textPrimary }]}>{a.athlete_name}</Text>
-                    <Text style={[styles.info, { color: colors.textPrimary }]}>{a.athlete_email}</Text>
-                  </View>
+        {/* Coach Panel primero */}
+        {profile.role.toUpperCase() === "COACH" && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Mis Atletas</Text>
+            {profile.athletes?.map((a) => (
+              <View key={a.id} style={styles.block}>
+                <Ionicons name="person-circle-outline" size={22} color="#EF233C" />
+                <View style={{ marginLeft: 10 }}>
+                  <Text style={styles.blockText}>{a.athlete_name}</Text>
+                  <Text style={styles.blockInfo}>{a.athlete_email}</Text>
                 </View>
-              ))}
+              </View>
+            ))}
 
-              {/* Input para correo */}
-              <TextInput
-                style={styles.input}
-                placeholder="Correo del atleta (opcional)"
-                value={athleteEmail}
-                onChangeText={setAthleteEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-              />
+            <TextInput
+              style={styles.input}
+              placeholder="Correo del atleta (opcional)"
+              placeholderTextColor="#777"
+              value={athleteEmail}
+              onChangeText={setAthleteEmail}
+              keyboardType="email-address"
+              autoCapitalize="none"
+            />
 
-              {/* Botón generar código */}
-              <TouchableOpacity style={[styles.generateButton]} onPress={handleGenerateCode}>
-                <Text style={styles.generateButtonText}>Generar Código</Text>
-              </TouchableOpacity>
+            <TouchableOpacity style={styles.generateButton} onPress={handleGenerateCode}>
+              <Text style={styles.generateButtonText}>Generar Código</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {/* Athlete Panel */}
+        {profile.role.toUpperCase() === "ATHLETE" && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Mi Progreso</Text>
+
+            {/* Quick Stats dentro de Mi Progreso */}
+            <View style={styles.statsContainer}>
+              <View style={styles.statCard}>
+                <Ionicons name="flame" size={28} color="#EF233C" />
+                <View style={{ marginLeft: 16 }}>
+                  <Text style={styles.cardValue}>12</Text>
+                  <Text style={styles.cardLabel}>Días streak</Text>
+                </View>
+              </View>
+
+              <View style={styles.statCard}>
+                <Ionicons name="barbell" size={28} color="#EF233C" />
+                <View style={{ marginLeft: 16 }}>
+                  <Text style={styles.cardValue}>4</Text>
+                  <Text style={styles.cardLabel}>Workouts esta semana</Text>
+                </View>
+              </View>
+
+              <View style={styles.statCard}>
+                <Ionicons name="calendar" size={28} color="#EF233C" />
+                <View style={{ marginLeft: 16 }}>
+                  <Text style={styles.cardValue}>Upper Body</Text>
+                  <Text style={styles.cardLabel}>Próximo workout</Text>
+                </View>
+              </View>
             </View>
-          )}
+          </View>
+        )}
+
+        {/* Recent Activity */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Actividad Reciente</Text>
+            <TouchableOpacity>
+              <Text style={styles.viewAll}>Ver todo →</Text>
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.activityItem}>
+            <Text style={styles.activityTitle}>Deadlift PR</Text>
+            <Text style={styles.activityDesc}>Nuevo récord personal: 495 lbs</Text>
+            <Text style={styles.activityDate}>Hace 2 días</Text>
+          </View>
+
+          <View style={styles.activityItem}>
+            <Text style={styles.activityTitle}>Leg Day</Text>
+            <Text style={styles.activityDesc}>5 ejercicios, 45 minutos completados</Text>
+            <Text style={styles.activityDate}>Hace 3 días</Text>
+          </View>
+        </View>
+
+        {/* Motivation */}
+        <View style={styles.motivationCard}>
+          <Text style={styles.motivationTitle}>Keep Pushing</Text>
+          <Text style={styles.motivationQuote}>
+            "The iron never lies to you. The iron will always kick you the real deal."
+          </Text>
+          <Text style={styles.motivationAuthor}>— Henry Rollins</Text>
         </View>
       </ScrollView>
 
@@ -180,162 +219,103 @@ const HomeScreen: React.FC = () => {
 export default HomeScreen;
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
+  container: { flex: 1, backgroundColor: "#121212" },
+  centered: { flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#121212" },
 
-  watermark: {
-    position: "absolute",
-    fontSize: 200,
-    fontWeight: "bold",
-    alignSelf: "center",
-    top: height / 3,
-    textAlign: "center",
-    zIndex: 0,
-    opacity: 0.05, 
-  },
-
-  modeSwitch: {
-    flexDirection: "row",
-    justifyContent: "flex-end",
-    padding: 10,
-    alignItems: "center",
-    zIndex: 1,
-  },
-
-  avatarContainer: {
-    alignItems: "center",
-    marginBottom: 20,
-    marginTop: 10,
-  },
-
-  avatar: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#ccc",
-  },
-
-  avatarText: { fontWeight: "bold", fontSize: 40 },
-
-  userName: { fontSize: 18, fontWeight: "600", marginTop: 8 },
-
-  info: { fontSize: 14, marginBottom: 5, textAlign: "center" },
-
-  mainRectangle: {
-    borderRadius: 20,
+  // Hero
+  hero: {
     padding: 20,
-    marginHorizontal: 20,
-    marginBottom: 20,
-    marginTop: 0,
-    zIndex: 1,
-    backgroundColor: "#fff", // fondo por defecto
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    backgroundColor: "#1E1E1E",
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
     elevation: 3,
   },
+  greeting: { fontSize: 18, color: "#aaa" },
+  heroName: { fontSize: 32, fontWeight: "bold", marginTop: 5, color: "#fff" },
+  heroSubtitle: { fontSize: 16, marginTop: 8, color: "#aaa" },
 
-  sectionTitle: { fontSize: 18, fontWeight: "bold", marginTop: 10 },
+  // Stats
+  statsContainer: {
+    marginTop: 15,
+    flexDirection: "column",
+    gap: 15,
+  },
+  statCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#1E1E1E",
+    paddingVertical: 20,
+    paddingHorizontal: 20,
+    borderRadius: 16,
+    elevation: 2,
+    marginBottom: 10,
+    width: width - 40,
+  },
+  cardValue: { fontSize: 20, fontWeight: "bold", color: "#fff" },
+  cardLabel: { fontSize: 14, color: "#aaa", marginTop: 4 },
 
+  // Sections
+  section: { marginHorizontal: 20, marginVertical: 15 },
+  sectionTitle: { fontSize: 20, fontWeight: "bold", marginBottom: 10, color: "#fff" },
+  sectionHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+  viewAll: { color: "#EF233C", fontWeight: "600" },
+
+  // Blocks (athletes)
   block: {
     flexDirection: "row",
     alignItems: "center",
+    backgroundColor: "#1E1E1E",
     padding: 12,
     borderRadius: 12,
-    marginTop: 10,
-    backgroundColor: "#f5f5f5",
+    marginBottom: 10,
+    elevation: 2,
   },
-
-  blockText: { fontSize: 16, fontWeight: "600", marginLeft: 10 },
-
-  bottomNav: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    flexDirection: "row",
-    justifyContent: "space-around",
-    paddingVertical: 10,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    backgroundColor: "#fff",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: -3 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 6,
-  },
-
-  navButton: { flex: 1, alignItems: "center", paddingVertical: 5 },
-
-  floatingButton: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    alignItems: "center",
-    justifyContent: "center",
-    marginTop: -30,
-    backgroundColor: "#007AFF",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 5 },
-    shadowOpacity: 0.3,
-    shadowRadius: 5,
-    elevation: 8,
-  },
-
-  navText: { fontSize: 12, marginTop: 4, fontWeight: "500" },
+  blockText: { fontSize: 16, fontWeight: "600", color: "#fff" },
+  blockInfo: { fontSize: 14, color: "#aaa" },
 
   input: {
     borderWidth: 1,
-    borderColor: "#ccc",
+    borderColor: "#333",
     borderRadius: 10,
     padding: 10,
     fontSize: 14,
     marginTop: 10,
-    backgroundColor: "#fff",
+    backgroundColor: "#1E1E1E",
+    color: "#fff",
   },
 
-  primaryButton: {
-    backgroundColor: "#007AFF",
+  generateButton: {
+    backgroundColor: "#28a745",
     paddingVertical: 12,
     borderRadius: 12,
     alignItems: "center",
     marginTop: 15,
   },
+  generateButtonText: { color: "#fff", fontWeight: "600", fontSize: 16 },
 
-  primaryButtonText: {
-    color: "#fff",
-    fontWeight: "600",
-    fontSize: 16,
+  // Activity
+  activityItem: {
+    backgroundColor: "#1E1E1E",
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 10,
+    elevation: 2,
   },
+  activityTitle: { fontWeight: "600", fontSize: 16, color: "#fff" },
+  activityDesc: { fontSize: 14, color: "#aaa", marginTop: 3 },
+  activityDate: { fontSize: 12, color: "#777", marginTop: 3 },
 
-  emptyState: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
+  // Motivation
+  motivationCard: {
+    backgroundColor: "#1E1E1E",
+    marginHorizontal: 20,
     padding: 20,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#EF233C",
+    marginBottom: 40,
   },
-
-  emptyText: {
-    fontSize: 16,
-    color: "#888",
-    textAlign: "center",
-  },
-
-  generateButton: {
-  backgroundColor: "#28a745", 
-  paddingVertical: 12,
-  paddingHorizontal: 20,
-  borderRadius: 12,
-  alignItems: "center",
-  marginTop: 15,
-},
-
-generateButtonText: {
-  color: "#fff",
-  fontWeight: "600",
-  fontSize: 16,
-},
+  motivationTitle: { fontSize: 18, fontWeight: "bold", color: "#fff" },
+  motivationQuote: { fontSize: 14, fontStyle: "italic", marginVertical: 10, color: "#aaa" },
+  motivationAuthor: { fontSize: 13, fontWeight: "600", color: "#EF233C" },
 });
