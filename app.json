@@ -29,7 +29,14 @@
     },
     "plugins": [
       "expo-router",
-      "expo-secure-store"
+      "expo-secure-store",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Necesitamos acceder a tus fotos para enviar imágenes.",
+          "cameraPermission": "Necesitamos usar la cámara para tomar fotos."
+        }
+      ]
     ]
   }
 }
