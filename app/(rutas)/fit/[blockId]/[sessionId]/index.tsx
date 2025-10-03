@@ -11,6 +11,7 @@ import {
   Alert,
   ScrollView,
 } from "react-native";
+import { Picker } from "@react-native-picker/picker";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { getToken } from "services/secureStore";
 import { getUserProfile } from "services/userService";
@@ -19,13 +20,25 @@ import { ArrowLeft } from "lucide-react-native";
 
 interface Exercise {
   id?: number;
-  name: string;
+  predefined_name: string;
+  custom_name?: string;
   sets: number;
   reps: number;
   weight?: number;
   rpe?: number;
   completed?: boolean;
 }
+
+const EXERCISE_CHOICES = [
+  "Sentadilla",
+  "Bench Press",
+  "Peso muerto",
+  "Overhead Press",
+  "Remo con barra",
+  "Pull Up",
+  "Dips",
+  "Otro",
+];
 
 export default function ExercisesScreen() {
   const router = useRouter();
@@ -44,8 +57,12 @@ export default function ExercisesScreen() {
     muted: "#888",
   };
 
-  useEffect(() => { fetchRole(); }, []);
-  useEffect(() => { if (role) fetchExercises(); }, [role]);
+  useEffect(() => {
+    fetchRole();
+  }, []);
+  useEffect(() => {
+    if (role) fetchExercises();
+  }, [role]);
 
   const fetchRole = async () => {
     const user = await getUserProfile();
@@ -75,13 +92,36 @@ export default function ExercisesScreen() {
     const token = await getToken("accessToken");
     let url = `${API_URL.replace(/\/$/, "")}/exercises/`;
     let method: "POST" | "PATCH" = "POST";
-    if (currentExercise.id) { url += `${currentExercise.id}/`; method = "PATCH"; }
+    if (currentExercise.id) {
+      url += `${currentExercise.id}/`;
+      method = "PATCH";
+    }
+
+    // Armar payload según reglas del backend
+    const payload: any = {
+      session: sessionId,
+      predefined_name: currentExercise.predefined_name,
+      sets: currentExercise.sets,
+      reps: currentExercise.reps,
+      weight: currentExercise.weight,
+      rpe: currentExercise.rpe,
+    };
+
+    if (
+      currentExercise.predefined_name === "Otro" &&
+      currentExercise.custom_name
+    ) {
+      payload.custom_name = currentExercise.custom_name;
+    }
 
     try {
       const res = await fetch(url, {
         method,
-        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ ...currentExercise, session: sessionId }),
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
       });
       if (!res.ok) throw new Error("Error guardando ejercicio");
       setCurrentExercise(null);
@@ -95,10 +135,13 @@ export default function ExercisesScreen() {
   const deleteExercise = async (id: number) => {
     const token = await getToken("accessToken");
     try {
-      const res = await fetch(`${API_URL.replace(/\/$/, "")}/exercises/${id}/`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await fetch(
+        `${API_URL.replace(/\/$/, "")}/exercises/${id}/`,
+        {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
       if (!res.ok) throw new Error("Error eliminando ejercicio");
       fetchExercises();
     } catch (err) {
@@ -116,20 +159,34 @@ export default function ExercisesScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <ScrollView contentContainerStyle={{ paddingBottom: 120, paddingHorizontal: 16 }} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={{ paddingBottom: 120, paddingHorizontal: 16 }}
+        showsVerticalScrollIndicator={false}
+      >
         {/* Flecha volver atrás */}
         <TouchableOpacity style={{ padding: 16 }} onPress={() => router.back()}>
           <ArrowLeft size={24} color={colors.textPrimary} />
         </TouchableOpacity>
 
-        <Text style={[styles.title, { color: colors.textPrimary, textAlign: "center" }]}>
+        <Text
+          style={[
+            styles.title,
+            { color: colors.textPrimary, textAlign: "center" },
+          ]}
+        >
           Ejercicios de la sesión {sessionId}
         </Text>
 
         {role === "coach" && (
           <TouchableOpacity
             style={[styles.addButton, { backgroundColor: "#555" }]}
-            onPress={() => setCurrentExercise({ name: "", sets: 3, reps: 5 })}
+            onPress={() =>
+              setCurrentExercise({
+                predefined_name: EXERCISE_CHOICES[0],
+                sets: 3,
+                reps: 5,
+              })
+            }
           >
             <Text style={styles.addButtonText}>+ Añadir ejercicio</Text>
           </TouchableOpacity>
@@ -156,24 +213,36 @@ export default function ExercisesScreen() {
               ]}
               activeOpacity={0.8}
             >
-              <Text style={[styles.exerciseName, { color: colors.textPrimary }]}>{item.name}</Text>
-              <Text style={{ color: colors.muted }}>
-                Sets: {item.sets} | Reps: {item.reps} | Peso: {item.weight || "-"}
+              <Text
+                style={[styles.exerciseName, { color: colors.textPrimary }]}
+              >
+                {item.custom_name || item.predefined_name}
               </Text>
               <Text style={{ color: colors.muted }}>
-                RPE: {item.rpe || "-"} | Completado: {item.completed ? "Sí" : "No"}
+                Sets: {item.sets} | Reps: {item.reps} | Peso:{" "}
+                {item.weight || "-"}
+              </Text>
+              <Text style={{ color: colors.muted }}>
+                RPE: {item.rpe || "-"} | Completado:{" "}
+                {item.completed ? "Sí" : "No"}
               </Text>
 
               {role === "coach" && (
                 <View style={styles.buttonsRow}>
                   <TouchableOpacity
-                    style={[styles.modalBtn, { backgroundColor: "#555", flex: 1, marginRight: 8 }]}
+                    style={[
+                      styles.modalBtn,
+                      { backgroundColor: "#555", flex: 1, marginRight: 8 },
+                    ]}
                     onPress={() => setCurrentExercise(item)}
                   >
                     <Text style={styles.modalBtnText}>Editar</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
-                    style={[styles.modalBtn, { backgroundColor: colors.primary, flex: 1 }]}
+                    style={[
+                      styles.modalBtn,
+                      { backgroundColor: colors.primary, flex: 1 },
+                    ]}
                     onPress={() => deleteExercise(item.id!)}
                   >
                     <Text style={styles.modalBtnText}>Eliminar</Text>
@@ -187,69 +256,131 @@ export default function ExercisesScreen() {
         {/* Modal */}
         <Modal visible={!!currentExercise} animationType="slide" transparent>
           <View style={styles.modalBackground}>
-            <View style={[styles.modalContent, { backgroundColor: colors.cardBackground }]}>
+            <View
+              style={[
+                styles.modalContent,
+                { backgroundColor: colors.cardBackground },
+              ]}
+            >
               <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>
                 {currentExercise?.id ? "Editar" : "Agregar"} Ejercicio
               </Text>
-              <TextInput
-                placeholder="Nombre"
-                placeholderTextColor={colors.muted}
-                style={[styles.input, { color: colors.textPrimary, borderColor: colors.muted }]}
-                value={currentExercise?.name}
-                onChangeText={(text) =>
-                  setCurrentExercise((prev) => (prev ? { ...prev, name: text } : null))
+
+              {/* Picker de ejercicios */}
+              <Text style={{ color: colors.textPrimary, marginBottom: 4 }}>
+                Ejercicio
+              </Text>
+              <Picker
+                selectedValue={currentExercise?.predefined_name}
+                onValueChange={(value) =>
+                  setCurrentExercise((prev) =>
+                    prev ? { ...prev, predefined_name: value } : null
+                  )
                 }
-              />
+                style={{
+                  color: colors.textPrimary,
+                  backgroundColor: "#222",
+                  marginBottom: 12,
+                }}
+              >
+                {EXERCISE_CHOICES.map((ex) => (
+                  <Picker.Item key={ex} label={ex} value={ex} />
+                ))}
+              </Picker>
+
+              {currentExercise?.predefined_name === "Otro" && (
+                <TextInput
+                  placeholder="Nombre personalizado"
+                  placeholderTextColor={colors.muted}
+                  style={[
+                    styles.input,
+                    { color: colors.textPrimary, borderColor: colors.muted },
+                  ]}
+                  value={currentExercise.custom_name || ""}
+                  onChangeText={(text) =>
+                    setCurrentExercise((prev) =>
+                      prev ? { ...prev, custom_name: text } : null
+                    )
+                  }
+                />
+              )}
+
               <TextInput
                 placeholder="Sets"
                 placeholderTextColor={colors.muted}
-                style={[styles.input, { color: colors.textPrimary, borderColor: colors.muted }]}
+                style={[
+                  styles.input,
+                  { color: colors.textPrimary, borderColor: colors.muted },
+                ]}
                 keyboardType="numeric"
-                value={currentExercise?.sets.toString()}
+                value={currentExercise?.sets?.toString() || ""}
                 onChangeText={(text) =>
-                  setCurrentExercise((prev) => (prev ? { ...prev, sets: Number(text) } : null))
+                  setCurrentExercise((prev) =>
+                    prev ? { ...prev, sets: Number(text) } : null
+                  )
                 }
               />
               <TextInput
                 placeholder="Reps"
                 placeholderTextColor={colors.muted}
-                style={[styles.input, { color: colors.textPrimary, borderColor: colors.muted }]}
+                style={[
+                  styles.input,
+                  { color: colors.textPrimary, borderColor: colors.muted },
+                ]}
                 keyboardType="numeric"
-                value={currentExercise?.reps.toString()}
+                value={currentExercise?.reps?.toString() || ""}
                 onChangeText={(text) =>
-                  setCurrentExercise((prev) => (prev ? { ...prev, reps: Number(text) } : null))
+                  setCurrentExercise((prev) =>
+                    prev ? { ...prev, reps: Number(text) } : null
+                  )
                 }
               />
               <TextInput
                 placeholder="Peso"
                 placeholderTextColor={colors.muted}
-                style={[styles.input, { color: colors.textPrimary, borderColor: colors.muted }]}
+                style={[
+                  styles.input,
+                  { color: colors.textPrimary, borderColor: colors.muted },
+                ]}
                 keyboardType="numeric"
                 value={currentExercise?.weight?.toString() || ""}
                 onChangeText={(text) =>
-                  setCurrentExercise((prev) => (prev ? { ...prev, weight: Number(text) } : null))
+                  setCurrentExercise((prev) =>
+                    prev ? { ...prev, weight: Number(text) } : null
+                  )
                 }
               />
               <TextInput
                 placeholder="RPE"
                 placeholderTextColor={colors.muted}
-                style={[styles.input, { color: colors.textPrimary, borderColor: colors.muted }]}
+                style={[
+                  styles.input,
+                  { color: colors.textPrimary, borderColor: colors.muted },
+                ]}
                 keyboardType="numeric"
                 value={currentExercise?.rpe?.toString() || ""}
                 onChangeText={(text) =>
-                  setCurrentExercise((prev) => (prev ? { ...prev, rpe: Number(text) } : null))
+                  setCurrentExercise((prev) =>
+                    prev ? { ...prev, rpe: Number(text) } : null
+                  )
                 }
               />
 
               <View style={styles.modalButtons}>
                 <TouchableOpacity
-                  style={[styles.modalBtn, { backgroundColor: "#555", flex: 1, marginRight: 8 }]}
+                  style={[
+                    styles.modalBtn,
+                    { backgroundColor: "#555", flex: 1, marginRight: 8 },
+                  ]}
                   onPress={() => setCurrentExercise(null)}
                 >
                   <Text style={styles.modalBtnText}>Cancelar</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  style={[styles.modalBtn, { backgroundColor: colors.primary, flex: 1 }]}
+                  style={[
+                    styles.modalBtn,
+                    { backgroundColor: colors.primary, flex: 1 },
+                  ]}
                   onPress={saveExercise}
                 >
                   <Text style={styles.modalBtnText}>Guardar</Text>
@@ -267,16 +398,45 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   center: { flex: 1, justifyContent: "center", alignItems: "center" },
   title: { fontSize: 22, fontWeight: "bold", marginBottom: 16 },
-  addButton: { marginBottom: 16, padding: 12, borderRadius: 8, alignItems: "center" },
+  addButton: {
+    marginBottom: 16,
+    padding: 12,
+    borderRadius: 8,
+    alignItems: "center",
+  },
   addButtonText: { color: "#fff", fontWeight: "bold" },
   card: { padding: 16, marginBottom: 10, borderRadius: 8 },
   exerciseName: { fontSize: 16, fontWeight: "600" },
-  buttonsRow: { flexDirection: "row", justifyContent: "space-between", marginTop: 10 },
-  modalBackground: { flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#00000099" },
+  buttonsRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 10,
+  },
+  modalBackground: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#00000099",
+  },
   modalContent: { width: "90%", padding: 16, borderRadius: 8 },
   modalTitle: { fontSize: 18, fontWeight: "bold", marginBottom: 12 },
-  input: { borderWidth: 1, borderRadius: 6, padding: 8, marginBottom: 12 },
-  modalButtons: { flexDirection: "row", justifyContent: "space-between", marginTop: 16 },
-  modalBtn: { flex: 1, marginHorizontal: 5, padding: 12, borderRadius: 6, alignItems: "center" },
+  input: {
+    borderWidth: 1,
+    borderRadius: 6,
+    padding: 8,
+    marginBottom: 12,
+  },
+  modalButtons: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 16,
+  },
+  modalBtn: {
+    flex: 1,
+    marginHorizontal: 5,
+    padding: 12,
+    borderRadius: 6,
+    alignItems: "center",
+  },
   modalBtnText: { color: "#fff", fontWeight: "bold" },
 });
