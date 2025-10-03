@@ -7,14 +7,15 @@ import {
   ActivityIndicator,
   Modal,
   TextInput,
-  Button,
-  StyleSheet,
   Alert,
+  StyleSheet,
+  ScrollView,
 } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { getToken } from "services/secureStore";
 import { getUserProfile } from "services/userService";
 import { API_URL } from "@env";
+import { ArrowLeft } from "lucide-react-native";
 
 interface Session {
   id?: number;
@@ -28,9 +29,15 @@ export default function SessionsScreen() {
   const [sessions, setSessions] = useState<Session[]>([]);
   const [loading, setLoading] = useState(true);
   const [role, setRole] = useState<string | null>(null);
-
-  const [modalVisible, setModalVisible] = useState(false);
   const [currentSession, setCurrentSession] = useState<Session | null>(null);
+
+  const colors = {
+    background: "#000",
+    cardBackground: "#111",
+    primary: "#EF233C",
+    muted: "#888",
+    textPrimary: "#fff",
+  };
 
   useEffect(() => {
     fetchRole();
@@ -42,19 +49,16 @@ export default function SessionsScreen() {
 
   const fetchRole = async () => {
     const user = await getUserProfile();
-    setRole(user.role);
+    setRole(user.role.toLowerCase());
   };
 
   const fetchSessions = async () => {
     setLoading(true);
     try {
       const token = await getToken("accessToken");
-      const res = await fetch(
-        `${API_URL.replace(/\/$/, "")}/sessions/?block=${blockId}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+      const res = await fetch(`${API_URL.replace(/\/$/, "")}/sessions/?block=${blockId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       const data = await res.json();
       setSessions(data);
     } catch (err) {
@@ -77,14 +81,10 @@ export default function SessionsScreen() {
     try {
       const res = await fetch(url, {
         method,
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
         body: JSON.stringify({ ...currentSession, block: blockId }),
       });
       if (!res.ok) throw new Error("Error guardando sesión");
-      setModalVisible(false);
       setCurrentSession(null);
       fetchSessions();
     } catch (err) {
@@ -110,95 +110,111 @@ export default function SessionsScreen() {
 
   if (loading)
     return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" />
+      <View style={[styles.center, { backgroundColor: colors.background }]}>
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Sesiones del bloque {blockId}</Text>
-
-      {role === "coach" && (
-        <TouchableOpacity
-          style={styles.addButton}
-          onPress={() => setCurrentSession({ date: "", notes: "" })}
-        >
-          <Text style={styles.addButtonText}>+ Añadir sesión</Text>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <ScrollView contentContainerStyle={{ paddingBottom: 120, paddingHorizontal: 16 }} showsVerticalScrollIndicator={false}>
+        {/* Flecha volver atrás */}
+        <TouchableOpacity style={{ padding: 16 }} onPress={() => router.back()}>
+          <ArrowLeft size={24} color={colors.textPrimary} />
         </TouchableOpacity>
-      )}
 
-      <FlatList
-        data={sessions}
-        keyExtractor={(item) => item.id!.toString()}
-        renderItem={({ item }) => (
+        <Text style={[styles.title, { color: colors.textPrimary, textAlign: "center" }]}>
+          Sesiones del bloque {blockId}
+        </Text>
+
+        {role === "coach" && (
           <TouchableOpacity
-            style={styles.card}
-            onPress={() => router.push(`/fit/${blockId}/${item.id}`)}
+            style={[styles.addButton, { backgroundColor: "#555" }]}
+            onPress={() => setCurrentSession({ date: "", notes: "" })}
           >
-            <Text style={styles.sessionName}>Sesión: {item.date}</Text>
-            <Text>Notas: {item.notes || "-"}</Text>
-
-            {role === "coach" && (
-              <View style={styles.buttonsRow}>
-                <Button
-                  title="Editar"
-                  onPress={() => setCurrentSession(item)}
-                />
-                <Button
-                  title="Eliminar"
-                  color="red"
-                  onPress={() => deleteSession(item.id!)}
-                />
-              </View>
-            )}
+            <Text style={styles.addButtonText}>+ Añadir sesión</Text>
           </TouchableOpacity>
         )}
-      />
+
+        <Text style={{ color: colors.muted, fontSize: 12, marginBottom: 4 }}>Sesiones</Text>
+
+        <FlatList
+          data={sessions}
+          keyExtractor={(item, index) => (item?.id ? item.id!.toString() : index.toString())}
+          scrollEnabled={false}
+          renderItem={({ item }) => (
+            <TouchableOpacity
+              style={[
+                styles.card,
+                {
+                  backgroundColor: colors.cardBackground, // Siempre mismo fondo
+                  borderColor: colors.primary,
+                  borderWidth: 2,
+                },
+              ]}
+              onPress={() => router.push(`/fit/${blockId}/${item.id}`)}
+            >
+              <Text style={[styles.blockName, { color: colors.textPrimary }]}>
+                Sesión: {item.date}
+              </Text>
+              <Text style={{ color: colors.textPrimary }}>Notas: {item.notes || "-"}</Text>
+
+              {role === "coach" && (
+                <View style={styles.buttonsRow}>
+                  <TouchableOpacity
+                    style={[styles.modalBtn, { backgroundColor: "#555", flex: 1, marginRight: 8 }]} // color gris oscuro, no verde
+                    onPress={() => setCurrentSession(item)}
+                  >
+                    <Text style={styles.modalBtnText}>Editar</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.modalBtn, { backgroundColor: colors.primary, flex: 1 }]}
+                    onPress={() => deleteSession(item.id!)}
+                  >
+                    <Text style={styles.modalBtnText}>Eliminar</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+            </TouchableOpacity>
+          )}
+        />
+      </ScrollView>
 
       {/* Modal */}
-      <Modal
-        visible={!!currentSession}
-        animationType="slide"
-        transparent={true}
-      >
+      <Modal visible={!!currentSession} animationType="slide" transparent>
         <View style={styles.modalBackground}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>
+          <View style={[styles.modalContent, { backgroundColor: colors.cardBackground }]}>
+            <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>
               {currentSession?.id ? "Editar" : "Agregar"} Sesión
             </Text>
             <TextInput
               placeholder="Fecha YYYY-MM-DD"
-              style={styles.input}
+              placeholderTextColor={colors.muted}
+              style={[styles.input, { color: colors.textPrimary, borderColor: colors.muted }]}
               value={currentSession?.date}
-              onChangeText={(text) =>
-                setCurrentSession((prev) =>
-                  prev ? { ...prev, date: text } : null
-                )
-              }
+              onChangeText={(text) => setCurrentSession((prev) => (prev ? { ...prev, date: text } : null))}
             />
             <TextInput
               placeholder="Notas"
-              style={styles.input}
+              placeholderTextColor={colors.muted}
+              style={[styles.input, { color: colors.textPrimary, borderColor: colors.muted }]}
               value={currentSession?.notes || ""}
-              onChangeText={(text) =>
-                setCurrentSession((prev) =>
-                  prev ? { ...prev, notes: text } : null
-                )
-              }
+              onChangeText={(text) => setCurrentSession((prev) => (prev ? { ...prev, notes: text } : null))}
             />
-            <View
-              style={{
-                flexDirection: "row",
-                justifyContent: "space-between",
-                marginTop: 10,
-              }}
-            >
-              <Button
-                title="Cancelar"
+
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.modalBtn, { backgroundColor: "#555", flex: 1, marginRight: 8 }]}
                 onPress={() => setCurrentSession(null)}
-              />
-              <Button title="Guardar" onPress={saveSession} />
+              >
+                <Text style={styles.modalBtnText}>Cancelar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalBtn, { backgroundColor: colors.primary, flex: 1 }]}
+                onPress={saveSession}
+              >
+                <Text style={styles.modalBtnText}>Guardar</Text>
+              </TouchableOpacity>
             </View>
           </View>
         </View>
@@ -208,47 +224,19 @@ export default function SessionsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16, backgroundColor: "#fff" },
+  container: { flex: 1 },
   center: { flex: 1, justifyContent: "center", alignItems: "center" },
   title: { fontSize: 22, fontWeight: "bold", marginBottom: 16 },
-  addButton: {
-    marginBottom: 16,
-    padding: 12,
-    backgroundColor: "#4CAF50",
-    borderRadius: 8,
-    alignItems: "center",
-  },
+  addButton: { marginBottom: 16, padding: 12, borderRadius: 8, alignItems: "center" },
   addButtonText: { color: "#fff", fontWeight: "bold" },
-  card: {
-    padding: 16,
-    marginBottom: 10,
-    backgroundColor: "#f5f5f5",
-    borderRadius: 8,
-  },
-  sessionName: { fontSize: 16, fontWeight: "600" },
-  buttonsRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: 10,
-  },
-  modalBackground: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#00000099",
-  },
-  modalContent: {
-    width: "90%",
-    padding: 16,
-    backgroundColor: "#fff",
-    borderRadius: 8,
-  },
+  card: { padding: 16, marginBottom: 10, borderRadius: 8 },
+  blockName: { fontSize: 16, fontWeight: "600" },
+  buttonsRow: { flexDirection: "row", justifyContent: "space-between", marginTop: 10 },
+  modalBackground: { flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#00000099" },
+  modalContent: { width: "90%", padding: 16, borderRadius: 8 },
   modalTitle: { fontSize: 18, fontWeight: "bold", marginBottom: 12 },
-  input: {
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 6,
-    padding: 8,
-    marginBottom: 12,
-  },
+  input: { borderWidth: 1, borderRadius: 6, padding: 8, marginBottom: 12 },
+  modalButtons: { flexDirection: "row", justifyContent: "space-between", marginTop: 16 },
+  modalBtn: { flex: 1, marginHorizontal: 5, padding: 12, borderRadius: 6, alignItems: "center" },
+  modalBtnText: { color: "#fff", fontWeight: "bold" },
 });

@@ -333,7 +333,7 @@ export default function BlocksScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   center: { flex: 1, justifyContent: "center", alignItems: "center" },
-  title: { fontSize: 22, fontWeight: "bold", marginBottom: 16 },
+  title: { fontSize: 22, fontWeight: "bold", marginBottom: 16, marginTop: 16 },
   addButton: { marginBottom: 16, padding: 12, borderRadius: 8, alignItems: "center" },
   addButtonText: { color: "#fff", fontWeight: "bold" },
   card: { padding: 16, marginBottom: 10, borderRadius: 8 },
