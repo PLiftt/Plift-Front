@@ -56,9 +56,12 @@ export default function SessionsScreen() {
     setLoading(true);
     try {
       const token = await getToken("accessToken");
-      const res = await fetch(`${API_URL.replace(/\/$/, "")}/sessions/?block=${blockId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await fetch(
+        `${API_URL.replace(/\/$/, "")}/sessions/?block=${blockId}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
       const data = await res.json();
       setSessions(data);
     } catch (err) {
@@ -81,7 +84,10 @@ export default function SessionsScreen() {
     try {
       const res = await fetch(url, {
         method,
-        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({ ...currentSession, block: blockId }),
       });
       if (!res.ok) throw new Error("Error guardando sesión");
@@ -117,13 +123,21 @@ export default function SessionsScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <ScrollView contentContainerStyle={{ paddingBottom: 120, paddingHorizontal: 16 }} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={{ paddingBottom: 120, paddingHorizontal: 16 }}
+        showsVerticalScrollIndicator={false}
+      >
         {/* Flecha volver atrás */}
         <TouchableOpacity style={{ padding: 16 }} onPress={() => router.back()}>
           <ArrowLeft size={24} color={colors.textPrimary} />
         </TouchableOpacity>
 
-        <Text style={[styles.title, { color: colors.textPrimary, textAlign: "center" }]}>
+        <Text
+          style={[
+            styles.title,
+            { color: colors.textPrimary, textAlign: "center" },
+          ]}
+        >
           Sesiones del bloque {blockId}
         </Text>
 
@@ -136,11 +150,15 @@ export default function SessionsScreen() {
           </TouchableOpacity>
         )}
 
-        <Text style={{ color: colors.muted, fontSize: 12, marginBottom: 4 }}>Sesiones</Text>
+        <Text style={{ color: colors.muted, fontSize: 12, marginBottom: 4 }}>
+          Sesiones
+        </Text>
 
         <FlatList
           data={sessions}
-          keyExtractor={(item, index) => (item?.id ? item.id!.toString() : index.toString())}
+          keyExtractor={(item, index) =>
+            item?.id ? item.id!.toString() : index.toString()
+          }
           scrollEnabled={false}
           renderItem={({ item }) => (
             <TouchableOpacity
@@ -157,19 +175,43 @@ export default function SessionsScreen() {
               <Text style={[styles.blockName, { color: colors.textPrimary }]}>
                 Sesión: {item.date}
               </Text>
-              <Text style={{ color: colors.textPrimary }}>Notas: {item.notes || "-"}</Text>
+              <Text style={{ color: colors.textPrimary }}>
+                Notas: {item.notes || "-"}
+              </Text>
 
               {role === "coach" && (
                 <View style={styles.buttonsRow}>
                   <TouchableOpacity
-                    style={[styles.modalBtn, { backgroundColor: "#555", flex: 1, marginRight: 8 }]} // color gris oscuro, no verde
+                    style={[
+                      styles.modalBtn,
+                      { backgroundColor: "#555", flex: 1, marginRight: 8 },
+                    ]} // color gris oscuro, no verde
                     onPress={() => setCurrentSession(item)}
                   >
                     <Text style={styles.modalBtnText}>Editar</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
-                    style={[styles.modalBtn, { backgroundColor: colors.primary, flex: 1 }]}
-                    onPress={() => deleteSession(item.id!)}
+                    style={[
+                      styles.modalBtn,
+                      { backgroundColor: colors.primary },
+                    ]}
+                    onPress={() => {
+                      Alert.alert(
+                        "Confirmar eliminación",
+                        `¿Estás seguro de que deseas eliminar la sesión "${item.date}"?`,
+                        [
+                          {
+                            text: "Cancelar",
+                            style: "cancel",
+                          },
+                          {
+                            text: "Eliminar",
+                            style: "destructive",
+                            onPress: () => deleteSession(item.id!),
+                          },
+                        ]
+                      );
+                    }}
                   >
                     <Text style={styles.modalBtnText}>Eliminar</Text>
                   </TouchableOpacity>
@@ -183,34 +225,59 @@ export default function SessionsScreen() {
       {/* Modal */}
       <Modal visible={!!currentSession} animationType="slide" transparent>
         <View style={styles.modalBackground}>
-          <View style={[styles.modalContent, { backgroundColor: colors.cardBackground }]}>
+          <View
+            style={[
+              styles.modalContent,
+              { backgroundColor: colors.cardBackground },
+            ]}
+          >
             <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>
               {currentSession?.id ? "Editar" : "Agregar"} Sesión
             </Text>
             <TextInput
               placeholder="Fecha YYYY-MM-DD"
               placeholderTextColor={colors.muted}
-              style={[styles.input, { color: colors.textPrimary, borderColor: colors.muted }]}
+              style={[
+                styles.input,
+                { color: colors.textPrimary, borderColor: colors.muted },
+              ]}
               value={currentSession?.date}
-              onChangeText={(text) => setCurrentSession((prev) => (prev ? { ...prev, date: text } : null))}
+              onChangeText={(text) =>
+                setCurrentSession((prev) =>
+                  prev ? { ...prev, date: text } : null
+                )
+              }
             />
             <TextInput
               placeholder="Notas"
               placeholderTextColor={colors.muted}
-              style={[styles.input, { color: colors.textPrimary, borderColor: colors.muted }]}
+              style={[
+                styles.input,
+                { color: colors.textPrimary, borderColor: colors.muted },
+              ]}
               value={currentSession?.notes || ""}
-              onChangeText={(text) => setCurrentSession((prev) => (prev ? { ...prev, notes: text } : null))}
+              onChangeText={(text) =>
+                setCurrentSession((prev) =>
+                  prev ? { ...prev, notes: text } : null
+                )
+              }
             />
 
             <View style={styles.modalButtons}>
               <TouchableOpacity
-                style={[styles.modalBtn, { backgroundColor: "#555", flex: 1, marginRight: 8 }]}
+                style={[
+                  styles.modalBtn,
+                  { backgroundColor: "#555", flex: 1, marginRight: 8 },
+                ]}
                 onPress={() => setCurrentSession(null)}
               >
                 <Text style={styles.modalBtnText}>Cancelar</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.modalBtn, { backgroundColor: colors.primary, flex: 1 }]}
+                style={[
+                  styles.modalBtn,
+                  { backgroundColor: colors.primary, flex: 1 },
+                ]}
                 onPress={saveSession}
               >
                 <Text style={styles.modalBtnText}>Guardar</Text>
@@ -227,16 +294,40 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   center: { flex: 1, justifyContent: "center", alignItems: "center" },
   title: { fontSize: 22, fontWeight: "bold", marginBottom: 16 },
-  addButton: { marginBottom: 16, padding: 12, borderRadius: 8, alignItems: "center" },
+  addButton: {
+    marginBottom: 16,
+    padding: 12,
+    borderRadius: 8,
+    alignItems: "center",
+  },
   addButtonText: { color: "#fff", fontWeight: "bold" },
   card: { padding: 16, marginBottom: 10, borderRadius: 8 },
   blockName: { fontSize: 16, fontWeight: "600" },
-  buttonsRow: { flexDirection: "row", justifyContent: "space-between", marginTop: 10 },
-  modalBackground: { flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#00000099" },
+  buttonsRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 10,
+  },
+  modalBackground: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#00000099",
+  },
   modalContent: { width: "90%", padding: 16, borderRadius: 8 },
   modalTitle: { fontSize: 18, fontWeight: "bold", marginBottom: 12 },
   input: { borderWidth: 1, borderRadius: 6, padding: 8, marginBottom: 12 },
-  modalButtons: { flexDirection: "row", justifyContent: "space-between", marginTop: 16 },
-  modalBtn: { flex: 1, marginHorizontal: 5, padding: 12, borderRadius: 6, alignItems: "center" },
+  modalButtons: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 16,
+  },
+  modalBtn: {
+    flex: 1,
+    marginHorizontal: 5,
+    padding: 12,
+    borderRadius: 6,
+    alignItems: "center",
+  },
   modalBtnText: { color: "#fff", fontWeight: "bold" },
 });

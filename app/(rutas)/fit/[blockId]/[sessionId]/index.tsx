@@ -241,9 +241,25 @@ export default function ExercisesScreen() {
                   <TouchableOpacity
                     style={[
                       styles.modalBtn,
-                      { backgroundColor: colors.primary, flex: 1 },
+                      { backgroundColor: colors.primary },
                     ]}
-                    onPress={() => deleteExercise(item.id!)}
+                    onPress={() => {
+                      Alert.alert(
+                        "Confirmar eliminación",
+                        `¿Estás seguro de que deseas eliminar el bloque "${item.id}"?`,
+                        [
+                          {
+                            text: "Cancelar",
+                            style: "cancel",
+                          },
+                          {
+                            text: "Eliminar",
+                            style: "destructive",
+                            onPress: () => deleteExercise(item.id!),
+                          },
+                        ]
+                      );
+                    }}
                   >
                     <Text style={styles.modalBtnText}>Eliminar</Text>
                   </TouchableOpacity>
