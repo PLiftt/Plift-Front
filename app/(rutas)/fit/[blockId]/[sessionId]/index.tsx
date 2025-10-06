@@ -100,15 +100,14 @@ export default function ExercisesScreen() {
     const isCoach = role === "coach";
 
     const url = isCoach
-      ? `${API_URL.replace(/\/$/, "")}/exercises/` // Crear nuevo si coach y no hay id
-      : `${API_URL.replace(/\/$/, "")}/exercises/${currentExercise.id}/`; // PATCH atleta
+      ? `${API_URL.replace(/\/$/, "")}/exercises/`
+      : `${API_URL.replace(/\/$/, "")}/exercises/${currentExercise.id}/`;
 
     const payload: any = {};
 
     if (isCoach) {
-      // Coach crea/edita ejercicio
       if (currentExercise.id) {
-        // Editar
+        // Editar ejercicio existente
         payload.predefined_name = currentExercise.predefined_name!;
         payload.custom_name =
           currentExercise.predefined_name === "Otro"
@@ -119,7 +118,6 @@ export default function ExercisesScreen() {
         payload.weight = currentExercise.weight;
         payload.rpe = currentExercise.rpe;
 
-        // PATCH
         try {
           const res = await fetch(url, {
             method: "PATCH",
@@ -135,7 +133,7 @@ export default function ExercisesScreen() {
           Alert.alert("Error", `No se pudo actualizar el ejercicio: ${err}`);
         }
       } else {
-        // Crear
+        // Crear ejercicio nuevo
         payload.session = sessionId;
         payload.predefined_name = currentExercise.predefined_name!;
         payload.custom_name =
@@ -163,7 +161,7 @@ export default function ExercisesScreen() {
         }
       }
     } else {
-      // Atleta solo actualiza progreso
+      // Atleta actualiza progreso
       payload.predefined_name = currentExercise.predefined_name || "Sentadilla";
       payload.custom_name =
         currentExercise.predefined_name === "Otro"
@@ -252,92 +250,103 @@ export default function ExercisesScreen() {
           </TouchableOpacity>
         )}
 
-        <FlatList
-          data={exercises}
-          keyExtractor={(item) => item.id!.toString()}
-          scrollEnabled={false}
-          renderItem={({ item }) => (
-            <TouchableOpacity
-              style={[
-                styles.card,
-                {
-                  backgroundColor: colors.cardBackground,
-                  borderColor: colors.primary,
-                  borderWidth: 2,
-                  elevation: 4,
-                },
-              ]}
-              activeOpacity={0.8}
-            >
-              <Text
-                style={[styles.exerciseName, { color: colors.textPrimary }]}
+        {/* Lista de ejercicios ordenada */}
+        <View>
+          {exercises
+            ?.slice()
+            .sort((a, b) => {
+              if (a.completed === b.completed) return 0;
+              return a.completed ? 1 : -1; // no completados arriba
+            })
+            .map((item, index) => (
+              <TouchableOpacity
+                key={index}
+                style={[
+                  styles.card,
+                  {
+                    backgroundColor: colors.cardBackground,
+                    borderColor: colors.primary,
+                    borderWidth: 2,
+                    elevation: 4,
+                  },
+                ]}
+                activeOpacity={0.8}
               >
-                {item?.name || "Sin nombre"}
-              </Text>
+                <Text
+                  style={{
+                    color: "#fff",
+                    fontWeight: "600",
+                    fontSize: 16,
+                  }}
+                >
+                  {item.name || "Sin nombre"}
+                </Text>
 
-              <Text style={{ color: colors.muted }}>
-                Sets: {item.sets} | Reps: {item.reps}
-              </Text>
-              <Text style={{ color: colors.muted }}>
-                Peso planificado: {item.weight || "-"} | RPE objetivo:{" "}
-                {item.rpe || "-"}
-              </Text>
-              <Text
-                style={{
-                  color: item.completed ? "green" : "orange",
-                  fontWeight: "600",
-                }}
-              >
-                Peso real: {item.weight_actual ?? "-"} | RPE real:{" "}
-                {item.rpe_actual ?? "-"} | Completado:{" "}
-                {item.completed ? "Sí" : "No"}
-              </Text>
+                <Text style={{ color: colors.muted }}>
+                  Sets: {item.sets} | Reps: {item.reps}
+                </Text>
+                <Text style={{ color: colors.muted }}>
+                  Peso planificado: {item.weight || "-"} | RPE objetivo:{" "}
+                  {item.rpe || "-"}
+                </Text>
+                <Text
+                  style={{
+                    color: item.completed ? "green" : "orange",
+                    fontWeight: "600",
+                  }}
+                >
+                  Peso real: {item.weight_actual ?? "-"} | RPE real:{" "}
+                  {item.rpe_actual ?? "-"} | Completado:{" "}
+                  {item.completed ? "Sí" : "No"}
+                </Text>
 
-              {role === "coach" ? (
-                <View style={styles.buttonsRow}>
-                  <TouchableOpacity
-                    style={[styles.modalBtn, { backgroundColor: "#555" }]}
-                    onPress={() => setCurrentExercise(item)}
-                  >
-                    <Text style={styles.modalBtnText}>Editar</Text>
-                  </TouchableOpacity>
+                {role === "coach" ? (
+                  <View style={styles.buttonsRow}>
+                    <TouchableOpacity
+                      style={[styles.modalBtn, { backgroundColor: "#555" }]}
+                      onPress={() => setCurrentExercise(item)}
+                    >
+                      <Text style={styles.modalBtnText}>Editar</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[
+                        styles.modalBtn,
+                        { backgroundColor: colors.primary },
+                      ]}
+                      onPress={() => {
+                        Alert.alert(
+                          "Confirmar eliminación",
+                          `¿Eliminar el ejercicio "${
+                            item.predefined_name || item.custom_name
+                          }"?`,
+                          [
+                            { text: "Cancelar", style: "cancel" },
+                            {
+                              text: "Eliminar",
+                              style: "destructive",
+                              onPress: () => deleteExercise(item.id!),
+                            },
+                          ]
+                        );
+                      }}
+                    >
+                      <Text style={styles.modalBtnText}>Eliminar</Text>
+                    </TouchableOpacity>
+                  </View>
+                ) : (
                   <TouchableOpacity
                     style={[
                       styles.modalBtn,
-                      { backgroundColor: colors.primary },
+                      { backgroundColor: colors.primary, marginTop: 10 },
                     ]}
-                    onPress={() => {
-                      Alert.alert(
-                        "Confirmar eliminación",
-                        `¿Eliminar el ejercicio "${item.name}"?`,
-                        [
-                          { text: "Cancelar", style: "cancel" },
-                          {
-                            text: "Eliminar",
-                            style: "destructive",
-                            onPress: () => deleteExercise(item.id!),
-                          },
-                        ]
-                      );
-                    }}
+                    onPress={() => setCurrentExercise(item)}
                   >
-                    <Text style={styles.modalBtnText}>Eliminar</Text>
+                    <Text style={styles.modalBtnText}>Registrar progreso</Text>
                   </TouchableOpacity>
-                </View>
-              ) : (
-                <TouchableOpacity
-                  style={[
-                    styles.modalBtn,
-                    { backgroundColor: colors.primary, marginTop: 10 },
-                  ]}
-                  onPress={() => setCurrentExercise(item)}
-                >
-                  <Text style={styles.modalBtnText}>Registrar progreso</Text>
-                </TouchableOpacity>
-              )}
-            </TouchableOpacity>
-          )}
-        />
+                )}
+              </TouchableOpacity>
+            ))}
+        </View>
 
         {/* Modal */}
         <Modal visible={!!currentExercise} animationType="slide" transparent>
