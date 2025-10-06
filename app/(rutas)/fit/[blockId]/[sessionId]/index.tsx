@@ -22,6 +22,7 @@ interface Exercise {
   id?: number;
   predefined_name: string;
   custom_name?: string;
+  name?: string;
   sets: number;
   reps: number;
   weight?: number;
@@ -216,7 +217,7 @@ export default function ExercisesScreen() {
               <Text
                 style={[styles.exerciseName, { color: colors.textPrimary }]}
               >
-                {item.custom_name || item.predefined_name}
+                {item.name}
               </Text>
               <Text style={{ color: colors.muted }}>
                 Sets: {item.sets} | Reps: {item.reps} | Peso:{" "}
@@ -246,7 +247,7 @@ export default function ExercisesScreen() {
                     onPress={() => {
                       Alert.alert(
                         "Confirmar eliminación",
-                        `¿Estás seguro de que deseas eliminar el bloque "${item.id}"?`,
+                        `¿Estás seguro de que deseas eliminar el Ejercicio "${item.name}"?`,
                         [
                           {
                             text: "Cancelar",
