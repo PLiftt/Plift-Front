@@ -16,6 +16,7 @@ import { useRouter } from "expo-router";
 import BottomNav from "../../components/bottomNav";
 import { acceptInvitation } from "../../../services/invitationService";
 import { logoutUser } from "../../../services/userService";
+import { useAppContext } from "app/context/appContext";
 
 interface UserProfile {
   first_name?: string;
@@ -47,6 +48,9 @@ const PerfilScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
 
   const router = useRouter();
 
+  // Contexto de configuración
+  const { isDarkMode, language } = useAppContext();
+
   const handleLogout = async () => {
     await logoutUser();
     router.replace("/(rutas)/login"); // redirige al login
@@ -66,8 +70,10 @@ const PerfilScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
         error.message?.includes("No hay token de acceso")
       ) {
         Alert.alert(
-          "Sesión expirada",
-          "Tu sesión ha expirado. Por favor, inicia sesión nuevamente.",
+          language === "es" ? "Sesión expirada" : "Session expired",
+          language === "es"
+            ? "Tu sesión ha expirado. Por favor, inicia sesión nuevamente."
+            : "Your session has expired. Please log in again.",
           [
             {
               text: "OK",
@@ -91,24 +97,34 @@ const PerfilScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
       if (!token) throw new Error("Token no disponible");
 
       if (!inviteCode.trim()) {
-        Alert.alert("Error", "Debes ingresar un código válido");
+        Alert.alert(
+          language === "es" ? "Error" : "Error",
+          language === "es"
+            ? "Debes ingresar un código válido"
+            : "You must enter a valid code"
+        );
         return;
       }
 
       const result = await acceptInvitation(token, inviteCode.trim());
-      Alert.alert("¡Éxito!", "Invitación aceptada correctamente");
+      Alert.alert(
+        language === "es" ? "¡Éxito!" : "Success!",
+        language === "es"
+          ? "Invitación aceptada correctamente"
+          : "Invitation accepted successfully"
+      );
       setInviteCode("");
       setModalVisible(false);
       fetchProfile(); // refresca el perfil
     } catch (error: any) {
       console.error(error);
-      if (error.response?.data?.code) {
-        Alert.alert("Error", error.response.data.code);
-      } else if (error.response?.data?.detail) {
-        Alert.alert("Error", error.response.data.detail);
-      } else {
-        Alert.alert("Error", "No se pudo aceptar la invitación");
-      }
+      const errorMessage =
+        error.response?.data?.code ||
+        error.response?.data?.detail ||
+        (language === "es"
+          ? "No se pudo aceptar la invitación"
+          : "Could not accept invitation");
+      Alert.alert(language === "es" ? "Error" : "Error", errorMessage);
     }
   };
 
@@ -118,7 +134,12 @@ const PerfilScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
 
   if (loading) {
     return (
-      <View style={[styles.container, { backgroundColor: "#000" }]}>
+      <View
+        style={[
+          styles.container,
+          { backgroundColor: isDarkMode ? "#000" : "#fff" },
+        ]}
+      >
         <ActivityIndicator size="large" color="#EF233C" />
       </View>
     );
@@ -126,8 +147,17 @@ const PerfilScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
 
   if (!profile) {
     return (
-      <View style={styles.container}>
-        <Text>No se pudo cargar el perfil.</Text>
+      <View
+        style={[
+          styles.container,
+          { backgroundColor: isDarkMode ? "#000" : "#fff" },
+        ]}
+      >
+        <Text style={{ color: isDarkMode ? "#fff" : "#000" }}>
+          {language === "es"
+            ? "No se pudo cargar el perfil."
+            : "Could not load profile."}
+        </Text>
       </View>
     );
   }
@@ -137,21 +167,42 @@ const PerfilScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
   } ${profile.second_last_name || ""}`.trim();
 
   return (
-    <View style={styles.container}>
+    <View
+      style={[
+        styles.container,
+        { backgroundColor: isDarkMode ? "#000" : "#fff" },
+      ]}
+    >
       {/* Avatar */}
       <View style={styles.avatarContainer}>
-        <View style={styles.avatar}>
+        <View
+          style={[
+            styles.avatar,
+            { backgroundColor: isDarkMode ? "#d00000" : "#EF233C" },
+          ]}
+        >
           <Text style={styles.avatarText}>
             {fullName
               ? fullName[0].toUpperCase()
               : profile.email[0].toUpperCase()}
           </Text>
         </View>
-        <Text style={styles.name}>{profile.first_name || "Sin nombre"}</Text>
+        <Text
+          style={[
+            styles.name,
+            { color: isDarkMode ? "#fff" : "#000" },
+          ]}
+        >
+          {profile.first_name || (language === "es" ? "Sin nombre" : "No name")}
+        </Text>
       </View>
 
-      <Text style={styles.email}>{profile.email}</Text>
-      <Text style={styles.info}>Rol: {profile.role}</Text>
+      <Text style={{ color: isDarkMode ? "#ccc" : "#333", fontSize: 16 }}>
+        {profile.email}
+      </Text>
+      <Text style={{ color: isDarkMode ? "#fff" : "#000", fontSize: 16 }}>
+        {language === "es" ? "Rol: " : "Role: "} {profile.role}
+      </Text>
 
       {/* BOTÓN INGRESAR CÓDIGO SOLO PARA ATHLETE */}
       {profile.role.toUpperCase() === "ATHLETE" && (
@@ -160,7 +211,11 @@ const PerfilScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
           onPress={() => setModalVisible(true)}
         >
           <Ionicons name="key-outline" size={20} color="#fff" />
-          <Text style={styles.buttonText}>Ingresar Código de Coach</Text>
+          <Text style={[styles.buttonText, { color: "#fff" }]}>
+            {language === "es"
+              ? "Ingresar Código de Coach"
+              : "Enter Coach Code"}
+          </Text>
         </TouchableOpacity>
       )}
 
@@ -173,10 +228,14 @@ const PerfilScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
       >
         <View style={styles.modalBackground}>
           <View style={styles.modalContainer}>
-            <Text style={styles.modalTitle}>Ingresar Código del Coach</Text>
+            <Text style={styles.modalTitle}>
+              {language === "es"
+                ? "Ingresar Código del Coach"
+                : "Enter Coach Code"}
+            </Text>
             <TextInput
               style={styles.input}
-              placeholder="Código"
+              placeholder={language === "es" ? "Código" : "Code"}
               value={inviteCode}
               onChangeText={setInviteCode}
               autoCapitalize="none"
@@ -192,13 +251,17 @@ const PerfilScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
                 style={styles.modalButton}
                 onPress={handleAcceptCode}
               >
-                <Text style={styles.generateButtonText}>Aceptar</Text>
+                <Text style={[styles.generateButtonText, { color: "#fff" }]}>
+                  {language === "es" ? "Aceptar" : "Accept"}
+                </Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.modalButton, { backgroundColor: "#888" }]}
                 onPress={() => setModalVisible(false)}
               >
-                <Text style={styles.generateButtonText}>Cancelar</Text>
+                <Text style={[styles.generateButtonText, { color: "#fff" }]}>
+                  {language === "es" ? "Cancelar" : "Cancel"}
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -213,25 +276,34 @@ const PerfilScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
           onPress={() => router.push("/editarperfil")}
         >
           <Ionicons name="create-outline" size={20} color="#fff" />
-          <Text style={styles.buttonText}>Editar Perfil</Text>
+          <Text style={[styles.buttonText, { color: "#fff" }]}>
+            {language === "es" ? "Editar Perfil" : "Edit Profile"}
+          </Text>
         </TouchableOpacity>
 
         {/* Configuración */}
         <TouchableOpacity
           style={styles.button}
-          onPress={() => router.push("/configuracion")} // si tienes pantalla de configuración
+          onPress={() => router.push("/perfil/configuracion")}
         >
           <Ionicons name="settings-outline" size={20} color="#fff" />
-          <Text style={styles.buttonText}>Configuración</Text>
+          <Text style={[styles.buttonText, { color: "#fff" }]}>
+            {language === "es" ? "Configuración" : "Settings"}
+          </Text>
         </TouchableOpacity>
 
+        {/* Cerrar sesión */}
+        {/*
         <TouchableOpacity
           style={[styles.button, styles.logoutButton]}
           onPress={handleLogout}
         >
           <Ionicons name="log-out-outline" size={20} color="#fff" />
-          <Text style={styles.buttonText}>Cerrar Sesión</Text>
+          <Text style={[styles.buttonText, { color: "#fff" }]}>
+            {language === "es" ? "Cerrar Sesión" : "Logout"}
+          </Text>
         </TouchableOpacity>
+        */}
       </View>
 
       <BottomNav />
@@ -274,18 +346,6 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#fff",
     marginTop: 8,
-  },
-
-  email: {
-    fontSize: 16,
-    color: "#ccc",
-    marginBottom: 10,
-  },
-
-  info: {
-    fontSize: 16,
-    color: "#fff",
-    marginBottom: 20,
   },
 
   buttonContainer: {
