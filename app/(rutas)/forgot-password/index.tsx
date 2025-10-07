@@ -11,13 +11,14 @@ import {
   StyleSheet,
 } from "react-native";
 import { useRouter } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
 import {
   requestPasswordResetCode,
   confirmPasswordResetCode,
 } from "services/authService";
 
 export default function ResetPasswordScreen() {
-  const router = useRouter(); // 🔹 Router para navegar al login
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -78,16 +79,19 @@ export default function ResetPasswordScreen() {
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
       <ScrollView
-        contentContainerStyle={{
-          flexGrow: 1,
-          justifyContent: "center",
-          alignItems: "center",
-          padding: 20,
-          paddingBottom: 40,
-        }}
+        contentContainerStyle={{ flexGrow: 1 }}
         keyboardShouldPersistTaps="handled"
       >
-        <View style={{ width: "100%", maxWidth: 400 }}>
+        {/* Flecha de retroceso pegada al header */}
+        <TouchableOpacity
+          style={styles.backButtonHeader}
+          onPress={() => router.back()}
+        >
+          <Ionicons name="arrow-back" size={28} color="#fff" />
+        </TouchableOpacity>
+
+        {/* Contenedor para centrar solo la card */}
+        <View style={styles.cardContainer}>
           <View style={styles.card}>
             <Text style={styles.title}>Recuperar Contraseña</Text>
             <Text style={styles.subtitle}>
@@ -96,8 +100,9 @@ export default function ResetPasswordScreen() {
 
             {!codeSent && (
               <>
+                <Text style={styles.label}>Correo electrónico</Text>
                 <TextInput
-                  placeholder="Email"
+                  placeholder="tucorreo@ejemplo.com"
                   placeholderTextColor="#888"
                   value={email}
                   onChangeText={setEmail}
@@ -163,42 +168,65 @@ export default function ResetPasswordScreen() {
 }
 
 const styles = StyleSheet.create({
+  backButtonHeader: {
+    marginTop: 20,
+    marginLeft: 20,
+  },
+  cardContainer: {
+    flex: 1,
+    justifyContent: "center", // 🔹 Centra verticalmente solo la card
+    alignItems: "center",
+    paddingHorizontal: 20,
+    paddingBottom: 40,
+  },
   card: {
     width: "100%",
+    maxWidth: 400,
     backgroundColor: "#1F1F1F",
-    borderRadius: 16,
-    padding: 20,
+    borderRadius: 20,
+    padding: 25,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 8,
   },
   title: {
     fontSize: 26,
     fontWeight: "700",
     color: "#fff",
-    marginBottom: 4,
+    marginBottom: 8,
     textAlign: "center",
   },
   subtitle: {
     fontSize: 16,
     color: "#ccc",
-    marginBottom: 20,
+    marginBottom: 25,
     textAlign: "center",
   },
-  sectionTitle: { fontSize: 16, color: "#E5E7EB", marginBottom: 8 },
+  label: {
+    fontSize: 14,
+    color: "#E5E7EB",
+    marginBottom: 6,
+    marginLeft: 2,
+  },
+  sectionTitle: { fontSize: 16, color: "#E5E7EB", marginBottom: 10 },
   input: {
     backgroundColor: "#111",
     color: "#fff",
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 12,
+    borderRadius: 10,
+    padding: 14,
+    marginBottom: 14,
     width: "100%",
     borderWidth: 1,
     borderColor: "#374151",
   },
   button: {
     backgroundColor: "#EF233C",
-    padding: 14,
-    borderRadius: 8,
+    padding: 16,
+    borderRadius: 10,
     alignItems: "center",
-    marginTop: 10,
+    marginTop: 12,
   },
   buttonText: { color: "#fff", fontWeight: "600", fontSize: 16 },
 });
