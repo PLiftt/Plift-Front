@@ -26,6 +26,7 @@ interface Block {
   end_date: string;
   goal_competition_date?: string;
   athlete?: number;
+  completed?: boolean;
 }
 
 interface Athlete {
@@ -245,6 +246,14 @@ export default function BlocksScreen() {
                     Atleta ID: {item.athlete}
                   </Text>
                 )}
+                <Text
+                  style={{
+                    color: item.completed ? "green" : "orange",
+                    fontWeight: "600",
+                  }}
+                >
+                  Bloque completado: {item.completed ? "Sí" : "No"}
+                </Text>
                 {role === "coach" && (
                   <View style={styles.buttonsRow}>
                     <TouchableOpacity

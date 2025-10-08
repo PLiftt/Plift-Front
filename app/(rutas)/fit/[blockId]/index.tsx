@@ -21,6 +21,7 @@ interface Session {
   id?: number;
   date: string;
   notes?: string;
+  completed?: boolean;
 }
 
 export default function SessionsScreen() {
@@ -177,6 +178,14 @@ export default function SessionsScreen() {
               </Text>
               <Text style={{ color: colors.textPrimary }}>
                 Notas: {item.notes || "-"}
+              </Text>
+              <Text
+                style={{
+                  color: item.completed ? "green" : "orange",
+                  fontWeight: "600",
+                }}
+              >
+                Sesión completada: {item.completed ? "Sí" : "No"}
               </Text>
 
               {role === "coach" && (
