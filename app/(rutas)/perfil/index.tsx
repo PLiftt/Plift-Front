@@ -42,10 +42,34 @@ interface UserProfile {
 }
 
 const statsData = [
-  { label: "Sentadilla", value: "180", unit: "kg", icon: "dumbbell", color: "#EF233C" },
-  { label: "Press Banca", value: "135", unit: "kg", icon: "dumbbell", color: "#EF233C" },
-  { label: "Peso Muerto", value: "210", unit: "kg", icon: "weight-hanging", color: "#EF233C" },
-  { label: "Total", value: "525", unit: "kg", icon: "trophy", color: "#EF233C" },
+  {
+    label: "Sentadilla",
+    value: "180",
+    unit: "kg",
+    icon: "dumbbell",
+    color: "#EF233C",
+  },
+  {
+    label: "Press Banca",
+    value: "135",
+    unit: "kg",
+    icon: "dumbbell",
+    color: "#EF233C",
+  },
+  {
+    label: "Peso Muerto",
+    value: "210",
+    unit: "kg",
+    icon: "weight-hanging",
+    color: "#EF233C",
+  },
+  {
+    label: "Total",
+    value: "525",
+    unit: "kg",
+    icon: "trophy",
+    color: "#EF233C",
+  },
 ];
 
 const PerfilScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
@@ -140,7 +164,11 @@ const PerfilScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
       <View
         style={[
           styles.container,
-          { backgroundColor: isDarkMode ? "#0F0F0F" : "#F9F9F9", justifyContent: "center", alignItems: "center" },
+          {
+            backgroundColor: isDarkMode ? "#0F0F0F" : "#F9F9F9",
+            justifyContent: "center",
+            alignItems: "center",
+          },
         ]}
       >
         <ActivityIndicator size="large" color="#EF233C" />
@@ -170,38 +198,94 @@ const PerfilScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
   } ${profile.second_last_name || ""}`.trim();
 
   return (
-    <View style={[styles.container, { backgroundColor: isDarkMode ? "#0F0F0F" : "#F9F9F9" }]}>
+    <View
+      style={[
+        styles.container,
+        { backgroundColor: isDarkMode ? "#0F0F0F" : "#F9F9F9" },
+      ]}
+    >
       <ScrollView contentContainerStyle={{ paddingBottom: 120 }}>
         {/* HEADER */}
         <View style={[styles.header, { backgroundColor: "#EF233C" }]}>
           <View style={styles.avatarContainer}>
             <View style={styles.avatar}>
               <Text style={styles.avatarText}>
-                {fullName ? fullName[0].toUpperCase() : profile.email[0].toUpperCase()}
+                {fullName
+                  ? fullName[0].toUpperCase()
+                  : profile.email[0].toUpperCase()}
               </Text>
             </View>
-            <Text style={[styles.name, { color: "#fff" }]}>{fullName || profile.email}</Text>
+            <Text style={[styles.name, { color: "#fff" }]}>
+              {fullName || profile.email}
+            </Text>
             <Text style={{ color: "#FFD6D6", fontSize: 14 }}>
-              {language === "es" ? `Rol: ${profile.role}` : `Role: ${profile.role}`}
+              {language === "es"
+                ? `Rol: ${profile.role}`
+                : `Role: ${profile.role}`}
             </Text>
           </View>
         </View>
 
         {/* TITULO RECORDS PERSONALES */}
-        <Text style={{ fontSize: 20, fontWeight: "bold", marginTop: 20, marginLeft: 15, color: isDarkMode ? "#fff" : "#000" }}>
+        <Text
+          style={{
+            fontSize: 20,
+            fontWeight: "bold",
+            marginTop: 20,
+            marginLeft: 15,
+            color: isDarkMode ? "#fff" : "#000",
+          }}
+        >
           {language === "es" ? "Records Personales" : "Personal Records"}
         </Text>
 
         {/* STATS */}
         <View style={styles.statsGrid}>
           {statsData.map((stat) => (
-            <View key={stat.label} style={[styles.statCard, { backgroundColor: isDarkMode ? "#1A1A1A" : "#fff" }]}>
-              <FontAwesome5 name={stat.icon as any} size={24} color={stat.color} />
-              <View style={{ flexDirection: "row", alignItems: "flex-end", marginTop: 5 }}>
-                <Text style={[styles.statValue, { color: isDarkMode ? "#fff" : "#000" }]}>{stat.value}</Text>
-                <Text style={[styles.statUnit, { color: isDarkMode ? "#bbb" : "#555" }]}>{stat.unit}</Text>
+            <View
+              key={stat.label}
+              style={[
+                styles.statCard,
+                { backgroundColor: isDarkMode ? "#1A1A1A" : "#fff" },
+              ]}
+            >
+              <FontAwesome5
+                name={stat.icon as any}
+                size={24}
+                color={stat.color}
+              />
+              <View
+                style={{
+                  flexDirection: "row",
+                  alignItems: "flex-end",
+                  marginTop: 5,
+                }}
+              >
+                <Text
+                  style={[
+                    styles.statValue,
+                    { color: isDarkMode ? "#fff" : "#000" },
+                  ]}
+                >
+                  {stat.value}
+                </Text>
+                <Text
+                  style={[
+                    styles.statUnit,
+                    { color: isDarkMode ? "#bbb" : "#555" },
+                  ]}
+                >
+                  {stat.unit}
+                </Text>
               </View>
-              <Text style={[styles.statLabel, { color: isDarkMode ? "#bbb" : "#555" }]}>{stat.label}</Text>
+              <Text
+                style={[
+                  styles.statLabel,
+                  { color: isDarkMode ? "#bbb" : "#555" },
+                ]}
+              >
+                {stat.label}
+              </Text>
             </View>
           ))}
         </View>
@@ -215,33 +299,59 @@ const PerfilScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
             >
               <Ionicons name="key-outline" size={20} color="#fff" />
               <Text style={styles.buttonText}>
-                {language === "es" ? "Ingresar Código de Coach" : "Enter Coach Code"}
+                {language === "es"
+                  ? "Ingresar Código de Coach"
+                  : "Enter Coach Code"}
               </Text>
             </TouchableOpacity>
           )}
 
-          <TouchableOpacity style={styles.button} onPress={() => router.push("/perfil/historial")}>
+          <TouchableOpacity
+            style={styles.button}
+            onPress={() => router.push("/perfil/historial")}
+          >
             <Ionicons name="time-outline" size={20} color="#fff" />
-            <Text style={styles.buttonText}>{language === "es" ? "Historial" : "History"}</Text>
+            <Text style={styles.buttonText}>
+              {language === "es" ? "Historial" : "History"}
+            </Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.button} onPress={() => router.push("/editarperfil")}>
+          <TouchableOpacity
+            style={styles.button}
+            onPress={() => router.push("/editarperfil")}
+          >
             <Ionicons name="create-outline" size={20} color="#fff" />
-            <Text style={styles.buttonText}>{language === "es" ? "Editar Perfil" : "Edit Profile"}</Text>
+            <Text style={styles.buttonText}>
+              {language === "es" ? "Editar Perfil" : "Edit Profile"}
+            </Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.button} onPress={() => router.push("/perfil/configuracion")}>
+          <TouchableOpacity
+            style={styles.button}
+            onPress={() => router.push("/perfil/configuracion")}
+          >
             <Ionicons name="settings-outline" size={20} color="#fff" />
-            <Text style={styles.buttonText}>{language === "es" ? "Configuración" : "Settings"}</Text>
+            <Text style={styles.buttonText}>
+              {language === "es" ? "Configuración" : "Settings"}
+            </Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
 
       {/* MODAL */}
-      <Modal visible={modalVisible} animationType="slide" transparent onRequestClose={() => setModalVisible(false)}>
+      <Modal
+        visible={modalVisible}
+        animationType="slide"
+        transparent
+        onRequestClose={() => setModalVisible(false)}
+      >
         <View style={styles.modalBackground}>
           <View style={styles.modalContainer}>
-            <Text style={styles.modalTitle}>{language === "es" ? "Ingresar Código del Coach" : "Enter Coach Code"}</Text>
+            <Text style={styles.modalTitle}>
+              {language === "es"
+                ? "Ingresar Código del Coach"
+                : "Enter Coach Code"}
+            </Text>
             <TextInput
               style={styles.input}
               placeholder={language === "es" ? "Código" : "Code"}
@@ -250,11 +360,21 @@ const PerfilScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
               autoCapitalize="none"
             />
             <View style={styles.modalButtonsRow}>
-              <TouchableOpacity style={styles.modalButton} onPress={handleAcceptCode}>
-                <Text style={styles.generateButtonText}>{language === "es" ? "Aceptar" : "Accept"}</Text>
+              <TouchableOpacity
+                style={styles.modalButton}
+                onPress={handleAcceptCode}
+              >
+                <Text style={styles.generateButtonText}>
+                  {language === "es" ? "Aceptar" : "Accept"}
+                </Text>
               </TouchableOpacity>
-              <TouchableOpacity style={[styles.modalButton, { backgroundColor: "#888" }]} onPress={() => setModalVisible(false)}>
-                <Text style={styles.generateButtonText}>{language === "es" ? "Cancelar" : "Cancel"}</Text>
+              <TouchableOpacity
+                style={[styles.modalButton, { backgroundColor: "#888" }]}
+                onPress={() => setModalVisible(false)}
+              >
+                <Text style={styles.generateButtonText}>
+                  {language === "es" ? "Cancelar" : "Cancel"}
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -273,25 +393,99 @@ export default PerfilScreen;
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#F9F9F9" },
-  header: { paddingVertical: 25, alignItems: "center", borderBottomLeftRadius: 20, borderBottomRightRadius: 20 },
+  header: {
+    paddingVertical: 25,
+    alignItems: "center",
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
+  },
   avatarContainer: { alignItems: "center" },
-  avatar: { width: 100, height: 100, borderRadius: 50, backgroundColor: "#900", justifyContent: "center", alignItems: "center" },
+  avatar: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: "#900",
+    justifyContent: "center",
+    alignItems: "center",
+  },
   avatarText: { color: "#fff", fontSize: 40, fontWeight: "bold" },
   name: { fontSize: 22, fontWeight: "bold", marginTop: 8 },
-  statsGrid: { flexDirection: "row", flexWrap: "wrap", justifyContent: "space-around", marginTop: 20 },
-  statCard: { width: "45%", borderRadius: 12, padding: 15, marginBottom: 12, alignItems: "center", shadowColor: "#000", shadowOpacity: 0.1, shadowRadius: 5, elevation: 3 },
+  statsGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-around",
+    marginTop: 20,
+  },
+  statCard: {
+    width: "45%",
+    borderRadius: 12,
+    padding: 15,
+    marginBottom: 12,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    elevation: 3,
+  },
   statValue: { fontSize: 18, fontWeight: "bold" },
   statUnit: { fontSize: 12, marginLeft: 2 },
   statLabel: { fontSize: 14, marginTop: 3 },
   buttonContainer: { marginTop: 20, paddingHorizontal: 20 },
-  button: { flexDirection: "row", alignItems: "center", backgroundColor: "#1a1a1a", paddingVertical: 12, paddingHorizontal: 20, borderRadius: 10, marginBottom: 15 },
-  buttonText: { color: "#fff", fontSize: 16, marginLeft: 10, fontWeight: "600" },
+  button: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#1a1a1a",
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 10,
+    marginBottom: 15,
+  },
+  buttonText: {
+    color: "#fff",
+    fontSize: 16,
+    marginLeft: 10,
+    fontWeight: "600",
+  },
   bottomNavWrapper: { position: "absolute", bottom: 0, width: "100%" },
-  modalBackground: { flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "rgba(0,0,0,0.5)" },
-  modalContainer: { width: 300, padding: 20, borderRadius: 12, backgroundColor: "#fff" },
-  modalTitle: { fontSize: 18, fontWeight: "bold", marginBottom: 10, textAlign: "center" },
-  input: { borderWidth: 1, borderColor: "#ccc", borderRadius: 10, padding: 10, fontSize: 14, marginTop: 10, backgroundColor: "#fff" },
-  modalButtonsRow: { flexDirection: "row", justifyContent: "space-between", marginTop: 15 },
-  modalButton: { flex: 1, backgroundColor: "#EF233C", paddingVertical: 12, borderRadius: 10, alignItems: "center", marginHorizontal: 5 },
+  modalBackground: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0,0,0,0.5)",
+  },
+  modalContainer: {
+    width: 300,
+    padding: 20,
+    borderRadius: 12,
+    backgroundColor: "#fff",
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 10,
+    textAlign: "center",
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 10,
+    padding: 10,
+    fontSize: 14,
+    marginTop: 10,
+    backgroundColor: "#fff",
+  },
+  modalButtonsRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 15,
+  },
+  modalButton: {
+    flex: 1,
+    backgroundColor: "#EF233C",
+    paddingVertical: 12,
+    borderRadius: 10,
+    alignItems: "center",
+    marginHorizontal: 5,
+  },
   generateButtonText: { color: "#fff", fontWeight: "600", fontSize: 16 },
 });
