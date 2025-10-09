@@ -208,94 +208,113 @@ export default function BlocksScreen() {
         )}
 
         <View style={{ flexGrow: 1 }}>
-          <FlatList
-            data={blocks}
-            keyExtractor={(item, index) =>
-              item?.id ? item.id!.toString() : index.toString()
-            }
-            scrollEnabled={false}
-            renderItem={({ item }) => (
-              <TouchableOpacity
-                style={[
-                  styles.card,
-                  {
-                    backgroundColor: colors.cardBackground,
-                    borderColor: colors.primary,
-                    borderWidth: 2,
-                    shadowColor: "#000",
-                    shadowOffset: { width: 0, height: 2 },
-                    shadowOpacity: 0.5,
-                    shadowRadius: 4,
-                    elevation: 4,
-                  },
-                ]}
-                onPress={() => router.push(`/fit/${item.id}`)}
-                activeOpacity={0.8}
+          {blocks.length === 0 ? (
+            <View
+              style={{
+                flex: 1,
+                justifyContent: "center",
+                alignItems: "center",
+                height: 300,
+              }}
+            >
+              <Text
+                style={{
+                  color: colors.textPrimary,
+                  fontSize: 16,
+                  textAlign: "center",
+                  top: 160,
+                  paddingHorizontal: 20,
+                  fontStyle: "italic",
+                  opacity: 0.7,
+                }}
               >
-                <Text style={[styles.blockName, { color: colors.textPrimary }]}>
-                  {item.name}
-                </Text>
-                <Text style={{ color: colors.muted }}>
-                  Periodo: {item.periodization}
-                </Text>
-                <Text style={{ color: colors.muted }}>
-                  Inicio: {item.start_date} | Fin: {item.end_date}
-                </Text>
-                {item.athlete && (
-                  <Text style={{ color: colors.muted }}>
-                    Atleta ID: {item.athlete}
-                  </Text>
-                )}
-                <Text
-                  style={{
-                    color: item.completed ? "green" : "orange",
-                    fontWeight: "600",
-                  }}
+                Aún no tienes bloques de entrenamiento asignados
+              </Text>
+            </View>
+          ) : (
+            <FlatList
+              data={blocks}
+              keyExtractor={(item, index) =>
+                item?.id ? item.id!.toString() : index.toString()
+              }
+              scrollEnabled={false}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={[
+                    styles.card,
+                    {
+                      backgroundColor: colors.cardBackground,
+                      borderColor: colors.primary,
+                      borderWidth: 2,
+                      shadowColor: "#000",
+                      shadowOffset: { width: 0, height: 2 },
+                      shadowOpacity: 0.5,
+                      shadowRadius: 4,
+                      elevation: 4,
+                    },
+                  ]}
+                  onPress={() => router.push(`/fit/${item.id}`)}
+                  activeOpacity={0.8}
                 >
-                  Bloque completado: {item.completed ? "Sí" : "No"}
-                </Text>
-                {role === "coach" && (
-                  <View style={styles.buttonsRow}>
-                    <TouchableOpacity
-                      style={[styles.modalBtn, { backgroundColor: "#555" }]}
-                      onPress={() => {
-                        setCurrentBlock(item);
-                        setSelectedAthleteId(item.athlete || null);
-                        setModalVisible(true);
-                      }}
-                    >
-                      <Text style={styles.modalBtnText}>Editar</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={[
-                        styles.modalBtn,
-                        { backgroundColor: colors.primary },
-                      ]}
-                      onPress={() => {
-                        Alert.alert(
-                          "Confirmar eliminación",
-                          `¿Estás seguro de que deseas eliminar el bloque "${item.name}"?`,
-                          [
-                            {
-                              text: "Cancelar",
-                              style: "cancel",
-                            },
-                            {
-                              text: "Eliminar",
-                              style: "destructive",
-                              onPress: () => deleteBlock(item.id!),
-                            },
-                          ]
-                        );
-                      }}
-                    >
-                      <Text style={styles.modalBtnText}>Eliminar</Text>
-                    </TouchableOpacity>
-                  </View>
-                )}
-              </TouchableOpacity>
-            )}
-          />
+                  <Text style={[styles.blockName, { color: colors.textPrimary }]}>
+                    {item.name}
+                  </Text>
+                  <Text style={{ color: colors.muted }}>
+                    Periodo: {item.periodization}
+                  </Text>
+                  <Text style={{ color: colors.muted }}>
+                    Inicio: {item.start_date} | Fin: {item.end_date}
+                  </Text>
+                  {item.athlete && (
+                    <Text style={{ color: colors.muted }}>
+                      Atleta ID: {item.athlete}
+                    </Text>
+                  )}
+                  <Text
+                    style={{
+                      color: item.completed ? "green" : "orange",
+                      fontWeight: "600",
+                    }}
+                  >
+                    Bloque completado: {item.completed ? "Sí" : "No"}
+                  </Text>
+                  {role === "coach" && (
+                    <View style={styles.buttonsRow}>
+                      <TouchableOpacity
+                        style={[styles.modalBtn, { backgroundColor: "#555" }]}
+                        onPress={() => {
+                          setCurrentBlock(item);
+                          setSelectedAthleteId(item.athlete || null);
+                          setModalVisible(true);
+                        }}
+                      >
+                        <Text style={styles.modalBtnText}>Editar</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={[styles.modalBtn, { backgroundColor: colors.primary }]}
+                        onPress={() => {
+                          Alert.alert(
+                            "Confirmar eliminación",
+                            `¿Estás seguro de que deseas eliminar el bloque "${item.name}"?`,
+                            [
+                              { text: "Cancelar", style: "cancel" },
+                              {
+                                text: "Eliminar",
+                                style: "destructive",
+                                onPress: () => deleteBlock(item.id!),
+                              },
+                            ]
+                          );
+                        }}
+                      >
+                        <Text style={styles.modalBtnText}>Eliminar</Text>
+                      </TouchableOpacity>
+                    </View>
+                  )}
+                </TouchableOpacity>
+              )}
+            />
+          )}
         </View>
       </ScrollView>
 
@@ -303,10 +322,7 @@ export default function BlocksScreen() {
       <Modal visible={modalVisible} animationType="slide" transparent>
         <View style={styles.modalBackground}>
           <View
-            style={[
-              styles.modalContent,
-              { backgroundColor: colors.cardBackground },
-            ]}
+            style={[styles.modalContent, { backgroundColor: colors.cardBackground }]}
           >
             <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>
               {currentBlock?.id ? "Editar" : "Agregar"} Bloque
@@ -316,80 +332,53 @@ export default function BlocksScreen() {
             <TextInput
               placeholder="Nombre"
               placeholderTextColor={colors.muted}
-              style={[
-                styles.input,
-                { color: colors.textPrimary, borderColor: colors.muted },
-              ]}
+              style={[styles.input, { color: colors.textPrimary, borderColor: colors.muted }]}
               value={currentBlock?.name}
               onChangeText={(text) =>
-                setCurrentBlock((prev) =>
-                  prev ? { ...prev, name: text } : null
-                )
+                setCurrentBlock((prev) => (prev ? { ...prev, name: text } : null))
               }
             />
             <TextInput
               placeholder="Periodización (LINEAL, DUP, BLOQUES)"
               placeholderTextColor={colors.muted}
-              style={[
-                styles.input,
-                { color: colors.textPrimary, borderColor: colors.muted },
-              ]}
+              style={[styles.input, { color: colors.textPrimary, borderColor: colors.muted }]}
               value={currentBlock?.periodization}
               onChangeText={(text) =>
-                setCurrentBlock((prev) =>
-                  prev ? { ...prev, periodization: text } : null
-                )
+                setCurrentBlock((prev) => (prev ? { ...prev, periodization: text } : null))
               }
             />
             <TextInput
               placeholder="Fecha inicio YYYY-MM-DD"
               placeholderTextColor={colors.muted}
-              style={[
-                styles.input,
-                { color: colors.textPrimary, borderColor: colors.muted },
-              ]}
+              style={[styles.input, { color: colors.textPrimary, borderColor: colors.muted }]}
               value={currentBlock?.start_date}
               onChangeText={(text) =>
-                setCurrentBlock((prev) =>
-                  prev ? { ...prev, start_date: text } : null
-                )
+                setCurrentBlock((prev) => (prev ? { ...prev, start_date: text } : null))
               }
             />
             <TextInput
               placeholder="Fecha fin YYYY-MM-DD"
               placeholderTextColor={colors.muted}
-              style={[
-                styles.input,
-                { color: colors.textPrimary, borderColor: colors.muted },
-              ]}
+              style={[styles.input, { color: colors.textPrimary, borderColor: colors.muted }]}
               value={currentBlock?.end_date}
               onChangeText={(text) =>
-                setCurrentBlock((prev) =>
-                  prev ? { ...prev, end_date: text } : null
-                )
+                setCurrentBlock((prev) => (prev ? { ...prev, end_date: text } : null))
               }
             />
             <TextInput
               placeholder="Fecha objetivo YYYY-MM-DD (opcional)"
               placeholderTextColor={colors.muted}
-              style={[
-                styles.input,
-                { color: colors.textPrimary, borderColor: colors.muted },
-              ]}
+              style={[styles.input, { color: colors.textPrimary, borderColor: colors.muted }]}
               value={currentBlock?.goal_competition_date}
               onChangeText={(text) =>
-                setCurrentBlock((prev) =>
-                  prev ? { ...prev, goal_competition_date: text } : null
-                )
+                setCurrentBlock((prev) => (prev ? { ...prev, goal_competition_date: text } : null))
               }
             />
 
             {/* Atletas */}
             {role === "coach" && athletes.length > 0 && (
               <>
-                <Text
-                  style={{ color: colors.muted, fontSize: 12, marginBottom: 4 }}
-                >
+                <Text style={{ color: colors.muted, fontSize: 12, marginBottom: 4 }}>
                   Atletas
                 </Text>
                 <FlatList
@@ -402,18 +391,14 @@ export default function BlocksScreen() {
                         styles.athleteItem,
                         {
                           borderColor:
-                            selectedAthleteId === item.id
-                              ? colors.primary
-                              : colors.muted,
+                            selectedAthleteId === item.id ? colors.primary : colors.muted,
                           backgroundColor:
                             selectedAthleteId === item.id ? "#222" : "#111",
                         },
                       ]}
                       onPress={() => setSelectedAthleteId(item.id)}
                     >
-                      <Text style={{ color: colors.textPrimary }}>
-                        {item.label}
-                      </Text>
+                      <Text style={{ color: colors.textPrimary }}>{item.label}</Text>
                     </TouchableOpacity>
                   )}
                 />
@@ -447,46 +432,17 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   center: { flex: 1, justifyContent: "center", alignItems: "center" },
   title: { fontSize: 22, fontWeight: "bold", marginBottom: 16, marginTop: 16 },
-  addButton: {
-    marginBottom: 16,
-    padding: 12,
-    borderRadius: 8,
-    alignItems: "center",
-  },
+  addButton: { marginBottom: 16, padding: 12, borderRadius: 8, alignItems: "center" },
   addButtonText: { color: "#fff", fontWeight: "bold" },
   card: { padding: 16, marginBottom: 10, borderRadius: 8 },
   blockName: { fontSize: 16, fontWeight: "600" },
-  buttonsRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: 10,
-  },
-  modalBackground: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#00000099",
-  },
+  buttonsRow: { flexDirection: "row", justifyContent: "space-between", marginTop: 10 },
+  modalBackground: { flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#00000099" },
   modalContent: { width: "90%", padding: 16, borderRadius: 8 },
   modalTitle: { fontSize: 18, fontWeight: "bold", marginBottom: 12 },
   input: { borderWidth: 1, borderRadius: 6, padding: 8, marginBottom: 12 },
-  athleteItem: {
-    padding: 10,
-    marginVertical: 4,
-    borderRadius: 6,
-    borderWidth: 1,
-  },
-  modalButtons: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: 16,
-  },
-  modalBtn: {
-    flex: 1,
-    marginHorizontal: 5,
-    padding: 12,
-    borderRadius: 6,
-    alignItems: "center",
-  },
+  athleteItem: { padding: 10, marginVertical: 4, borderRadius: 6, borderWidth: 1 },
+  modalButtons: { flexDirection: "row", justifyContent: "space-between", marginTop: 16 },
+  modalBtn: { flex: 1, marginHorizontal: 5, padding: 12, borderRadius: 6, alignItems: "center" },
   modalBtnText: { color: "#fff", fontWeight: "bold" },
 });

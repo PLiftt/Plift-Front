@@ -220,6 +220,11 @@ const PerfilScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
             </TouchableOpacity>
           )}
 
+          <TouchableOpacity style={styles.button} onPress={() => router.push("/perfil/historial")}>
+            <Ionicons name="time-outline" size={20} color="#fff" />
+            <Text style={styles.buttonText}>{language === "es" ? "Historial" : "History"}</Text>
+          </TouchableOpacity>
+
           <TouchableOpacity style={styles.button} onPress={() => router.push("/editarperfil")}>
             <Ionicons name="create-outline" size={20} color="#fff" />
             <Text style={styles.buttonText}>{language === "es" ? "Editar Perfil" : "Edit Profile"}</Text>
