@@ -1,7 +1,7 @@
 import { Link, useRouter } from "expo-router";
 import React, { useState } from "react";
+import {SafeAreaView} from "react-native-safe-area-context";
 import {
-  SafeAreaView,
   View,
   Text,
   TextInput,
