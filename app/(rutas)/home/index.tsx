@@ -17,6 +17,9 @@ import { deleteToken, getToken } from "../../../services/secureStore";
 import { createInvitation } from "../../../services/invitationService";
 import BottomNav from "../../components/bottomNav";
 
+// ⬇️ NUEVO: importa el widget
+import AIChatWidget from "../../components/AIChatWidget";
+
 const { width } = Dimensions.get("window");
 
 interface UserProfile {
@@ -210,6 +213,12 @@ const HomeScreen: React.FC = () => {
           <Text style={styles.motivationAuthor}>— Henry Rollins</Text>
         </View>
       </ScrollView>
+
+      {/* burbuja de chat IA */}
+      <AIChatWidget
+        userName={profile.first_name || profile.email}
+        role={profile.role}
+      />
 
       <BottomNav />
     </View>
