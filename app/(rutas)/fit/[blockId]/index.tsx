@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import {
   View,
   Text,
@@ -16,12 +16,14 @@ import { getToken } from "services/secureStore";
 import { getUserProfile } from "services/userService";
 import { API_URL } from "@env";
 import { ArrowLeft } from "lucide-react-native";
+// Si usas react-navigation, puedes refrescar al volver:
+// import { useFocusEffect } from "@react-navigation/native";
 
 interface Session {
   id?: number;
   date: string;
   notes?: string;
-  completed?: boolean;
+  completed?: boolean; // Usamos esto para decidir la etiqueta del botón
 }
 
 export default function SessionsScreen() {
@@ -31,6 +33,7 @@ export default function SessionsScreen() {
   const [loading, setLoading] = useState(true);
   const [role, setRole] = useState<string | null>(null);
   const [currentSession, setCurrentSession] = useState<Session | null>(null);
+  const [startingId, setStartingId] = useState<number | null>(null);
 
   const colors = {
     background: "#000",
@@ -48,6 +51,13 @@ export default function SessionsScreen() {
     if (role) fetchSessions();
   }, [role]);
 
+  // Opcional: refrescar al volver a esta screen
+  // useFocusEffect(
+  //   useCallback(() => {
+  //     fetchSessions();
+  //   }, [])
+  // );
+
   const fetchRole = async () => {
     const user = await getUserProfile();
     setRole(user.role.toLowerCase());
@@ -59,9 +69,7 @@ export default function SessionsScreen() {
       const token = await getToken("accessToken");
       const res = await fetch(
         `${API_URL.replace(/\/$/, "")}/sessions/?block=${blockId}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
       const data = await res.json();
       setSessions(data);
@@ -115,6 +123,45 @@ export default function SessionsScreen() {
     }
   };
 
+  // "Comenzar sesión": marca completada y navega
+  const startSession = async (id: number) => {
+    try {
+      setStartingId(id);
+      const token = await getToken("accessToken");
+      const res = await fetch(`${API_URL.replace(/\/$/, "")}/sessions/${id}/`, {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        // Si "comenzar" no debería marcar completada, cambia a { started: true }
+        body: JSON.stringify({ started: true, completed: true }),
+      });
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(text || `HTTP ${res.status}`);
+      }
+
+      // Actualización optimista para que al volver se vea "Ver sesión"
+      setSessions((prev) =>
+        prev.map((s) => (s.id === id ? { ...s, completed: true } : s))
+      );
+
+      // Navega a la sesión
+      router.push(`/fit/${blockId}/${id}`);
+    } catch (err) {
+      console.error(err);
+      Alert.alert("Error", "No se pudo comenzar la sesión.");
+    } finally {
+      setStartingId(null);
+    }
+  };
+
+  // "Ver sesión": solo navegar
+  const viewSession = (id: number) => {
+    router.push(`/fit/${blockId}/${id}`);
+  };
+
   if (loading)
     return (
       <View style={[styles.center, { backgroundColor: colors.background }]}>
@@ -128,7 +175,7 @@ export default function SessionsScreen() {
         contentContainerStyle={{ paddingBottom: 120, paddingHorizontal: 16 }}
         showsVerticalScrollIndicator={false}
       >
-        {/* Flecha volver atrás */}
+        {/* Back */}
         <TouchableOpacity style={{ padding: 16 }} onPress={() => router.back()}>
           <ArrowLeft size={24} color={colors.textPrimary} />
         </TouchableOpacity>
@@ -162,16 +209,16 @@ export default function SessionsScreen() {
           }
           scrollEnabled={false}
           renderItem={({ item }) => (
-            <TouchableOpacity
+            // CARD sin onPress: NO navega al tocar el contenedor
+            <View
               style={[
                 styles.card,
                 {
-                  backgroundColor: colors.cardBackground, // Siempre mismo fondo
+                  backgroundColor: colors.cardBackground,
                   borderColor: colors.primary,
                   borderWidth: 2,
                 },
               ]}
-              onPress={() => router.push(`/fit/${blockId}/${item.id}`)}
             >
               <Text style={[styles.blockName, { color: colors.textPrimary }]}>
                 Sesión: {item.date}
@@ -179,40 +226,64 @@ export default function SessionsScreen() {
               <Text style={{ color: colors.textPrimary }}>
                 Notas: {item.notes || "-"}
               </Text>
+
               <Text
                 style={{
                   color: item.completed ? "green" : "orange",
                   fontWeight: "600",
+                  marginTop: 6,
                 }}
               >
                 Sesión completada: {item.completed ? "Sí" : "No"}
               </Text>
 
+              {/* Botón para atleta SIEMPRE visible.
+                  - Si NO está completada => "Comenzar sesión"
+                  - Si ya está completada => "Ver sesión" */}
+              {role === "athlete" && !!item.id && (
+                <TouchableOpacity
+                  onPress={() =>
+                    item.completed ? viewSession(item.id!) : startSession(item.id!)
+                  }
+                  disabled={startingId === item.id}
+                  style={[
+                    styles.sessionBtn,
+                    {
+                      backgroundColor: colors.primary,
+                      opacity: startingId === item.id ? 0.7 : 1,
+                    },
+                  ]}
+                >
+                  <Text style={styles.sessionBtnText}>
+                    {startingId === item.id
+                      ? "Iniciando..."
+                      : item.completed
+                      ? "Ver sesión"
+                      : "Comenzar sesión"}
+                  </Text>
+                </TouchableOpacity>
+              )}
+
+              {/* Acciones de coach (sin cambios) */}
               {role === "coach" && (
-                <View style={styles.buttonsRow}>
+                <View className="buttonsRow" style={styles.buttonsRow}>
                   <TouchableOpacity
                     style={[
                       styles.modalBtn,
                       { backgroundColor: "#555", flex: 1, marginRight: 8 },
-                    ]} // color gris oscuro, no verde
+                    ]}
                     onPress={() => setCurrentSession(item)}
                   >
                     <Text style={styles.modalBtnText}>Editar</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
-                    style={[
-                      styles.modalBtn,
-                      { backgroundColor: colors.primary },
-                    ]}
+                    style={[styles.modalBtn, { backgroundColor: colors.primary }]}
                     onPress={() => {
                       Alert.alert(
                         "Confirmar eliminación",
-                        `¿Estás seguro de que deseas eliminar la sesión "${item.date}"?`,
+                        `¿Eliminar la sesión "${item.date}"?`,
                         [
-                          {
-                            text: "Cancelar",
-                            style: "cancel",
-                          },
+                          { text: "Cancelar", style: "cancel" },
                           {
                             text: "Eliminar",
                             style: "destructive",
@@ -226,12 +297,12 @@ export default function SessionsScreen() {
                   </TouchableOpacity>
                 </View>
               )}
-            </TouchableOpacity>
+            </View>
           )}
         />
       </ScrollView>
 
-      {/* Modal */}
+      {/* Modal CRUD sesiones */}
       <Modal visible={!!currentSession} animationType="slide" transparent>
         <View style={styles.modalBackground}>
           <View
@@ -339,4 +410,15 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   modalBtnText: { color: "#fff", fontWeight: "bold" },
+
+  // Botón acción (comenzar / ver)
+  sessionBtn: {
+    marginTop: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    alignItems: "center",
+    alignSelf: "flex-start",
+  },
+  sessionBtnText: { color: "#fff", fontWeight: "bold" },
 });
