@@ -17,6 +17,7 @@ import * as ImagePicker from "expo-image-picker";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useAppContext } from "app/context/appContext";
 
 interface Message {
   id: number;
@@ -27,22 +28,49 @@ interface Message {
 }
 
 const initialMessages: Message[] = [
-  {
-    id: 1,
-    text: "¿En qué puedo ayudarte hoy?",
-    sender: "coach",
-    timestamp: "10:30",
-  },
-  {
-    id: 2,
-    text: "Hola, tengo una pregunta sobre mi rutina",
-    sender: "user",
-    timestamp: "10:32",
-  },
+  { id: 1, text: "¿En qué puedo ayudarte hoy?", sender: "coach", timestamp: "10:30" },
+  { id: 2, text: "Hola, tengo una pregunta sobre mi rutina", sender: "user", timestamp: "10:32" },
 ];
 
 export default function ChatPage() {
   const navigation = useNavigation();
+  const { isDarkMode, language } = useAppContext();
+
+  // Paleta según tema (NO cambia tu lógica, solo colores)
+  const palette = isDarkMode
+    ? {
+        background: "#0F0F0F",
+        header: "#1E1E1E",
+        headerText: "#FFFFFF",
+        text: "#FFFFFF",
+        subtext: "#AAAAAA",
+        coachBubble: "#333333",
+        coachText: "#FFFFFF",
+        userBubble: "#EF233C",
+        userText: "#FFFFFF",
+        inputBg: "#22262E",
+        inputText: "#FFFFFF",
+        placeholder: "#AAAAAA",
+        barBorder: "#2A2A2A",
+        modalOverlay: "rgba(0,0,0,0.95)",
+      }
+    : {
+        background: "#F9F9F9",
+        header: "#FFFFFF",
+        headerText: "#111111",
+        text: "#111111",
+        subtext: "#555555",
+        coachBubble: "#E5E7EB",
+        coachText: "#111111",
+        userBubble: "#EF233C",
+        userText: "#FFFFFF",
+        inputBg: "#FFFFFF",
+        inputText: "#111111",
+        placeholder: "#888888",
+        barBorder: "#E5E7EB",
+        modalOverlay: "rgba(0,0,0,0.5)",
+      };
+
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const scrollRef = useRef<ScrollView>(null);
@@ -55,11 +83,8 @@ export default function ChatPage() {
     const loadMessages = async () => {
       try {
         const stored = await AsyncStorage.getItem("chatMessages");
-        if (stored) {
-          setMessages(JSON.parse(stored));
-        } else {
-          setMessages(initialMessages);
-        }
+        if (stored) setMessages(JSON.parse(stored));
+        else setMessages(initialMessages);
       } catch (e) {
         console.error("Error cargando mensajes:", e);
         setMessages(initialMessages);
@@ -68,7 +93,7 @@ export default function ChatPage() {
     loadMessages();
   }, []);
 
-  // --- Guardar mensajes cada vez que cambian ---
+  // --- Guardar mensajes cada vez que cambian + autoscroll ---
   useEffect(() => {
     AsyncStorage.setItem("chatMessages", JSON.stringify(messages)).catch((e) =>
       console.error("Error guardando mensajes:", e)
@@ -83,7 +108,7 @@ export default function ChatPage() {
       id: messages.length + 1,
       text: newMessage,
       sender: "user",
-      timestamp: new Date().toLocaleTimeString("es-ES", {
+      timestamp: new Date().toLocaleTimeString(language === "es" ? "es-CL" : "en-US", {
         hour: "2-digit",
         minute: "2-digit",
       }),
@@ -94,10 +119,13 @@ export default function ChatPage() {
 
     setTimeout(() => {
       const coachMessage: Message = {
-        id: messages.length + 2,
-        text: "Entiendo. Recuerda trabajar en la técnica y progresar gradualmente.",
+        id: message.id + 1,
+        text:
+          language === "es"
+            ? "Entiendo. Recuerda trabajar en la técnica y progresar gradualmente."
+            : "Got it. Remember to focus on technique and progress gradually.",
         sender: "coach",
-        timestamp: new Date().toLocaleTimeString("es-ES", {
+        timestamp: new Date().toLocaleTimeString(language === "es" ? "es-CL" : "en-US", {
           hour: "2-digit",
           minute: "2-digit",
         }),
@@ -109,16 +137,17 @@ export default function ChatPage() {
   const requestCameraPermissions = async () => {
     const { status: cameraStatus } = await ImagePicker.requestCameraPermissionsAsync();
     if (cameraStatus !== "granted") {
-      Alert.alert("Permiso denegado", "Necesitamos acceso a la cámara.");
+      Alert.alert(language === "es" ? "Permiso denegado" : "Permission denied",
+        language === "es" ? "Necesitamos acceso a la cámara." : "We need camera access.");
       return false;
     }
 
     const { status: mediaStatus } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (mediaStatus !== "granted") {
-      Alert.alert("Permiso denegado", "Necesitamos acceso a tus fotos.");
+      Alert.alert(language === "es" ? "Permiso denegado" : "Permission denied",
+        language === "es" ? "Necesitamos acceso a tus fotos." : "We need access to your photos.");
       return false;
     }
-
     return true;
   };
 
@@ -139,7 +168,7 @@ export default function ChatPage() {
         id: messages.length + 1,
         imageUri,
         sender: "user",
-        timestamp: new Date().toLocaleTimeString("es-ES", {
+        timestamp: new Date().toLocaleTimeString(language === "es" ? "es-CL" : "en-US", {
           hour: "2-digit",
           minute: "2-digit",
         }),
@@ -164,7 +193,7 @@ export default function ChatPage() {
         id: messages.length + 1,
         imageUri,
         sender: "user",
-        timestamp: new Date().toLocaleTimeString("es-ES", {
+        timestamp: new Date().toLocaleTimeString(language === "es" ? "es-CL" : "en-US", {
           hour: "2-digit",
           minute: "2-digit",
         }),
@@ -175,16 +204,18 @@ export default function ChatPage() {
 
   return (
     <KeyboardAvoidingView
-      style={styles.container}
+      style={[styles.container, { backgroundColor: palette.background }]}
       behavior={Platform.OS === "ios" ? "padding" : undefined}
       keyboardVerticalOffset={100}
     >
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { backgroundColor: palette.header, borderBottomColor: palette.barBorder }]}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Ionicons name="arrow-back" size={28} color="#fff" />
+          <Ionicons name="arrow-back" size={28} color={palette.headerText} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Coach Juan</Text>
+        <Text style={[styles.headerTitle, { color: palette.headerText }]}>
+          {language === "es" ? "Coach Juan" : "Coach John"}
+        </Text>
       </View>
 
       {/* Chat messages */}
@@ -193,43 +224,35 @@ export default function ChatPage() {
         ref={scrollRef}
         contentContainerStyle={{ paddingVertical: 10 }}
       >
-        {messages.map((msg) => (
-          <View
-            key={msg.id}
-            style={[
-              styles.messageBubble,
-              msg.sender === "user" ? styles.userBubble : styles.coachBubble,
-            ]}
-          >
-            {msg.text && <Text style={styles.messageText}>{msg.text}</Text>}
-            {msg.imageUri && (
-              <TouchableOpacity
-                onPress={() => {
-                  if (msg.imageUri) {
-                    setModalImageUri(msg.imageUri);
+        {messages.map((msg) => {
+          const isUser = msg.sender === "user";
+          const bubbleStyle = isUser
+            ? { backgroundColor: palette.userBubble, alignSelf: "flex-end" as const }
+            : { backgroundColor: palette.coachBubble, alignSelf: "flex-start" as const };
+          const textColor = isUser ? palette.userText : palette.coachText;
+          const timeColor = isUser ? "#ffd1d1" : palette.subtext;
+
+          return (
+            <View key={msg.id} style={[styles.messageBubble, bubbleStyle]}>
+              {!!msg.text && <Text style={[styles.messageText, { color: textColor }]}>{msg.text}</Text>}
+              {!!msg.imageUri && (
+                <TouchableOpacity
+                  onPress={() => {
+                    setModalImageUri(msg.imageUri!);
                     setModalVisible(true);
-                  }
-                }}
-              >
-                <Image source={{ uri: msg.imageUri }} style={styles.image} />
-              </TouchableOpacity>
-            )}
-            <Text
-              style={[
-                styles.timestamp,
-                msg.sender === "user"
-                  ? styles.userTimestamp
-                  : styles.coachTimestamp,
-              ]}
-            >
-              {msg.timestamp}
-            </Text>
-          </View>
-        ))}
+                  }}
+                >
+                  <Image source={{ uri: msg.imageUri }} style={styles.image} />
+                </TouchableOpacity>
+              )}
+              <Text style={[styles.timestamp, { color: timeColor, textAlign: isUser ? "right" : "left" }]}>{msg.timestamp}</Text>
+            </View>
+          );
+        })}
       </ScrollView>
 
       {/* Input */}
-      <View style={styles.inputContainer}>
+      <View style={[styles.inputContainer, { backgroundColor: palette.header, borderTopColor: palette.barBorder }]}>
         <TouchableOpacity onPress={pickImage}>
           <Ionicons name="image-outline" size={28} color="#EF233C" />
         </TouchableOpacity>
@@ -239,9 +262,9 @@ export default function ChatPage() {
         </TouchableOpacity>
 
         <TextInput
-          style={styles.input}
-          placeholder="Escribe tu mensaje..."
-          placeholderTextColor="#aaa"
+          style={[styles.input, { backgroundColor: palette.inputBg, color: palette.inputText }]}
+          placeholder={language === "es" ? "Escribe tu mensaje..." : "Type your message..."}
+          placeholderTextColor={palette.placeholder}
           value={newMessage}
           onChangeText={setNewMessage}
         />
@@ -252,12 +275,10 @@ export default function ChatPage() {
       </View>
 
       {/* Modal para imagen */}
-      <Modal visible={modalVisible} transparent={true} animationType="fade">
+      <Modal visible={modalVisible} transparent animationType="fade">
         <TouchableWithoutFeedback onPress={() => setModalVisible(false)}>
-          <View style={styles.modalBackground}>
-            {modalImageUri && (
-              <Image source={{ uri: modalImageUri }} style={styles.modalImage} />
-            )}
+          <View style={[styles.modalBackground, { backgroundColor: palette.modalOverlay }]}>
+            {modalImageUri && <Image source={{ uri: modalImageUri }} style={styles.modalImage} />}
           </View>
         </TouchableWithoutFeedback>
       </Modal>
@@ -266,51 +287,39 @@ export default function ChatPage() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#121212" },
+  container: { flex: 1 },
+
   header: {
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: "#1E1E1E",
+    borderBottomWidth: 1,
   },
-  headerTitle: {
-    color: "#fff",
-    fontSize: 20,
-    fontWeight: "bold",
-    marginLeft: 16,
-  },
+  headerTitle: { fontSize: 20, fontWeight: "bold", marginLeft: 16 },
+
   messagesContainer: { flex: 1, paddingHorizontal: 10 },
+
   messageBubble: {
     maxWidth: "70%",
     borderRadius: 12,
     padding: 10,
     marginVertical: 5,
   },
-  userBubble: {
-    backgroundColor: "#EF233C",
-    alignSelf: "flex-end",
-  },
-  coachBubble: {
-    backgroundColor: "#333",
-    alignSelf: "flex-start",
-  },
-  messageText: { color: "#fff", fontSize: 16 },
+  messageText: { fontSize: 16 },
   timestamp: { fontSize: 10, marginTop: 4 },
-  userTimestamp: { color: "#ffd1d1", textAlign: "right" },
-  coachTimestamp: { color: "#aaa", textAlign: "left" },
+
   image: { width: 150, height: 150, borderRadius: 12, marginTop: 5 },
+
   inputContainer: {
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 10,
     paddingVertical: 6,
-    backgroundColor: "#1E1E1E",
+    borderTopWidth: 1,
   },
   input: {
     flex: 1,
-    color: "#fff",
-    backgroundColor: "#2A2A2A",
     borderRadius: 20,
     paddingHorizontal: 16,
     marginHorizontal: 8,
@@ -321,9 +330,9 @@ const styles = StyleSheet.create({
     padding: 10,
     borderRadius: 20,
   },
+
   modalBackground: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.95)",
     justifyContent: "center",
     alignItems: "center",
   },

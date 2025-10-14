@@ -10,6 +10,7 @@ import {
 import { getUserProfile } from "../../../services/userService";
 import BottomNav from "../../components/bottomNav";
 import { TrendingUp, TrendingDown, Activity } from "lucide-react-native";
+import { useAppContext } from "app/context/appContext";
 
 const { width } = Dimensions.get("window");
 
@@ -27,15 +28,32 @@ interface UserProfile {
 export default function EstadisticasPage() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const { isDarkMode, language } = useAppContext();
 
-  const colors = {
-    background: "#000",
-    cardBackground: "#111",
-    primary: "#EF233C",
-    secondary: "#4CAF50",
-    textPrimary: "#fff",
-    muted: "#888",
-  };
+  // 🎨 Paleta por tema (solo estilos)
+  const palette = isDarkMode
+    ? {
+        background: "#0F0F0F",
+        cardBackground: "#1E1E1E",
+        cardAlt: "#1A1A1A",
+        primary: "#EF233C",
+        secondary: "#28a745",
+        textPrimary: "#FFFFFF",
+        muted: "#9CA3AF",
+        border: "#262626",
+        track: "#22262E",
+      }
+    : {
+        background: "#F8FAFC",
+        cardBackground: "#FFFFFF",
+        cardAlt: "#FFFFFF",
+        primary: "#EF233C",
+        secondary: "#22c55e",
+        textPrimary: "#111827",
+        muted: "#6B7280",
+        border: "#E5E7EB",
+        track: "#E5E7EB",
+      };
 
   const fetchProfile = async () => {
     try {
@@ -63,21 +81,23 @@ export default function EstadisticasPage() {
 
   if (loading) {
     return (
-      <View style={[styles.container, { backgroundColor: colors.background }]}>
-        <ActivityIndicator size="large" color={colors.primary} />
+      <View style={[styles.container, { backgroundColor: palette.background, justifyContent: "center", alignItems: "center" }]}>
+        <ActivityIndicator size="large" color={palette.primary} />
       </View>
     );
   }
 
   if (!profile) {
     return (
-      <View style={[styles.container, { backgroundColor: colors.background }]}>
-        <Text style={{ color: colors.textPrimary }}>No se pudo cargar el perfil.</Text>
+      <View style={[styles.container, { backgroundColor: palette.background, justifyContent: "center", alignItems: "center" }]}>
+        <Text style={{ color: palette.textPrimary }}>
+          {language === "es" ? "No se pudo cargar el perfil." : "Could not load profile."}
+        </Text>
       </View>
     );
   }
 
-  // Cálculos iniciales de stats (temporal, reemplazar con backend)
+  // Cálculos iniciales de stats (temporal)
   const stats = {
     bodyWeight: { current: profile.bodyweight_kg ?? 0, previous: profile.bodyweight_kg ?? 0, unit: "kg", change: 0 },
     squat: { current: profile.squat_1rm ?? 0, previous: profile.squat_1rm ?? 0, unit: "kg", change: 0 },
@@ -96,48 +116,81 @@ export default function EstadisticasPage() {
       d = -0.00113732,
       e = 7.01863e-6,
       f = -1.291e-8;
-    const bw = bodyWeight;
+    const bw = bodyWeight || 0.00001; // evitar división por 0
     return (total * 500) / (a + b * bw + c * bw ** 2 + d * bw ** 3 + e * bw ** 4 + f * bw ** 5);
   };
 
+  // Textos
+  const T = {
+    header: language === "es" ? "Estadísticas de Rendimiento" : "Performance Statistics",
+    totalLabel: language === "es" ? "Total (Sentadilla + Banca + Peso Muerto)" : "Total (Squat + Bench + Deadlift)",
+    body: language === "es" ? "Peso corporal" : "Body Weight",
+    squat: "1RM Squat",
+    bench: "1RM Bench",
+    deadlift: "1RM Deadlift",
+    squatDead: language === "es" ? "Ratio Sentadilla / Peso Muerto" : "Squat to Deadlift Ratio",
+    benchSquat: language === "es" ? "Ratio Banca / Sentadilla" : "Bench to Squat Ratio",
+    wilks: "Wilks Score",
+    wilksNote: language === "es" ? "Fuerza relativa al peso corporal" : "Strength relative to body weight",
+  };
+
+  const squatDeadRatio = stats.deadlift.current ? (stats.squat.current / stats.deadlift.current) * 100 : 0;
+  const benchSquatRatio = stats.squat.current ? (stats.bench.current / stats.squat.current) * 100 : 0;
+  const wilks = calculateWilks(total, stats.bodyWeight.current);
+
+  const isTotalPositive = totalChange >= 0;
+
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <View style={[styles.container, { backgroundColor: palette.background }]}>
       <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 120 }} showsVerticalScrollIndicator={false}>
         {/* Header */}
-        <Text style={[styles.header, { color: "#fff", textAlign: "center" }]}>
-          Estadísticas de Rendimiento
-        </Text>
+        <Text style={[styles.header, { color: palette.textPrimary, textAlign: "center" }]}>{T.header}</Text>
 
         {/* ---------------- BLOQUE TOTAL ---------------- */}
-        <View style={[styles.card, { backgroundColor: colors.cardBackground, borderColor: colors.primary, borderWidth: 2 }]}>
+        <View
+          style={[
+            styles.card,
+            {
+              backgroundColor: palette.cardBackground,
+              borderColor: palette.primary,
+              borderWidth: 2,
+              shadowColor: "#000",
+              shadowOpacity: isDarkMode ? 0.2 : 0.06,
+              shadowRadius: 5,
+            },
+          ]}
+        >
           <View style={styles.rowBetween}>
             <View>
-              <Text style={[styles.smallText, { color: colors.muted, textTransform: "uppercase" }]}>
-                Total (Squat + Bench + Deadlift)
+              <Text style={[styles.smallText, { color: palette.muted, textTransform: "uppercase" }]}>
+                {T.totalLabel}
               </Text>
-              <Text style={[styles.bigText, { color: colors.primary }]}>{total} kg</Text>
+              <Text style={[styles.bigText, { color: palette.primary }]}>{total} kg</Text>
             </View>
             <View style={styles.changeBadge}>
-              {totalChange >= 0 ? <TrendingUp size={18} color={colors.secondary} /> : <TrendingDown size={18} color={colors.primary} />}
-              <Text style={{ color: totalChange >= 0 ? colors.secondary : colors.primary }}>
-                {totalChange >= 0 ? "+" : ""}{totalChange}
+              {isTotalPositive ? (
+                <TrendingUp size={18} color={palette.secondary} />
+              ) : (
+                <TrendingDown size={18} color={palette.primary} />
+              )}
+              <Text style={{ color: isTotalPositive ? palette.secondary : palette.primary }}>
+                {isTotalPositive ? "+" : ""}
+                {totalChange}
               </Text>
             </View>
           </View>
         </View>
 
         {/* ---------------- BLOQUES INDIVIDUALES ---------------- */}
-        {/* Reemplazar cada StatCard con datos reales del backend */}
-        <StatCard title="Body Weight" stat={stats.bodyWeight} colors={colors} icon={<Activity />} />
-        <StatCard title="1RM Squat" stat={stats.squat} colors={colors} />
-        <StatCard title="1RM Bench" stat={stats.bench} colors={colors} />
-        <StatCard title="1RM Deadlift" stat={stats.deadlift} colors={colors} />
+        <StatCard title={T.body}   stat={stats.bodyWeight} colors={palette} icon={<Activity color={palette.primary} />} />
+        <StatCard title={T.squat}  stat={stats.squat}      colors={palette} />
+        <StatCard title={T.bench}  stat={stats.bench}      colors={palette} />
+        <StatCard title={T.deadlift} stat={stats.deadlift} colors={palette} />
 
         {/* ---------------- BLOQUES DE RATIOS ---------------- */}
-        {/* Reemplazar con cálculos reales o del backend */}
-        <RatioCard title="Squat to Deadlift Ratio" value={(stats.squat.current / stats.deadlift.current) * 100} colors={colors} colorBar={colors.primary} />
-        <RatioCard title="Bench to Squat Ratio" value={(stats.bench.current / stats.squat.current) * 100} colors={colors} colorBar={colors.secondary} />
-        <RatioCard title="Wilks Score" value={calculateWilks(total, stats.bodyWeight.current)} colors={colors} isWilks />
+        <RatioCard title={T.squatDead} value={squatDeadRatio} colors={palette} colorBar={palette.primary} />
+        <RatioCard title={T.benchSquat} value={benchSquatRatio} colors={palette} colorBar={palette.secondary} />
+        <RatioCard title={T.wilks} value={wilks} colors={palette} isWilks note={T.wilksNote} />
       </ScrollView>
 
       <BottomNav />
@@ -145,50 +198,100 @@ export default function EstadisticasPage() {
   );
 }
 
-// ---------------- COMPONENTES ----------------
+/* ---------------- COMPONENTES ---------------- */
 function StatCard({ title, stat, colors, icon }: any) {
   const isPositive = stat.change >= 0;
   return (
-    <View style={[styles.card, { backgroundColor: colors.cardBackground }]}>
+    <View
+      style={[
+        styles.card,
+        {
+          backgroundColor: colors.cardBackground,
+          borderColor: colors.border,
+          borderWidth: 1,
+          shadowColor: "#000",
+          shadowOpacity: 0.08,
+          shadowRadius: 4,
+        },
+      ]}
+    >
       <View style={styles.rowBetween}>
-        <Text style={[styles.smallText, { color: colors.muted, textTransform: "uppercase" }]}>{title}</Text>
-        {icon && icon}
+        <Text style={[styles.smallText, { color: colors.muted, textTransform: "uppercase" }]}>
+          {title}
+        </Text>
+        {icon || null}
       </View>
-      <Text style={[styles.bigText, { color: colors.primary }]}>{stat.current} {stat.unit}</Text>
+      <Text style={[styles.bigText, { color: colors.primary }]}>
+        {stat.current} {stat.unit}
+      </Text>
       <View style={styles.rowBetween}>
         {isPositive ? <TrendingUp size={16} color={colors.secondary} /> : <TrendingDown size={16} color={colors.primary} />}
         <Text style={{ color: isPositive ? colors.secondary : colors.primary }}>
-          {isPositive ? "+" : ""}{stat.change} {stat.unit}
+          {isPositive ? "+" : ""}
+          {stat.change} {stat.unit}
         </Text>
       </View>
     </View>
   );
 }
 
-function RatioCard({ title, value, colors, colorBar, isWilks = false }: any) {
+function RatioCard({ title, value, colors, colorBar, isWilks = false, note }: any) {
+  const clamped = Math.max(0, Math.min(value || 0, 999)); // por si hay NaN/∞
   return (
-    <View style={[styles.card, { backgroundColor: colors.cardBackground }]}>
+    <View
+      style={[
+        styles.card,
+        {
+          backgroundColor: colors.cardBackground,
+          borderColor: colors.border,
+          borderWidth: 1,
+          shadowColor: "#000",
+          shadowOpacity: 0.08,
+          shadowRadius: 4,
+        },
+      ]}
+    >
       <Text style={[styles.smallText, { color: colors.muted, textTransform: "uppercase" }]}>{title}</Text>
-      <Text style={[styles.bigText, { color: colors.primary }]}>{isWilks ? value.toFixed(1) : value.toFixed(1) + "%"}</Text>
+      <Text style={[styles.bigText, { color: colors.primary }]}>
+        {isWilks ? clamped.toFixed(1) : `${clamped.toFixed(1)}%`}
+      </Text>
       {!isWilks && (
-        <View style={styles.progressBackground}>
-          <View style={[styles.progressBar, { width: `${Math.min(value, 100)}%`, backgroundColor: colorBar }]} />
+        <View style={[styles.progressBackground, { backgroundColor: colors.track }]}>
+          <View style={[styles.progressBar, { width: `${Math.min(clamped, 100)}%`, backgroundColor: colorBar }]} />
         </View>
       )}
-      {isWilks && <Text style={{ color: colors.muted, fontSize: 12 }}>Strength relative to body weight</Text>}
+      {isWilks && (
+        <Text style={{ color: colors.muted, fontSize: 12 }}>
+          {note || "Strength relative to body weight"}
+        </Text>
+      )}
     </View>
   );
 }
 
-// ---------------- ESTILOS ----------------
+/* ---------------- ESTILOS ---------------- */
 const styles = StyleSheet.create({
   container: { flex: 1 },
   header: { fontSize: 24, fontWeight: "bold", marginBottom: 12 },
-  card: { padding: 16, borderRadius: 12, marginVertical: 8 },
+
+  card: {
+    padding: 16,
+    borderRadius: 12,
+    marginVertical: 8,
+  },
+
   rowBetween: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-  changeBadge: { flexDirection: "row", alignItems: "center", gap: 4 },
+  changeBadge: { flexDirection: "row", alignItems: "center", gap: 6 },
+
   smallText: { fontSize: 12, fontWeight: "600" },
   bigText: { fontSize: 20, fontWeight: "bold" },
-  progressBackground: { height: 6, width: "100%", backgroundColor: "#333", borderRadius: 3, marginTop: 4 },
+
+  progressBackground: {
+    height: 6,
+    width: "100%",
+    borderRadius: 3,
+    marginTop: 6,
+    overflow: "hidden",
+  },
   progressBar: { height: 6, borderRadius: 3 },
 });

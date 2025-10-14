@@ -16,6 +16,7 @@ import { getToken } from "services/secureStore";
 import { getUserProfile } from "services/userService";
 import { API_URL } from "@env";
 import { ArrowLeft } from "lucide-react-native";
+import { useAppContext } from "app/context/appContext";
 
 interface Session {
   id?: number;
@@ -33,12 +34,69 @@ export default function SessionsScreen() {
   const [currentSession, setCurrentSession] = useState<Session | null>(null);
   const [startingId, setStartingId] = useState<number | null>(null);
 
-  const colors = {
-    background: "#000",
-    cardBackground: "#111",
-    primary: "#EF233C",
-    muted: "#888",
-    textPrimary: "#fff",
+  const { isDarkMode, language } = useAppContext();
+
+  // 🎨 Paleta por tema (solo estilos, no cambia lógica)
+  const palette = isDarkMode
+    ? {
+        background: "#0F0F0F",
+        surface: "#1E1E1E",
+        surfaceAlt: "#111111",
+        text: "#FFFFFF",
+        subtext: "#9CA3AF",
+        border: "#2A2A2A",
+        accent: "#EF233C",
+        success: "#22c55e",
+        warn: "#f59e0b",
+        neutral: "#9CA3AF",
+        overlay: "rgba(0,0,0,0.6)",
+      }
+    : {
+        background: "#F8FAFC",
+        surface: "#FFFFFF",
+        surfaceAlt: "#FFFFFF",
+        text: "#111827",
+        subtext: "#6B7280",
+        border: "#E5E7EB",
+        accent: "#EF233C",
+        success: "#16a34a",
+        warn: "#d97706",
+        neutral: "#6B7280",
+        overlay: "rgba(0,0,0,0.25)",
+      };
+
+  // 🗣️ Textos
+  const T = {
+    title: language === "es" ? `Sesiones del bloque ${blockId}` : `Block ${blockId} sessions`,
+    add: language === "es" ? "+ Añadir sesión" : "+ Add session",
+    listLabel: language === "es" ? "Sesiones" : "Sessions",
+    datePh: language === "es" ? "Fecha YYYY-MM-DD" : "Date YYYY-MM-DD",
+    notesPh: language === "es" ? "Notas" : "Notes",
+    cancel: language === "es" ? "Cancelar" : "Cancel",
+    save: language === "es" ? "Guardar" : "Save",
+    edit: language === "es" ? "Editar" : "Edit",
+    del: language === "es" ? "Eliminar" : "Delete",
+    confirmDel: language === "es" ? "Confirmar eliminación" : "Confirm deletion",
+    confirmDelMsg: (d: string) =>
+      language === "es" ? `¿Eliminar la sesión "${d}"?` : `Delete session "${d}"?`,
+    status: language === "es" ? "Estado" : "Status",
+    pending: language === "es" ? "Pendiente" : "Pending",
+    inProgress: language === "es" ? "En progreso" : "In progress",
+    completed: language === "es" ? "Finalizada" : "Completed",
+    start: language === "es" ? "Comenzar sesión" : "Start session",
+    starting: language === "es" ? "Iniciando..." : "Starting...",
+    view: language === "es" ? "Ver sesión" : "View session",
+    finish: language === "es" ? "Finalizar sesión" : "Finish session",
+    confirmFinish: language === "es" ? "Finalizar sesión" : "Finish session",
+    confirmFinishMsg:
+      language === "es"
+        ? "¿Seguro que deseas marcar esta sesión como completada?"
+        : "Are you sure you want to mark this session as completed?",
+    errLoad: language === "es" ? "No se pudieron cargar las sesiones" : "Could not load sessions",
+    errSave: language === "es" ? "No se pudo guardar la sesión" : "Could not save the session",
+    errDelete: language === "es" ? "No se pudo eliminar la sesión" : "Could not delete the session",
+    errStart: language === "es" ? "No se pudo comenzar la sesión." : "Could not start the session.",
+    errFinish: language === "es" ? "No se pudo finalizar la sesión." : "Could not finish the session.",
   };
 
   useEffect(() => {
@@ -58,17 +116,14 @@ export default function SessionsScreen() {
     setLoading(true);
     try {
       const token = await getToken("accessToken");
-      const res = await fetch(
-        `${API_URL.replace(/\/$/, "")}/sessions/?block=${blockId}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+      const res = await fetch(`${API_URL.replace(/\/$/, "")}/sessions/?block=${blockId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       const data = await res.json();
       setSessions(data);
     } catch (err) {
       console.error(err);
-      Alert.alert("Error", "No se pudieron cargar las sesiones");
+      Alert.alert("Error", T.errLoad);
     } finally {
       setLoading(false);
     }
@@ -97,7 +152,7 @@ export default function SessionsScreen() {
       fetchSessions();
     } catch (err) {
       console.error(err);
-      Alert.alert("Error", "No se pudo guardar la sesión");
+      Alert.alert("Error", T.errSave);
     }
   };
 
@@ -112,7 +167,7 @@ export default function SessionsScreen() {
       fetchSessions();
     } catch (err) {
       console.error(err);
-      Alert.alert("Error", "No se pudo eliminar la sesión");
+      Alert.alert("Error", T.errDelete);
     }
   };
 
@@ -132,31 +187,21 @@ export default function SessionsScreen() {
         const text = await res.text();
         throw new Error(text || `HTTP ${res.status}`);
       }
-      setSessions((prev) =>
-        prev.map((s) => (s.id === id ? { ...s, status: "in_progress" } : s))
-      );
+      setSessions((prev) => prev.map((s) => (s.id === id ? { ...s, status: "in_progress" } : s)));
       router.push(`/fit/${blockId}/${id}`);
     } catch (err) {
       console.error(err);
-      Alert.alert("Error", "No se pudo comenzar la sesión.");
+      Alert.alert("Error", T.errStart);
     } finally {
       setStartingId(null);
     }
   };
 
   const confirmFinishSession = (id: number) => {
-    Alert.alert(
-      "Finalizar sesión",
-      "¿Seguro que deseas marcar esta sesión como completada?",
-      [
-        { text: "Cancelar", style: "cancel" },
-        {
-          text: "Finalizar",
-          style: "destructive",
-          onPress: () => finishSession(id),
-        },
-      ]
-    );
+    Alert.alert(T.confirmFinish, T.confirmFinishMsg, [
+      { text: T.cancel, style: "cancel" },
+      { text: T.finish, style: "destructive", onPress: () => finishSession(id) },
+    ]);
   };
 
   const finishSession = async (id: number) => {
@@ -175,12 +220,10 @@ export default function SessionsScreen() {
         const text = await res.text();
         throw new Error(text || `HTTP ${res.status}`);
       }
-      setSessions((prev) =>
-        prev.map((s) => (s.id === id ? { ...s, status: "completed" } : s))
-      );
+      setSessions((prev) => prev.map((s) => (s.id === id ? { ...s, status: "completed" } : s)));
     } catch (err) {
       console.error(err);
-      Alert.alert("Error", "No se pudo finalizar la sesión.");
+      Alert.alert("Error", T.errFinish);
     } finally {
       setStartingId(null);
     }
@@ -192,85 +235,71 @@ export default function SessionsScreen() {
 
   if (loading)
     return (
-      <View style={[styles.center, { backgroundColor: colors.background }]}>
-        <ActivityIndicator size="large" color={colors.primary} />
+      <View style={[styles.center, { backgroundColor: palette.background }]}>
+        <ActivityIndicator size="large" color={palette.accent} />
       </View>
     );
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <ScrollView
-        contentContainerStyle={{ paddingBottom: 120, paddingHorizontal: 16 }}
-        showsVerticalScrollIndicator={false}
-      >
+    <View style={[styles.container, { backgroundColor: palette.background }]}>
+      <ScrollView contentContainerStyle={{ paddingBottom: 120, paddingHorizontal: 16 }} showsVerticalScrollIndicator={false}>
         <TouchableOpacity style={{ padding: 16 }} onPress={() => router.back()}>
-          <ArrowLeft size={24} color={colors.textPrimary} />
+          <ArrowLeft size={24} color={palette.text} />
         </TouchableOpacity>
 
-        <Text
-          style={[
-            styles.title,
-            { color: colors.textPrimary, textAlign: "center" },
-          ]}
-        >
-          Sesiones del bloque {blockId}
+        <Text style={[styles.title, { color: palette.text, textAlign: "center" }]}>
+          {T.title}
         </Text>
 
         {role === "coach" && (
           <TouchableOpacity
-            style={[styles.addButton, { backgroundColor: "#555" }]}
+            style={[styles.addButton, { backgroundColor: isDarkMode ? "#3F3F46" : "#374151" }]}
             onPress={() => setCurrentSession({ date: "", notes: "" })}
           >
-            <Text style={styles.addButtonText}>+ Añadir sesión</Text>
+            <Text style={styles.addButtonText}>{T.add}</Text>
           </TouchableOpacity>
         )}
 
-        <Text style={{ color: colors.muted, fontSize: 12, marginBottom: 4 }}>
-          Sesiones
+        <Text style={{ color: palette.subtext, fontSize: 12, marginBottom: 4 }}>
+          {T.listLabel}
         </Text>
 
         <FlatList
           data={sessions}
-          keyExtractor={(item, index) =>
-            item?.id ? item.id!.toString() : index.toString()
-          }
+          keyExtractor={(item, index) => (item?.id ? item.id!.toString() : index.toString())}
           scrollEnabled={false}
           renderItem={({ item }) => (
             <View
               style={[
                 styles.card,
                 {
-                  backgroundColor: colors.cardBackground,
-                  borderColor: colors.primary,
+                  backgroundColor: palette.surface,
+                  borderColor: palette.accent,
                   borderWidth: 2,
                 },
               ]}
             >
-              <Text style={[styles.blockName, { color: colors.textPrimary }]}>
-                Sesión: {item.date}
+              <Text style={[styles.blockName, { color: palette.text }]}>
+                {language === "es" ? "Sesión" : "Session"}: {item.date}
               </Text>
-              <Text style={{ color: colors.textPrimary }}>
-                Notas: {item.notes || "-"}
+              <Text style={{ color: palette.text }}>
+                {language === "es" ? "Notas" : "Notes"}: {item.notes || "-"}
               </Text>
 
               <Text
                 style={{
                   color:
                     item.status === "completed"
-                      ? "green"
+                      ? palette.success
                       : item.status === "in_progress"
-                      ? "orange"
-                      : "gray",
+                      ? palette.warn
+                      : palette.neutral,
                   fontWeight: "600",
                   marginTop: 6,
                 }}
               >
-                Estado:{" "}
-                {item.status === "pending"
-                  ? "Pendiente"
-                  : item.status === "in_progress"
-                  ? "En progreso"
-                  : "Finalizada"}
+                {T.status}:{" "}
+                {item.status === "pending" ? T.pending : item.status === "in_progress" ? T.inProgress : T.completed}
               </Text>
 
               {role === "athlete" && !!item.id && (
@@ -281,29 +310,20 @@ export default function SessionsScreen() {
                       disabled={startingId === item.id}
                       style={[
                         styles.sessionBtn,
-                        {
-                          backgroundColor: colors.primary,
-                          opacity: startingId === item.id ? 0.7 : 1,
-                        },
+                        { backgroundColor: palette.accent, opacity: startingId === item.id ? 0.7 : 1 },
                       ]}
                     >
                       <Text style={styles.sessionBtnText}>
-                        {startingId === item.id
-                          ? "Iniciando..."
-                          : "Comenzar sesión"}
+                        {startingId === item.id ? T.starting : T.start}
                       </Text>
                     </TouchableOpacity>
                   )}
-                  {(item.status === "in_progress" ||
-                    item.status === "completed") && (
+                  {(item.status === "in_progress" || item.status === "completed") && (
                     <TouchableOpacity
                       onPress={() => viewSession(item.id!)}
-                      style={[
-                        styles.sessionBtn,
-                        { backgroundColor: colors.primary, marginTop: 6 },
-                      ]}
+                      style={[styles.sessionBtn, { backgroundColor: palette.accent, marginTop: 6 }]}
                     >
-                      <Text style={styles.sessionBtnText}>Ver sesión</Text>
+                      <Text style={styles.sessionBtnText}>{T.view}</Text>
                     </TouchableOpacity>
                   )}
                   {item.status === "in_progress" && (
@@ -312,16 +332,10 @@ export default function SessionsScreen() {
                       disabled={startingId === item.id}
                       style={[
                         styles.sessionBtn,
-                        {
-                          backgroundColor: colors.primary,
-                          marginTop: 6,
-                          opacity: startingId === item.id ? 0.7 : 1,
-                        },
+                        { backgroundColor: palette.accent, marginTop: 6, opacity: startingId === item.id ? 0.7 : 1 },
                       ]}
                     >
-                      <Text style={styles.sessionBtnText}>
-                        Finalizar sesión
-                      </Text>
+                      <Text style={styles.sessionBtnText}>{T.finish}</Text>
                     </TouchableOpacity>
                   )}
                 </View>
@@ -330,38 +344,22 @@ export default function SessionsScreen() {
               {role === "coach" && (
                 <View style={styles.buttonsRow}>
                   <TouchableOpacity
-                    style={[
-                      styles.modalBtn,
-                      { backgroundColor: "#555", flex: 1, marginRight: 8 },
-                    ]}
-                    onPress={() =>
-                      item.status !== "completed" && setCurrentSession(item)
-                    }
+                    style={[styles.modalBtn, { backgroundColor: isDarkMode ? "#3F3F46" : "#374151", flex: 1, marginRight: 8 }]}
+                    onPress={() => item.status !== "completed" && setCurrentSession(item)}
                     disabled={item.status === "completed"}
                   >
-                    <Text style={styles.modalBtnText}>Editar</Text>
+                    <Text style={styles.modalBtnText}>{T.edit}</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
-                    style={[
-                      styles.modalBtn,
-                      { backgroundColor: colors.primary },
-                    ]}
+                    style={[styles.modalBtn, { backgroundColor: palette.accent }]}
                     onPress={() => {
-                      Alert.alert(
-                        "Confirmar eliminación",
-                        `¿Eliminar la sesión "${item.date}"?`,
-                        [
-                          { text: "Cancelar", style: "cancel" },
-                          {
-                            text: "Eliminar",
-                            style: "destructive",
-                            onPress: () => deleteSession(item.id!),
-                          },
-                        ]
-                      );
+                      Alert.alert(T.confirmDel, T.confirmDelMsg(item.date), [
+                        { text: T.cancel, style: "cancel" },
+                        { text: T.del, style: "destructive", onPress: () => deleteSession(item.id!) },
+                      ]);
                     }}
                   >
-                    <Text style={styles.modalBtnText}>Eliminar</Text>
+                    <Text style={styles.modalBtnText}>{T.del}</Text>
                   </TouchableOpacity>
                 </View>
               )}
@@ -372,63 +370,41 @@ export default function SessionsScreen() {
 
       {/* Modal CRUD sesiones */}
       <Modal visible={!!currentSession} animationType="slide" transparent>
-        <View style={styles.modalBackground}>
-          <View
-            style={[
-              styles.modalContent,
-              { backgroundColor: colors.cardBackground },
-            ]}
-          >
-            <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>
-              {currentSession?.id ? "Editar" : "Agregar"} Sesión
+        <View style={[styles.modalBackground, { backgroundColor: palette.overlay }]}>
+          <View style={[styles.modalContent, { backgroundColor: palette.surface }]}>
+            <Text style={[styles.modalTitle, { color: palette.text }]}>
+              {currentSession?.id
+                ? language === "es"
+                  ? "Editar Sesión"
+                  : "Edit Session"
+                : language === "es"
+                ? "Agregar Sesión"
+                : "Add Session"}
             </Text>
             <TextInput
-              placeholder="Fecha YYYY-MM-DD"
-              placeholderTextColor={colors.muted}
-              style={[
-                styles.input,
-                { color: colors.textPrimary, borderColor: colors.muted },
-              ]}
+              placeholder={T.datePh}
+              placeholderTextColor={palette.subtext}
+              style={[styles.input, { color: palette.text, borderColor: palette.border, backgroundColor: palette.surfaceAlt }]}
               value={currentSession?.date}
-              onChangeText={(text) =>
-                setCurrentSession((prev) =>
-                  prev ? { ...prev, date: text } : null
-                )
-              }
+              onChangeText={(text) => setCurrentSession((prev) => (prev ? { ...prev, date: text } : null))}
             />
             <TextInput
-              placeholder="Notas"
-              placeholderTextColor={colors.muted}
-              style={[
-                styles.input,
-                { color: colors.textPrimary, borderColor: colors.muted },
-              ]}
+              placeholder={T.notesPh}
+              placeholderTextColor={palette.subtext}
+              style={[styles.input, { color: palette.text, borderColor: palette.border, backgroundColor: palette.surfaceAlt }]}
               value={currentSession?.notes || ""}
-              onChangeText={(text) =>
-                setCurrentSession((prev) =>
-                  prev ? { ...prev, notes: text } : null
-                )
-              }
+              onChangeText={(text) => setCurrentSession((prev) => (prev ? { ...prev, notes: text } : null))}
             />
 
             <View style={styles.modalButtons}>
               <TouchableOpacity
-                style={[
-                  styles.modalBtn,
-                  { backgroundColor: "#555", flex: 1, marginRight: 8 },
-                ]}
+                style={[styles.modalBtn, { backgroundColor: isDarkMode ? "#3F3F46" : "#374151", flex: 1, marginRight: 8 }]}
                 onPress={() => setCurrentSession(null)}
               >
-                <Text style={styles.modalBtnText}>Cancelar</Text>
+                <Text style={styles.modalBtnText}>{T.cancel}</Text>
               </TouchableOpacity>
-              <TouchableOpacity
-                style={[
-                  styles.modalBtn,
-                  { backgroundColor: colors.primary, flex: 1 },
-                ]}
-                onPress={saveSession}
-              >
-                <Text style={styles.modalBtnText}>Guardar</Text>
+              <TouchableOpacity style={[styles.modalBtn, { backgroundColor: palette.accent, flex: 1 }]} onPress={saveSession}>
+                <Text style={styles.modalBtnText}>{T.save}</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -442,49 +418,18 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   center: { flex: 1, justifyContent: "center", alignItems: "center" },
   title: { fontSize: 22, fontWeight: "bold", marginBottom: 16 },
-  addButton: {
-    marginBottom: 16,
-    padding: 12,
-    borderRadius: 8,
-    alignItems: "center",
-  },
+  addButton: { marginBottom: 16, padding: 12, borderRadius: 8, alignItems: "center" },
   addButtonText: { color: "#fff", fontWeight: "bold" },
   card: { padding: 16, marginBottom: 10, borderRadius: 8 },
   blockName: { fontSize: 16, fontWeight: "600" },
-  buttonsRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: 10,
-  },
-  modalBackground: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#00000099",
-  },
+  buttonsRow: { flexDirection: "row", justifyContent: "space-between", marginTop: 10 },
+  modalBackground: { flex: 1, justifyContent: "center", alignItems: "center" },
   modalContent: { width: "90%", padding: 16, borderRadius: 8 },
   modalTitle: { fontSize: 18, fontWeight: "bold", marginBottom: 12 },
   input: { borderWidth: 1, borderRadius: 6, padding: 8, marginBottom: 12 },
-  modalButtons: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: 16,
-  },
-  modalBtn: {
-    flex: 1,
-    marginHorizontal: 5,
-    padding: 12,
-    borderRadius: 6,
-    alignItems: "center",
-  },
+  modalButtons: { flexDirection: "row", justifyContent: "space-between", marginTop: 16 },
+  modalBtn: { flex: 1, marginHorizontal: 5, padding: 12, borderRadius: 6, alignItems: "center" },
   modalBtnText: { color: "#fff", fontWeight: "bold" },
-  sessionBtn: {
-    marginTop: 8,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    borderRadius: 8,
-    alignItems: "center",
-    alignSelf: "flex-start",
-  },
+  sessionBtn: { marginTop: 8, paddingVertical: 10, paddingHorizontal: 12, borderRadius: 8, alignItems: "center", alignSelf: "flex-start" },
   sessionBtnText: { color: "#fff", fontWeight: "bold" },
 });

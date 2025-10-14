@@ -17,6 +17,7 @@ import { deleteToken, getToken } from "../../../services/secureStore";
 import { createInvitation } from "../../../services/invitationService";
 import BottomNav from "../../components/bottomNav";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useAppContext } from "app/context/appContext";
 
 // ⬇️ Burbuja de chat IA
 import AIChatWidget from "../../components/AIChatWidget";
@@ -43,6 +44,44 @@ const HomeScreen: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [athleteEmail, setAthleteEmail] = useState<string>("");
   const router = useRouter();
+  const { isDarkMode, language } = useAppContext();
+
+  // 🎨 Paleta por tema (solo estilos, no cambia lógica)
+  const palette = isDarkMode
+    ? {
+        background: "#0F0F0F",
+        surface: "#1E1E1E",
+        surfaceAlt: "#1A1A1A",
+        text: "#FFFFFF",
+        subtext: "#AAAAAA",
+        border: "#262626",
+        borderSoft: "#2A2A2A",
+        inputBg: "#1E1E1E",
+        inputText: "#FFFFFF",
+        inputBorder: "#333333",
+        placeholder: "#777777",
+        accent: "#EF233C",
+        success: "#28a745",
+        trackBg: "#1A1A1A",
+        cupBorder: "#555555",
+      }
+    : {
+        background: "#F8FAFC",
+        surface: "#FFFFFF",
+        surfaceAlt: "#FFFFFF",
+        text: "#111111",
+        subtext: "#4B5563",
+        border: "#E5E7EB",
+        borderSoft: "#E5E7EB",
+        inputBg: "#FFFFFF",
+        inputText: "#111111",
+        inputBorder: "#D1D5DB",
+        placeholder: "#777777",
+        accent: "#EF233C",
+        success: "#22c55e",
+        trackBg: "#E5E7EB",
+        cupBorder: "#D1D5DB",
+      };
 
   // ----- BLOQUE VISUAL SIN DATOS REALES (con persistencia) -----
   const challenges = [
@@ -147,11 +186,11 @@ const HomeScreen: React.FC = () => {
   };
   const confirmResetCups = () => {
     Alert.alert(
-      "Reiniciar hidratación",
-      "¿Quieres vaciar los 8 vasos de hoy?",
+      language === "es" ? "Reiniciar hidratación" : "Reset hydration",
+      language === "es" ? "¿Quieres vaciar los 8 vasos de hoy?" : "Do you want to clear today's 8 cups?",
       [
-        { text: "Cancelar", style: "cancel" },
-        { text: "Sí, reiniciar", style: "destructive", onPress: resetCups },
+        { text: language === "es" ? "Cancelar" : "Cancel", style: "cancel" },
+        { text: language === "es" ? "Sí, reiniciar" : "Yes, reset", style: "destructive", onPress: resetCups },
       ],
       { cancelable: true }
     );
@@ -182,16 +221,19 @@ const HomeScreen: React.FC = () => {
 
       const payload = athleteEmail.trim() ? athleteEmail.trim() : undefined;
       const result = await createInvitation(token, payload);
-      Alert.alert("Código generado", `El código es: ${result.code}`);
+      Alert.alert(
+        language === "es" ? "Código generado" : "Code generated",
+        (language === "es" ? "El código es: " : "Your code: ") + result.code
+      );
       setAthleteEmail("");
     } catch (error: any) {
       console.error(error);
       if (error.response?.data?.athlete) {
-        Alert.alert("Error", error.response.data.athlete);
+        Alert.alert(language === "es" ? "Error" : "Error", error.response.data.athlete);
       } else if (error.response?.data?.detail) {
-        Alert.alert("Error", error.response.data.detail);
+        Alert.alert(language === "es" ? "Error" : "Error", error.response.data.detail);
       } else {
-        Alert.alert("Error", "No se pudo generar la invitación");
+        Alert.alert(language === "es" ? "Error" : "Error", language === "es" ? "No se pudo generar la invitación" : "Could not generate the invitation");
       }
     }
   };
@@ -202,63 +244,85 @@ const HomeScreen: React.FC = () => {
 
   if (loading) {
     return (
-      <View style={styles.centered}>
-        <ActivityIndicator size="large" color="#EF233C" />
+      <View style={[styles.centered, { backgroundColor: palette.background }]}>
+        <ActivityIndicator size="large" color={palette.accent} />
       </View>
     );
   }
 
   if (!profile) {
     return (
-      <View style={styles.centered}>
-        <Text style={{ color: "#fff" }}>No se pudo cargar el perfil.</Text>
+      <View style={[styles.centered, { backgroundColor: palette.background }]}>
+        <Text style={{ color: palette.text }}>
+          {language === "es" ? "No se pudo cargar el perfil." : "Could not load profile."}
+        </Text>
       </View>
     );
   }
 
   const greeting = (() => {
     const hour = new Date().getHours();
-    if (hour < 12) return "Buenos días";
-    if (hour < 18) return "Buenas tardes";
-    return "Buenas noches";
+    if (language === "es") {
+      if (hour < 12) return "Buenos días";
+      if (hour < 18) return "Buenas tardes";
+      return "Buenas noches";
+    } else {
+      if (hour < 12) return "Good morning";
+      if (hour < 18) return "Good afternoon";
+      return "Good evening";
+    }
   })();
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: palette.background }]}>
       <ScrollView contentContainerStyle={{ paddingBottom: 120 }}>
         {/* Hero Section */}
-        <View style={styles.hero}>
-          <Text style={styles.greeting}>{greeting},</Text>
-          <Text style={styles.heroName}>{profile.first_name || profile.email}</Text>
-          <Text style={styles.heroSubtitle}>¿Listo para tus metas? ¡Haz que hoy cuente!</Text>
+        <View style={[styles.hero, { backgroundColor: palette.surface, borderBottomColor: palette.borderSoft }]}>
+          <Text style={[styles.greeting, { color: palette.subtext }]}>{greeting},</Text>
+          <Text style={[styles.heroName, { color: palette.text }]}>{profile.first_name || profile.email}</Text>
+          <Text style={[styles.heroSubtitle, { color: palette.subtext }]}>
+            {language === "es" ? "¿Listo para tus metas? ¡Haz que hoy cuente!" : "Ready for your goals? Make today count!"}
+          </Text>
         </View>
 
         {/* Coach Panel */}
         {profile.role.toUpperCase() === "COACH" && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Mis Atletas</Text>
+            <Text style={[styles.sectionTitle, { color: palette.text }]}>
+              {language === "es" ? "Mis Atletas" : "My Athletes"}
+            </Text>
+
             {profile.athletes?.map((a) => (
-              <View key={a.id} style={styles.block}>
-                <Ionicons name="person-circle-outline" size={22} color="#EF233C" />
+              <View key={a.id} style={[styles.block, { backgroundColor: palette.surface, borderColor: palette.border, shadowOpacity: isDarkMode ? 0.2 : 0.06 }]}>
+                <Ionicons name="person-circle-outline" size={22} color={palette.accent} />
                 <View style={{ marginLeft: 10 }}>
-                  <Text style={styles.blockText}>{a.athlete_name}</Text>
-                  <Text style={styles.blockInfo}>{a.athlete_email}</Text>
+                  <Text style={[styles.blockText, { color: palette.text }]}>{a.athlete_name}</Text>
+                  <Text style={[styles.blockInfo, { color: palette.subtext }]}>{a.athlete_email}</Text>
                 </View>
               </View>
             ))}
 
             <TextInput
-              style={styles.input}
-              placeholder="Correo del atleta (opcional)"
-              placeholderTextColor="#777"
+              style={[
+                styles.input,
+                {
+                  backgroundColor: palette.inputBg,
+                  color: palette.inputText,
+                  borderColor: palette.inputBorder,
+                },
+              ]}
+              placeholder={language === "es" ? "Correo del atleta (opcional)" : "Athlete email (optional)"}
+              placeholderTextColor={palette.placeholder}
               value={athleteEmail}
               onChangeText={setAthleteEmail}
               keyboardType="email-address"
               autoCapitalize="none"
             />
 
-            <TouchableOpacity style={styles.generateButton} onPress={handleGenerateCode}>
-              <Text style={styles.generateButtonText}>Generar Código</Text>
+            <TouchableOpacity style={[styles.generateButton, { backgroundColor: palette.success }]} onPress={handleGenerateCode}>
+              <Text style={styles.generateButtonText}>
+                {language === "es" ? "Generar Código" : "Generate Code"}
+              </Text>
             </TouchableOpacity>
           </View>
         )}
@@ -266,109 +330,127 @@ const HomeScreen: React.FC = () => {
         {/* Athlete Panel */}
         {profile.role.toUpperCase() === "ATHLETE" && (
           <View style={styles.section}>
-            {/* ⬇️ Header de MI PROGRESO con ícono (armonizado) */}
+            {/* Header MI PROGRESO */}
             <View style={[styles.sectionHeader, styles.headerGapLarge]}>
               <View style={{ flexDirection: "row", alignItems: "center" }}>
-                <Ionicons name="stats-chart-outline" size={18} color="#EF233C" />
-                <Text style={[styles.sectionTitle, { marginLeft: 8, marginBottom: 0 }]}>
-                  Mi Progreso
+                <Ionicons name="stats-chart-outline" size={18} color={palette.accent} />
+                <Text style={[styles.sectionTitle, { marginLeft: 8, marginBottom: 0, color: palette.text }]}>
+                  {language === "es" ? "Mi Progreso" : "My Progress"}
                 </Text>
               </View>
             </View>
 
             {/* Quick Stats */}
             <View style={styles.statsContainer}>
-              <View style={styles.statCard}>
-                <Ionicons name="flame" size={28} color="#EF233C" />
+              <View style={[styles.statCard, { backgroundColor: palette.surface, shadowOpacity: isDarkMode ? 0.2 : 0.06 }]}>
+                <Ionicons name="flame" size={28} color={palette.accent} />
                 <View style={{ marginLeft: 16 }}>
-                  <Text style={styles.cardValue}>12</Text>
-                  <Text style={styles.cardLabel}>Días streak</Text>
+                  <Text style={[styles.cardValue, { color: palette.text }]}>12</Text>
+                  <Text style={[styles.cardLabel, { color: palette.subtext }]}>{language === "es" ? "Días streak" : "Streak days"}</Text>
                 </View>
               </View>
 
-              <View style={styles.statCard}>
-                <Ionicons name="barbell" size={28} color="#EF233C" />
+              <View style={[styles.statCard, { backgroundColor: palette.surface, shadowOpacity: isDarkMode ? 0.2 : 0.06 }]}>
+                <Ionicons name="barbell" size={28} color={palette.accent} />
                 <View style={{ marginLeft: 16 }}>
-                  <Text style={styles.cardValue}>4</Text>
-                  <Text style={styles.cardLabel}>Workouts esta semana</Text>
+                  <Text style={[styles.cardValue, { color: palette.text }]}>4</Text>
+                  <Text style={[styles.cardLabel, { color: palette.subtext }]}>{language === "es" ? "Workouts esta semana" : "Workouts this week"}</Text>
                 </View>
               </View>
 
-              <View style={styles.statCard}>
-                <Ionicons name="calendar" size={28} color="#EF233C" />
+              <View style={[styles.statCard, { backgroundColor: palette.surface, shadowOpacity: isDarkMode ? 0.2 : 0.06 }]}>
+                <Ionicons name="calendar" size={28} color={palette.accent} />
                 <View style={{ marginLeft: 16 }}>
-                  <Text style={styles.cardValue}>Upper Body</Text>
-                  <Text style={styles.cardLabel}>Próximo workout</Text>
+                  <Text style={[styles.cardValue, { color: palette.text }]}>Upper Body</Text>
+                  <Text style={[styles.cardLabel, { color: palette.subtext }]}>{language === "es" ? "Próximo workout" : "Next workout"}</Text>
                 </View>
               </View>
             </View>
           </View>
         )}
 
-        {/* ----- REEMPLAZO ARMÓNICO: títulos fuera + más espacio ----- */}
+        {/* ----- Títulos fuera + espacio ----- */}
         <View style={styles.section}>
-          {/* Header "Desafío del día" con acciones (más espacio debajo) */}
+          {/* Header "Desafío del día" */}
           <View style={[styles.sectionHeader, styles.headerGapLarge]}>
             <View style={{ flexDirection: "row", alignItems: "center" }}>
-              <Ionicons name="flag-outline" size={18} color="#EF233C" />
-              <Text style={[styles.sectionTitle, { marginLeft: 8, marginBottom: 0 }]}>
-                Desafío del día
+              <Ionicons name="flag-outline" size={18} color={palette.accent} />
+              <Text style={[styles.sectionTitle, { marginLeft: 8, marginBottom: 0, color: palette.text }]}>
+                {language === "es" ? "Desafío del día" : "Today's challenge"}
               </Text>
             </View>
             <View style={{ flexDirection: "row", gap: 8 }}>
-              <TouchableOpacity onPress={shuffleChallenge} style={styles.altBtn}>
-                <Text style={styles.altBtnText}>Otro</Text>
+              <TouchableOpacity onPress={shuffleChallenge} style={[styles.altBtn, { backgroundColor: palette.surface, borderColor: palette.border }]}>
+                <Text style={[styles.altBtnText, { color: palette.accent }]}>
+                  {language === "es" ? "Otro" : "Another"}
+                </Text>
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={toggleChallengeDone}
-                style={[styles.doneBtn, challengeDone && styles.doneBtnActive]}
+                style={[
+                  styles.doneBtn,
+                  { backgroundColor: palette.surfaceAlt, borderColor: isDarkMode ? "#444" : palette.border },
+                  challengeDone && { backgroundColor: palette.success, borderColor: palette.success },
+                ]}
               >
                 <Ionicons
                   name={challengeDone ? "checkmark-circle" : "ellipse-outline"}
                   size={16}
-                  color={challengeDone ? "#121212" : "#aaa"}
+                  color={challengeDone ? (isDarkMode ? "#121212" : "#052e16") : palette.subtext}
                 />
-                <Text style={[styles.doneBtnText, challengeDone && { color: "#121212", fontWeight: "800" }]}>
-                  {challengeDone ? "Hecho" : "Marcar"}
+                <Text
+                  style={[
+                    styles.doneBtnText,
+                    { color: palette.subtext },
+                    challengeDone && { color: isDarkMode ? "#121212" : "#052e16", fontWeight: "800" },
+                  ]}
+                >
+                  {language === "es" ? (challengeDone ? "Hecho" : "Marcar") : challengeDone ? "Done" : "Mark"}
                 </Text>
               </TouchableOpacity>
             </View>
           </View>
 
           {/* Tarjeta del desafío */}
-          <View style={styles.challengeCard}>
+          <View style={[styles.challengeCard, { backgroundColor: palette.surface, borderColor: palette.border }]}>
             <Text
               style={[
                 styles.challengeText,
-                challengeDone && { color: "#777", textDecorationLine: "line-through" },
+                { color: palette.text },
+                challengeDone && { color: palette.subtext, textDecorationLine: "line-through" },
               ]}
             >
               {challenge}
             </Text>
           </View>
 
-          {/* Header "Hidratación" con contador + reset */}
+          {/* Header "Hidratación" */}
           <View style={[styles.sectionHeader, styles.headerGap]}>
             <View style={{ flexDirection: "row", alignItems: "center" }}>
-              <Ionicons name="water-outline" size={18} color="#EF233C" />
-              <Text style={[styles.sectionTitle, { marginLeft: 8, marginBottom: 0 }]}>
-                Hidratación
+              <Ionicons name="water-outline" size={18} color={palette.accent} />
+              <Text style={[styles.sectionTitle, { marginLeft: 8, marginBottom: 0, color: palette.text }]}>
+                {language === "es" ? "Hidratación" : "Hydration"}
               </Text>
             </View>
             <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-              <Text style={{ color: "#aaa", fontSize: 12 }}>
+              <Text style={{ color: palette.subtext, fontSize: 12 }}>
                 {hydrationCount}/8 • {hydrationPct}%
               </Text>
-              <TouchableOpacity onPress={confirmResetCups} style={styles.resetBtn}>
-                <Text style={styles.resetBtnText}>Reset</Text>
+              <TouchableOpacity
+                onPress={confirmResetCups}
+                style={[styles.resetBtn, { backgroundColor: palette.surface, borderColor: palette.border }]}
+              >
+                <Text style={[styles.resetBtnText, { color: palette.accent }]}>
+                  {language === "es" ? "Reset" : "Reset"}
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
 
           {/* Tarjeta de hidratación */}
-          <View style={styles.hydrationCard}>
-            <View style={styles.progressTrack}>
-              <View style={[styles.progressFill, { width: `${hydrationPct}%` }]} />
+          <View style={[styles.hydrationCard, { backgroundColor: palette.surface, borderColor: palette.border }]}>
+            <View style={[styles.progressTrack, { backgroundColor: palette.trackBg, borderColor: palette.border }]}>
+              <View style={[styles.progressFill, { width: `${hydrationPct}%`, backgroundColor: palette.accent }]} />
             </View>
 
             <View style={styles.cupsRow}>
@@ -376,15 +458,23 @@ const HomeScreen: React.FC = () => {
                 <TouchableOpacity
                   key={idx}
                   onPress={() => toggleCup(idx)}
-                  style={[styles.cup, filled && styles.cupFilled]}
+                  style={[
+                    styles.cup,
+                    { backgroundColor: palette.background, borderColor: palette.cupBorder },
+                    filled && { backgroundColor: palette.accent, borderColor: palette.accent },
+                  ]}
                 >
-                  <Ionicons name="water-outline" size={16} color={filled ? "#121212" : "#aaa"} />
+                  <Ionicons
+                    name="water-outline"
+                    size={16}
+                    color={filled ? (isDarkMode ? "#121212" : "#052e16") : palette.subtext}
+                  />
                 </TouchableOpacity>
               ))}
             </View>
           </View>
         </View>
-        {/* ----- FIN REEMPLAZO ----- */}
+        {/* ----- FIN ----- */}
       </ScrollView>
 
       {/* burbuja de chat IA */}
@@ -399,40 +489,41 @@ export default HomeScreen;
 
 const styles = StyleSheet.create({
   // Base
-  container: { flex: 1, backgroundColor: "#121212" },
-  centered: { flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#121212" },
+  container: { flex: 1 },
+  centered: { flex: 1, justifyContent: "center", alignItems: "center" },
 
   // Hero
   hero: {
     padding: 20,
-    backgroundColor: "#1E1E1E",
     borderBottomLeftRadius: 20,
     borderBottomRightRadius: 20,
     elevation: 3,
+    borderBottomWidth: 0, // color dinámico
   },
-  greeting: { fontSize: 18, color: "#aaa" },
-  heroName: { fontSize: 32, fontWeight: "bold", marginTop: 5, color: "#fff" },
-  heroSubtitle: { fontSize: 16, marginTop: 8, color: "#aaa" },
+  greeting: { fontSize: 18 },
+  heroName: { fontSize: 32, fontWeight: "bold", marginTop: 5 },
+  heroSubtitle: { fontSize: 16, marginTop: 8 },
 
   // Stats
   statsContainer: { marginTop: 15, flexDirection: "column", gap: 15 },
   statCard: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#1E1E1E",
     paddingVertical: 20,
     paddingHorizontal: 20,
     borderRadius: 16,
     elevation: 2,
     marginBottom: 10,
     width: width - 40,
+    shadowColor: "#000",
+    shadowRadius: 5,
   },
-  cardValue: { fontSize: 20, fontWeight: "bold", color: "#fff" },
-  cardLabel: { fontSize: 14, color: "#aaa", marginTop: 4 },
+  cardValue: { fontSize: 20, fontWeight: "bold" },
+  cardLabel: { fontSize: 14, marginTop: 4 },
 
   // Secciones / títulos
   section: { marginHorizontal: 20, marginVertical: 15 },
-  sectionTitle: { fontSize: 20, fontWeight: "bold", color: "#fff", marginBottom: 10 },
+  sectionTitle: { fontSize: 20, fontWeight: "bold", marginBottom: 10 },
   sectionHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
 
   // Pequeños ajustes de separación entre título y tarjeta
@@ -443,27 +534,25 @@ const styles = StyleSheet.create({
   block: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#1E1E1E",
     padding: 12,
     borderRadius: 12,
     marginBottom: 10,
     elevation: 2,
+    shadowColor: "#000",
+    shadowRadius: 5,
+    borderWidth: 1,
   },
-  blockText: { fontSize: 16, fontWeight: "600", color: "#fff" },
-  blockInfo: { fontSize: 14, color: "#aaa" },
+  blockText: { fontSize: 16, fontWeight: "600" },
+  blockInfo: { fontSize: 14 },
 
   input: {
     borderWidth: 1,
-    borderColor: "#333",
     borderRadius: 10,
     padding: 10,
     fontSize: 14,
     marginTop: 10,
-    backgroundColor: "#1E1E1E",
-    color: "#fff",
   },
   generateButton: {
-    backgroundColor: "#28a745",
     paddingVertical: 12,
     borderRadius: 12,
     alignItems: "center",
@@ -473,26 +562,22 @@ const styles = StyleSheet.create({
 
   // Desafío
   challengeCard: {
-    backgroundColor: "#1E1E1E",
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: "#262626",
     padding: 16,
     marginTop: 0,
     marginBottom: 12,
   },
-  challengeText: { color: "#fff", fontSize: 16, lineHeight: 22 },
+  challengeText: { fontSize: 16, lineHeight: 22 },
 
   // Botones header (Otro / Marcar)
   altBtn: {
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 10,
-    backgroundColor: "#1E1E1E",
     borderWidth: 1,
-    borderColor: "#262626",
   },
-  altBtnText: { color: "#EF233C", fontWeight: "700", fontSize: 12 },
+  altBtnText: { fontWeight: "700", fontSize: 12 },
   doneBtn: {
     flexDirection: "row",
     alignItems: "center",
@@ -500,19 +585,14 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: "#444",
-    backgroundColor: "#1A1A1A",
     gap: 6,
   },
-  doneBtnActive: { backgroundColor: "#28a745", borderColor: "#28a745" },
-  doneBtnText: { color: "#aaa", fontSize: 12, fontWeight: "700" },
+  doneBtnText: { fontSize: 12, fontWeight: "700" },
 
   // Hidratación
   hydrationCard: {
-    backgroundColor: "#1E1E1E",
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: "#262626",
     padding: 16,
     marginTop: 0,
   },
@@ -522,37 +602,26 @@ const styles = StyleSheet.create({
     height: 36,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: "#555",
-    backgroundColor: "#121212",
     alignItems: "center",
     justifyContent: "center",
   },
-  cupFilled: { backgroundColor: "#EF233C", borderColor: "#EF233C" },
 
   // Barra de progreso
   progressTrack: {
     marginTop: 6,
     height: 8,
-    backgroundColor: "#1A1A1A",
     borderRadius: 99,
     borderWidth: 1,
-    borderColor: "#262626",
     overflow: "hidden",
   },
-  progressFill: { height: "100%", backgroundColor: "#EF233C", borderRadius: 99 },
+  progressFill: { height: "100%", borderRadius: 99 },
 
   // Botón Reset
   resetBtn: {
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 10,
-    backgroundColor: "#1E1E1E",
     borderWidth: 1,
-    borderColor: "#262626",
   },
-  resetBtnText: {
-    color: "#EF233C",
-    fontWeight: "700",
-    fontSize: 12,
-  },
+  resetBtnText: { fontWeight: "700", fontSize: 12 },
 });
