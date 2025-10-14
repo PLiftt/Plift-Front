@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -16,14 +16,12 @@ import { getToken } from "services/secureStore";
 import { getUserProfile } from "services/userService";
 import { API_URL } from "@env";
 import { ArrowLeft } from "lucide-react-native";
-// Si usas react-navigation, puedes refrescar al volver:
-// import { useFocusEffect } from "@react-navigation/native";
 
 interface Session {
   id?: number;
   date: string;
   notes?: string;
-  completed?: boolean; // Usamos esto para decidir la etiqueta del botón
+  status?: "pending" | "in_progress" | "completed";
 }
 
 export default function SessionsScreen() {
@@ -51,13 +49,6 @@ export default function SessionsScreen() {
     if (role) fetchSessions();
   }, [role]);
 
-  // Opcional: refrescar al volver a esta screen
-  // useFocusEffect(
-  //   useCallback(() => {
-  //     fetchSessions();
-  //   }, [])
-  // );
-
   const fetchRole = async () => {
     const user = await getUserProfile();
     setRole(user.role.toLowerCase());
@@ -69,7 +60,9 @@ export default function SessionsScreen() {
       const token = await getToken("accessToken");
       const res = await fetch(
         `${API_URL.replace(/\/$/, "")}/sessions/?block=${blockId}`,
-        { headers: { Authorization: `Bearer ${token}` } }
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
       );
       const data = await res.json();
       setSessions(data);
@@ -123,7 +116,6 @@ export default function SessionsScreen() {
     }
   };
 
-  // "Comenzar sesión": marca completada y navega
   const startSession = async (id: number) => {
     try {
       setStartingId(id);
@@ -134,20 +126,15 @@ export default function SessionsScreen() {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
-        // Si "comenzar" no debería marcar completada, cambia a { started: true }
-        body: JSON.stringify({ started: true, completed: true }),
+        body: JSON.stringify({ status: "in_progress" }),
       });
       if (!res.ok) {
         const text = await res.text();
         throw new Error(text || `HTTP ${res.status}`);
       }
-
-      // Actualización optimista para que al volver se vea "Ver sesión"
       setSessions((prev) =>
-        prev.map((s) => (s.id === id ? { ...s, completed: true } : s))
+        prev.map((s) => (s.id === id ? { ...s, status: "in_progress" } : s))
       );
-
-      // Navega a la sesión
       router.push(`/fit/${blockId}/${id}`);
     } catch (err) {
       console.error(err);
@@ -157,7 +144,48 @@ export default function SessionsScreen() {
     }
   };
 
-  // "Ver sesión": solo navegar
+  const confirmFinishSession = (id: number) => {
+    Alert.alert(
+      "Finalizar sesión",
+      "¿Seguro que deseas marcar esta sesión como completada?",
+      [
+        { text: "Cancelar", style: "cancel" },
+        {
+          text: "Finalizar",
+          style: "destructive",
+          onPress: () => finishSession(id),
+        },
+      ]
+    );
+  };
+
+  const finishSession = async (id: number) => {
+    try {
+      setStartingId(id);
+      const token = await getToken("accessToken");
+      const res = await fetch(`${API_URL.replace(/\/$/, "")}/sessions/${id}/`, {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ status: "completed" }),
+      });
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(text || `HTTP ${res.status}`);
+      }
+      setSessions((prev) =>
+        prev.map((s) => (s.id === id ? { ...s, status: "completed" } : s))
+      );
+    } catch (err) {
+      console.error(err);
+      Alert.alert("Error", "No se pudo finalizar la sesión.");
+    } finally {
+      setStartingId(null);
+    }
+  };
+
   const viewSession = (id: number) => {
     router.push(`/fit/${blockId}/${id}`);
   };
@@ -175,7 +203,6 @@ export default function SessionsScreen() {
         contentContainerStyle={{ paddingBottom: 120, paddingHorizontal: 16 }}
         showsVerticalScrollIndicator={false}
       >
-        {/* Back */}
         <TouchableOpacity style={{ padding: 16 }} onPress={() => router.back()}>
           <ArrowLeft size={24} color={colors.textPrimary} />
         </TouchableOpacity>
@@ -209,7 +236,6 @@ export default function SessionsScreen() {
           }
           scrollEnabled={false}
           renderItem={({ item }) => (
-            // CARD sin onPress: NO navega al tocar el contenedor
             <View
               style={[
                 styles.card,
@@ -229,55 +255,97 @@ export default function SessionsScreen() {
 
               <Text
                 style={{
-                  color: item.completed ? "green" : "orange",
+                  color:
+                    item.status === "completed"
+                      ? "green"
+                      : item.status === "in_progress"
+                      ? "orange"
+                      : "gray",
                   fontWeight: "600",
                   marginTop: 6,
                 }}
               >
-                Sesión completada: {item.completed ? "Sí" : "No"}
+                Estado:{" "}
+                {item.status === "pending"
+                  ? "Pendiente"
+                  : item.status === "in_progress"
+                  ? "En progreso"
+                  : "Finalizada"}
               </Text>
 
-              {/* Botón para atleta SIEMPRE visible.
-                  - Si NO está completada => "Comenzar sesión"
-                  - Si ya está completada => "Ver sesión" */}
               {role === "athlete" && !!item.id && (
-                <TouchableOpacity
-                  onPress={() =>
-                    item.completed ? viewSession(item.id!) : startSession(item.id!)
-                  }
-                  disabled={startingId === item.id}
-                  style={[
-                    styles.sessionBtn,
-                    {
-                      backgroundColor: colors.primary,
-                      opacity: startingId === item.id ? 0.7 : 1,
-                    },
-                  ]}
-                >
-                  <Text style={styles.sessionBtnText}>
-                    {startingId === item.id
-                      ? "Iniciando..."
-                      : item.completed
-                      ? "Ver sesión"
-                      : "Comenzar sesión"}
-                  </Text>
-                </TouchableOpacity>
+                <View style={{ marginTop: 8 }}>
+                  {item.status === "pending" && (
+                    <TouchableOpacity
+                      onPress={() => startSession(item.id!)}
+                      disabled={startingId === item.id}
+                      style={[
+                        styles.sessionBtn,
+                        {
+                          backgroundColor: colors.primary,
+                          opacity: startingId === item.id ? 0.7 : 1,
+                        },
+                      ]}
+                    >
+                      <Text style={styles.sessionBtnText}>
+                        {startingId === item.id
+                          ? "Iniciando..."
+                          : "Comenzar sesión"}
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                  {(item.status === "in_progress" ||
+                    item.status === "completed") && (
+                    <TouchableOpacity
+                      onPress={() => viewSession(item.id!)}
+                      style={[
+                        styles.sessionBtn,
+                        { backgroundColor: colors.primary, marginTop: 6 },
+                      ]}
+                    >
+                      <Text style={styles.sessionBtnText}>Ver sesión</Text>
+                    </TouchableOpacity>
+                  )}
+                  {item.status === "in_progress" && (
+                    <TouchableOpacity
+                      onPress={() => confirmFinishSession(item.id!)}
+                      disabled={startingId === item.id}
+                      style={[
+                        styles.sessionBtn,
+                        {
+                          backgroundColor: colors.primary,
+                          marginTop: 6,
+                          opacity: startingId === item.id ? 0.7 : 1,
+                        },
+                      ]}
+                    >
+                      <Text style={styles.sessionBtnText}>
+                        Finalizar sesión
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
               )}
 
-              {/* Acciones de coach (sin cambios) */}
               {role === "coach" && (
-                <View className="buttonsRow" style={styles.buttonsRow}>
+                <View style={styles.buttonsRow}>
                   <TouchableOpacity
                     style={[
                       styles.modalBtn,
                       { backgroundColor: "#555", flex: 1, marginRight: 8 },
                     ]}
-                    onPress={() => setCurrentSession(item)}
+                    onPress={() =>
+                      item.status !== "completed" && setCurrentSession(item)
+                    }
+                    disabled={item.status === "completed"}
                   >
                     <Text style={styles.modalBtnText}>Editar</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
-                    style={[styles.modalBtn, { backgroundColor: colors.primary }]}
+                    style={[
+                      styles.modalBtn,
+                      { backgroundColor: colors.primary },
+                    ]}
                     onPress={() => {
                       Alert.alert(
                         "Confirmar eliminación",
@@ -410,8 +478,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   modalBtnText: { color: "#fff", fontWeight: "bold" },
-
-  // Botón acción (comenzar / ver)
   sessionBtn: {
     marginTop: 8,
     paddingVertical: 10,

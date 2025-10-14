@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import {SafeAreaView} from "react-native-safe-area-context";
+import { SafeAreaView } from "react-native-safe-area-context";
 import {
   View,
   Text,
@@ -63,18 +63,26 @@ export default function AthleteHistoryScreen() {
             const blocksWithSessions = await Promise.all(
               blocks.map(async (block: any) => {
                 const sessions = await getSessions(block.id);
-                const completedSessions = sessions.filter(
-                  (s: any) => s.status === "completed" || s.completed
-                );
+
+                // Ordenar sesiones por estado
+                const sortedSessions = [...sessions].sort((a, b) => {
+                  const order: Record<
+                    "in_progress" | "pending" | "completed",
+                    number
+                  > = { in_progress: 0, pending: 1, completed: 2 };
+                  return (
+                    order[a.status as "in_progress" | "pending" | "completed"] -
+                    order[b.status as "in_progress" | "pending" | "completed"]
+                  );
+                });
+
                 const sessionsWithExercises = await Promise.all(
-                  completedSessions.map(async (session: any) => {
+                  sortedSessions.map(async (session: any) => {
                     const exercises = await getExercises(session.id);
-                    const completedExercises = exercises.filter(
-                      (ex: any) => ex.status === "completed" || ex.completed
-                    );
-                    return { ...session, exercises: completedExercises };
+                    return { ...session, exercises };
                   })
                 );
+
                 return { ...block, sessions: sessionsWithExercises };
               })
             );
@@ -87,24 +95,23 @@ export default function AthleteHistoryScreen() {
 
         setAthletes(athleteList);
       } else {
-        const completedBlocks = blocksData.filter(
-          (block: any) => block.status === "completed" || block.completed
-        );
         const blocksWithSessions = await Promise.all(
-          completedBlocks.map(async (block: any) => {
+          blocksData.map(async (block: any) => {
             const sessions = await getSessions(block.id);
-            const completedSessions = sessions.filter(
-              (s: any) => s.status === "completed" || s.completed
-            );
+
+            // Ordenar sesiones por estado
+            const sortedSessions = [...sessions].sort((a, b) => {
+              const order = { in_progress: 0, pending: 1, completed: 2 };
+              return order[a.status] - order[b.status];
+            });
+
             const sessionsWithExercises = await Promise.all(
-              completedSessions.map(async (session: any) => {
+              sortedSessions.map(async (session: any) => {
                 const exercises = await getExercises(session.id);
-                const completedExercises = exercises.filter(
-                  (ex: any) => ex.status === "completed" || ex.completed
-                );
-                return { ...session, exercises: completedExercises };
+                return { ...session, exercises };
               })
             );
+
             return { ...block, sessions: sessionsWithExercises };
           })
         );
@@ -138,7 +145,7 @@ export default function AthleteHistoryScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      {/* Header con flecha */}
+      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity
           onPress={() => router.back()}
@@ -193,7 +200,12 @@ export default function AthleteHistoryScreen() {
                           {block.name || `Bloque ${block.id}`}
                         </Text>
                         <Text style={styles.subtitle}>
-                          {block.sessions.length} sesiones completadas
+                          {
+                            block.sessions.filter(
+                              (s: any) => s.status === "completed"
+                            ).length
+                          }{" "}
+                          sesiones finalizadas
                         </Text>
                       </View>
                     </TouchableOpacity>
@@ -207,9 +219,21 @@ export default function AthleteHistoryScreen() {
                               style={styles.sessionHeader}
                             >
                               <Ionicons
-                                name="flame-outline"
+                                name={
+                                  session.status === "completed"
+                                    ? "checkmark-done-circle-outline"
+                                    : session.status === "in_progress"
+                                    ? "flame-outline"
+                                    : "time-outline"
+                                }
                                 size={18}
-                                color="#FF3B30"
+                                color={
+                                  session.status === "completed"
+                                    ? "#4CD964"
+                                    : session.status === "in_progress"
+                                    ? "#FF9500"
+                                    : "#aaa"
+                                }
                                 style={{ marginRight: 6 }}
                               />
                               <View>
@@ -220,8 +244,12 @@ export default function AthleteHistoryScreen() {
                                   Fecha: {session.date || "-"}
                                 </Text>
                                 <Text style={styles.subtitle}>
-                                  {session.exercises.length} ejercicios
-                                  completados
+                                  Estado:{" "}
+                                  {session.status === "completed"
+                                    ? "Finalizada"
+                                    : session.status === "in_progress"
+                                    ? "En progreso"
+                                    : "Pendiente"}
                                 </Text>
                               </View>
                             </TouchableOpacity>
@@ -235,7 +263,7 @@ export default function AthleteHistoryScreen() {
                                     </Text>
                                     <Text style={styles.exerciseDetail}>
                                       {ex.sets}x{ex.reps} | Peso propuesto:{" "}
-                                      {ex.weight} kg | RPE Objetivo: @{ex.rpe}{" "}
+                                      {ex.weight} kg | RPE @{ex.rpe}
                                       {"\n"}Peso realizado:{" "}
                                       {ex.weight_actual || "-"} kg | RPE
                                       Realizado: @{ex.rpe_actual}
@@ -267,16 +295,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     backgroundColor: "transparent",
-    borderBottomWidth: 0,
-    elevation: 0,
-    shadowColor: "transparent",
   },
   backButton: { marginRight: 10 },
-  headerTitle: {
-    color: "#fff",
-    fontSize: 20,
-    fontWeight: "700",
-  },
+  headerTitle: { color: "#fff", fontSize: 20, fontWeight: "700" },
   container: { flex: 1, padding: 16 },
   center: {
     flex: 1,
@@ -298,6 +319,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 10,
   },
+  athleteName: { fontSize: 20, fontWeight: "bold", color: "#fff" },
   noHistoryContainer: {
     padding: 12,
     borderRadius: 12,
@@ -306,16 +328,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginTop: 8,
   },
-  noHistoryText: {
-    color: "#ccc",
-    fontSize: 14,
-    fontStyle: "italic",
-  },
-  athleteName: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: "#fff",
-  },
+  noHistoryText: { color: "#ccc", fontSize: 14, fontStyle: "italic" },
   blockCard: {
     backgroundColor: "#121212",
     borderRadius: 14,
