@@ -41,30 +41,31 @@ interface UserProfile {
   }[];
 }
 
-const statsData = [
+// ⬇️ Localización de etiquetas para PR (en vez de statsData estático)
+const getStatsData = (lang: "es" | "en") => [
   {
-    label: "Sentadilla",
+    label: lang === "es" ? "Sentadilla" : "Squat",
     value: "180",
     unit: "kg",
     icon: "dumbbell",
     color: "#EF233C",
   },
   {
-    label: "Press Banca",
+    label: lang === "es" ? "Press Banca" : "Bench Press",
     value: "135",
     unit: "kg",
     icon: "dumbbell",
     color: "#EF233C",
   },
   {
-    label: "Peso Muerto",
+    label: lang === "es" ? "Peso Muerto" : "Deadlift",
     value: "210",
     unit: "kg",
     icon: "weight-hanging",
     color: "#EF233C",
   },
   {
-    label: "Total",
+    label: lang === "es" ? "Total" : "Total",
     value: "525",
     unit: "kg",
     icon: "trophy",
@@ -196,6 +197,9 @@ const PerfilScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
   const fullName = `${profile.first_name || ""} ${profile.second_name || ""} ${
     profile.last_name || ""
   } ${profile.second_last_name || ""}`.trim();
+
+  // ⬇️ stats dependientes del idioma
+  const statsData = getStatsData(language === "es" ? "es" : "en");
 
   return (
     <View
