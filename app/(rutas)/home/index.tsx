@@ -12,6 +12,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
+import * as Clipboard from "expo-clipboard"; // ⬅️ NUEVO
 import { useRouter } from "expo-router";
 import { getUserProfile } from "../../../services/userService";
 import { deleteToken, getToken } from "../../../services/secureStore";
@@ -155,10 +156,35 @@ const HomeScreen: React.FC = () => {
       if (!token) throw new Error("Token no disponible");
       const payload = athleteEmail.trim() ? athleteEmail.trim() : undefined;
       const result = await createInvitation(token, payload);
+
+      const title = language === "es" ? "Código generado" : "Code generated";
+      const labelCopy =
+        language === "es" ? "Copiar código" : "Copy code";
+      const labelOk = language === "es" ? "OK" : "OK";
+      const msg =
+        (language === "es" ? "El código es: " : "Your code: ") +
+        String(result.code);
+
       Alert.alert(
-        language === "es" ? "Código generado" : "Code generated",
-        (language === "es" ? "El código es: " : "Your code: ") + result.code
+        title,
+        msg,
+        [
+          {
+            text: labelCopy,
+            onPress: async () => {
+              try {
+                await Clipboard.setStringAsync(String(result.code));
+                await Haptics.notificationAsync(
+                  Haptics.NotificationFeedbackType.Success
+                );
+              } catch {}
+            },
+          },
+          { text: labelOk, style: "default" },
+        ],
+        { cancelable: true }
       );
+
       setAthleteEmail("");
     } catch (error: any) {
       console.error(error);
