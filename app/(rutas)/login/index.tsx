@@ -1,6 +1,6 @@
 import { Link, useRouter } from "expo-router";
 import React, { useState } from "react";
-import {SafeAreaView} from "react-native-safe-area-context";
+import { SafeAreaView } from "react-native-safe-area-context";
 import {
   View,
   Text,
@@ -58,10 +58,7 @@ export default function LoginPage() {
       if (error.response?.status === 404) {
         Alert.alert("Usuario no encontrado", "El correo ingresado no existe");
       } else if (error.response?.status === 401) {
-        Alert.alert(
-          "Credenciales inválidas",
-          "Correo o contraseña incorrectas"
-        );
+        Alert.alert("Credenciales inválidas", "Correo o contraseña incorrectas");
       } else if (error.response?.status === 500) {
         Alert.alert("Error del servidor", "Inténtalo más tarde");
       } else {
@@ -73,128 +70,140 @@ export default function LoginPage() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <ImageBackground
-        source={require("../../../assets/fondobg.jpg")}
-        style={styles.backgroundImage}
-        resizeMode="cover"
-      />
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-        style={styles.keyboardView}
-      >
-        <View style={styles.card}>
-          {/* Logo */}
-          <Image
-            source={require("../../../assets/logoplift.png")}
-            style={styles.logo}
-            resizeMode="contain"
-          />
-          <Text style={styles.title}>Bienvenido a PLift</Text>
-          <Text style={styles.subtitle}>Únete a Nosotros</Text>
-
-          {/* Email */}
-          <View style={styles.inputContainer}>
-            <Text style={styles.label}>Email</Text>
-            <View style={styles.inputWrapper}>
-              <Mail size={20} color="#9CA3AF" style={styles.icon} />
-              <TextInput
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                placeholder="Ingresa tu email"
-                placeholderTextColor="#9CA3AF"
-                style={styles.input}
-              />
-            </View>
-          </View>
-
-          {/* Password */}
-          <View style={styles.inputContainer}>
-            <Text style={styles.label}>Contraseña</Text>
-            <View style={styles.inputWrapper}>
-              <Lock size={20} color="#9CA3AF" style={styles.icon} />
-              <TextInput
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry={!showPassword}
-                placeholder="Ingresa tu contraseña"
-                placeholderTextColor="#9CA3AF"
-                style={styles.input}
-              />
-              <TouchableOpacity
-                onPress={() => setShowPassword(!showPassword)}
-                style={styles.eyeButton}
-              >
-                {showPassword ? (
-                  <EyeOff size={20} color="#9CA3AF" />
-                ) : (
-                  <Eye size={20} color="#9CA3AF" />
-                )}
-              </TouchableOpacity>
-            </View>
-          </View>
-
-          {/* Remember Me Switch */}
-          <View
-            style={{ flexDirection: "row", alignItems: "center", marginTop: 8 }}
-          >
-            <Switch
-              value={rememberMe}
-              onValueChange={setRememberMe}
-              trackColor={{ false: "#374151", true: "#EF233C" }}
-              thumbColor={rememberMe ? "#fff" : "#9CA3AF"}
+    <ImageBackground
+      source={require("../../../assets/fondobg.jpg")}
+      style={styles.bg}
+      imageStyle={styles.bgImage}
+      resizeMode="cover"
+    >
+      <SafeAreaView style={styles.container}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
+          style={styles.keyboardView}
+        >
+          <View style={styles.card}>
+            {/* Logo */}
+            <Image
+              source={require("../../../assets/logoplift.png")}
+              style={styles.logo}
+              resizeMode="contain"
             />
-            <Text style={{ color: "#E5E7EB", marginLeft: 8 }}>
-              {" "}
-              Mantener sesión iniciada{" "}
-            </Text>
+            <Text style={styles.title}>Bienvenido a PLift</Text>
+            <Text style={styles.subtitle}>Únete a Nosotros</Text>
+
+            {/* Email */}
+            <View style={styles.inputContainer}>
+              <Text style={styles.label}>Email</Text>
+              <View style={styles.inputWrapper}>
+                <Mail size={20} color="#9CA3AF" style={styles.icon} />
+                <TextInput
+                  value={email}
+                  onChangeText={setEmail}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  placeholder="Ingresa tu email"
+                  placeholderTextColor="#9CA3AF"
+                  style={styles.input}
+                />
+              </View>
+            </View>
+
+            {/* Password */}
+            <View style={styles.inputContainer}>
+              <Text style={styles.label}>Contraseña</Text>
+              <View style={styles.inputWrapper}>
+                <Lock size={20} color="#9CA3AF" style={styles.icon} />
+                <TextInput
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry={!showPassword}
+                  placeholder="Ingresa tu contraseña"
+                  placeholderTextColor="#9CA3AF"
+                  style={styles.input}
+                />
+                <TouchableOpacity
+                  onPress={() => setShowPassword(!showPassword)}
+                  style={styles.eyeButton}
+                >
+                  {showPassword ? (
+                    <EyeOff size={20} color="#9CA3AF" />
+                  ) : (
+                    <Eye size={20} color="#9CA3AF" />
+                  )}
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            {/* Remember Me Switch */}
+            <View style={styles.rememberRow}>
+              <Switch
+                value={rememberMe}
+                onValueChange={setRememberMe}
+                trackColor={{ false: "#374151", true: "#EF233C" }}
+                thumbColor={rememberMe ? "#fff" : "#9CA3AF"}
+              />
+              <Text style={styles.rememberText}> Mantener sesión iniciada </Text>
+            </View>
+
+            {/* Sign In Button */}
+            <TouchableOpacity
+              disabled={isLoading}
+              onPress={handleLogin}
+              style={styles.button}
+            >
+              {isLoading ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text style={styles.buttonText}>Iniciar sesión</Text>
+              )}
+            </TouchableOpacity>
+
+            {/* Forgot password */}
+            <TouchableOpacity
+              style={styles.forgotButton}
+              onPress={() => router.push("../forgot-password")}
+            >
+              <Text style={styles.forgotText}>Olvidaste tu contraseña?</Text>
+            </TouchableOpacity>
+
+            {/* Switch to register */}
+            <View style={styles.switchContainer}>
+              <Text style={styles.switchText}>No tienes una cuenta?</Text>
+              <Link href={"/register"} asChild>
+                <Text style={styles.switchButton}>Crea tu cuenta aquí</Text>
+              </Link>
+            </View>
           </View>
-
-          {/* Sign In Button */}
-          <TouchableOpacity
-            disabled={isLoading}
-            onPress={handleLogin}
-            style={styles.button}
-          >
-            {isLoading ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <Text style={styles.buttonText}>Iniciar sesión</Text>
-            )}
-          </TouchableOpacity>
-
-          {/* Forgot password */}
-          <TouchableOpacity
-            style={styles.forgotButton}
-            onPress={() => router.push("../forgot-password")}
-          >
-            <Text style={styles.forgotText}>Olvidaste tu contraseña?</Text>
-          </TouchableOpacity>
-
-          {/* Switch to register */}
-          <View style={styles.switchContainer}>
-            <Text style={styles.switchText}>No tienes una cuenta?</Text>
-            <Link href={"/register"} asChild>
-              <Text style={styles.switchButton}>Crea tu cuenta aquí</Text>
-            </Link>
-          </View>
-        </View>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
+    </ImageBackground>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#111111" },
+  // Fondo ocupa toda la pantalla sin cortarse con teclado ni safe areas
+  bg: {
+    flex: 1,
+  },
+  // Suaviza bordes del fondo y garantiza que se vea completo tras safe areas
+  bgImage: {
+    // Puedes ajustar opacidad si quieres oscurecer un poco el fondo
+    // opacity: 0.95,
+  },
+
+  container: {
+    flex: 1,
+    backgroundColor: "transparent",
+  },
+  // Centrado vertical y horizontal del card
   keyboardView: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    padding: 24,
+    paddingHorizontal: 24,
   },
-  backgroundImage: { position: "absolute", width: "100%", height: "100%" },
+
+  // Card más centrado y con ancho responsivo
   card: {
     width: "100%",
     maxWidth: 400,
@@ -206,7 +215,9 @@ const styles = StyleSheet.create({
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 4 },
     elevation: 5,
+    alignSelf: "center",
   },
+
   title: {
     fontSize: 32,
     fontWeight: "bold",
@@ -223,6 +234,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginBottom: 24,
   },
+
   inputContainer: { marginBottom: 16 },
   label: { fontSize: 14, fontWeight: "600", color: "#E5E7EB", marginBottom: 4 },
   inputWrapper: { position: "relative" },
@@ -236,19 +248,31 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#E5E7EB",
     textAlign: "center",
+    paddingLeft: 40, // asegura espacio para el ícono
+    paddingRight: 40, // asegura espacio para el ojo
   },
   eyeButton: { position: "absolute", marginTop: 4, right: 12, top: 12 },
+
+  rememberRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 8,
+  },
+  rememberText: { color: "#E5E7EB", marginLeft: 8 },
+
   button: {
     height: 48,
     backgroundColor: "#EF233C",
     borderRadius: 12,
     justifyContent: "center",
     alignItems: "center",
-    marginTop: 8,
+    marginTop: 12,
   },
   buttonText: { color: "#fff", fontSize: 16, fontWeight: "600" },
+
   forgotButton: { marginTop: 12, alignItems: "center" },
   forgotText: { fontSize: 14, color: "#9CA3AF" },
+
   switchContainer: {
     flexDirection: "row",
     justifyContent: "center",
