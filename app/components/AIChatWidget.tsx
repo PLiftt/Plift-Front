@@ -15,10 +15,6 @@ import { Ionicons } from "@expo/vector-icons";
 
 /**
  * AIChatWidget (Check-in diario, burbuja abajo; chat centrado al abrir)
- * -------------------------------------------------------------
- * - Mantiene la burbuja flotante abajo a la derecha
- * - El chat (modal) se muestra centrado verticalmente (no pegado abajo)
- * - Panel de Check-in diario (sueño, fatiga, estrés, dolor, RPE)
  */
 
 const { width, height } = Dimensions.get("window");
@@ -46,7 +42,7 @@ const SHEET_HEIGHT = Math.min(680, height * 0.8);
 
 export default function AIChatWidget({ userName, role, initialUnread = 0, onOpen, onClose }: AIChatWidgetProps) {
   const [open, setOpen] = useState(false);
-  const [input, setInput] = useState("");
+  const [input, setInput] = useState(""); // por si luego vuelves a usar input
   const [unread, setUnread] = useState(initialUnread);
   const [showCheckin, setShowCheckin] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
@@ -127,7 +123,7 @@ export default function AIChatWidget({ userName, role, initialUnread = 0, onOpen
 
   return (
     <>
-      {/* Burbuja flotante (igual que antes) */}
+      {/* Burbuja flotante */}
       <TouchableOpacity onPress={handleOpen} activeOpacity={0.9} style={styles.fab}>
         <Ionicons name="chatbubble-ellipses" size={26} color="#fff" />
         {unread > 0 && (
@@ -140,6 +136,7 @@ export default function AIChatWidget({ userName, role, initialUnread = 0, onOpen
       {/* Modal centrado */}
       <Modal visible={open} animationType="slide" transparent onRequestClose={handleClose}>
         <View style={styles.backdrop}>
+          {/* panel con borde integrado y glow sutil */}
           <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={styles.sheet}>
             {/* Header */}
             <View style={styles.sheetHeader}>
@@ -147,15 +144,11 @@ export default function AIChatWidget({ userName, role, initialUnread = 0, onOpen
                 <Ionicons name="sparkles" size={20} color="#EF233C" />
                 <Text style={styles.sheetTitle}>{headerTitle}</Text>
               </View>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-                <TouchableOpacity onPress={() => setShowCheckin(s => !s)} style={styles.toolbarBtn}>
-                  <Ionicons name="clipboard-outline" size={18} color="#EF233C" />
-                  <Text style={styles.toolbarText}>{showCheckin ? 'Chat' : 'Check-in'}</Text>
-                </TouchableOpacity>
-                <TouchableOpacity onPress={handleClose}>
-                  <Ionicons name="close" size={26} color="#fff" />
-                </TouchableOpacity>
-              </View>
+
+              {/* Derecha: solo cerrar */}
+              <TouchableOpacity onPress={handleClose}>
+                <Ionicons name="close" size={26} color="#fff" />
+              </TouchableOpacity>
             </View>
 
             {!showCheckin ? (
@@ -167,26 +160,32 @@ export default function AIChatWidget({ userName, role, initialUnread = 0, onOpen
                     </View>
                   ))}
                 </ScrollView>
-                <View style={styles.inputBar}>
-                  <TextInput
-                    style={styles.input}
-                    placeholder="Escribe un mensaje..."
-                    placeholderTextColor="#777"
-                    value={input}
-                    onChangeText={setInput}
-                    onSubmitEditing={handleSend}
-                    returnKeyType="send"
-                    multiline
-                    maxLength={800}
-                  />
-                  <TouchableOpacity style={styles.sendBtn} onPress={handleSend}>
-                    <Ionicons name="send" size={18} color="#121212" />
+
+                {/* Botón inferior centrado: abre Check-in */}
+                <View style={[styles.inputBar, { justifyContent: 'center' }]}>
+                  <TouchableOpacity
+                    style={styles.toolbarBtn}
+                    onPress={() => setShowCheckin(true)}
+                  >
+                    <Ionicons name="clipboard-outline" size={18} color="#EF233C" />
+                    <Text style={styles.toolbarText}>Check-in</Text>
                   </TouchableOpacity>
                 </View>
               </>
             ) : (
               <ScrollView contentContainerStyle={styles.checkinContainer}>
-                <Text style={styles.checkinTitle}>Check-in diario</Text>
+                {/* ⬇️ Título + "Volver al chat" al lado */}
+                <View style={styles.checkinHeader}>
+                  <Text style={styles.checkinTitle}>Check-in diario</Text>
+                  <TouchableOpacity
+                    style={styles.toolbarBtn}
+                    onPress={() => setShowCheckin(false)}
+                  >
+                    <Ionicons name="chatbubble-ellipses-outline" size={18} color="#EF233C" />
+                    <Text style={styles.toolbarText}>Volver al chat</Text>
+                  </TouchableOpacity>
+                </View>
+
                 <NumberRow label="¿Cómo dormiste anoche?" value={sleep} setValue={setSleep} />
                 <NumberRow label="¿Qué tan fatigado/a te sientes ahora?" value={fatigue} setValue={setFatigue} />
                 <NumberRow label="¿Nivel de estrés hoy?" value={stress} setValue={setStress} />
@@ -202,6 +201,8 @@ export default function AIChatWidget({ userName, role, initialUnread = 0, onOpen
                   />
                 </View>
                 <NumberRow label="RPE promedio del día anterior" value={rpe} setValue={setRpe} />
+
+                {/* Enviar check-in */}
                 <TouchableOpacity style={styles.submitBtn} onPress={submitCheckin}>
                   <Ionicons name="checkmark-circle" size={18} color="#121212" />
                   <Text style={styles.submitText}>Enviar check-in</Text>
@@ -233,21 +234,37 @@ function NumberRow({ label, value, setValue }: { label: string; value: number; s
 }
 
 const styles = StyleSheet.create({
-  // Fondo del modal: centrado, con leve padding abajo para no tapar totalmente
   backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', paddingBottom: 80 },
 
-  // Contenedor del chat: tarjeta centrada
-  sheet: { backgroundColor: '#121212', borderRadius: 16, paddingBottom: 12, width: width * 0.9, maxHeight: SHEET_HEIGHT, alignSelf: 'center' },
+  // Panel con borde pegado a la card y glow sutil
+  sheet: {
+    backgroundColor: '#121212',
+    borderRadius: 16,
+    paddingBottom: 12,
+    width: width * 0.9,
+    maxHeight: SHEET_HEIGHT,
+    alignSelf: 'center',
 
-  // Burbuja flotante (sin cambios)
+    // borde integrado y sutil
+    borderWidth: 1,
+    borderColor: 'rgba(239,35,60,0.35)',
+    overflow: 'hidden',
+
+    // glow muy suave
+    shadowColor: '#EF233C',
+    shadowOpacity: 0.18,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 6,
+  },
+
+  // Burbuja
   fab: { position: 'absolute', right: WIDGET_SIDE_OFFSET, bottom: WIDGET_BOTTOM_OFFSET, backgroundColor: '#EF233C', width: 56, height: 56, borderRadius: 28, alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOpacity: 0.4, shadowRadius: 6, shadowOffset: { width: 0, height: 3 }, elevation: 8 },
   badge: { position: 'absolute', top: -6, right: -6, backgroundColor: '#1E1E1E', borderColor: '#EF233C', borderWidth: 1, height: 20, minWidth: 20, paddingHorizontal: 4, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
   badgeText: { color: '#fff', fontSize: 11, fontWeight: '700' },
 
   sheetHeader: { paddingHorizontal: 16, paddingVertical: 12, borderBottomColor: '#222', borderBottomWidth: StyleSheet.hairlineWidth, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   sheetTitle: { color: '#fff', fontWeight: '700', fontSize: 16, marginLeft: 8 },
-  toolbarBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#1E1E1E', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 10, borderWidth: 1, borderColor: '#262626' },
-  toolbarText: { color: '#fff', fontSize: 12, marginLeft: 6, fontWeight: '600' },
 
   messagesContainer: { paddingHorizontal: 12, paddingTop: 12, paddingBottom: 8 },
   bubble: { maxWidth: width * 0.8, paddingVertical: 10, paddingHorizontal: 12, borderRadius: 14, marginBottom: 10 },
@@ -255,12 +272,17 @@ const styles = StyleSheet.create({
   bubbleAssistant: { alignSelf: 'flex-start', backgroundColor: '#1E1E1E', borderWidth: 1, borderColor: '#262626' },
   bubbleText: { color: '#fff', fontSize: 14, lineHeight: 19 },
 
-  inputBar: { flexDirection: 'row', alignItems: 'flex-end', borderTopColor: '#222', borderTopWidth: StyleSheet.hairlineWidth, padding: 10, gap: 8 },
-  input: { flex: 1, minHeight: 40, maxHeight: 120, backgroundColor: '#1E1E1E', borderRadius: 12, paddingHorizontal: 12, paddingVertical: 8, color: '#fff', fontSize: 14 },
-  sendBtn: { backgroundColor: '#EF233C', paddingHorizontal: 14, paddingVertical: 10, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+  // Barra inferior
+  inputBar: { flexDirection: 'row', alignItems: 'center', borderTopColor: '#222', borderTopWidth: StyleSheet.hairlineWidth, padding: 10, gap: 8 },
+  toolbarBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#1E1E1E', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 10, borderWidth: 1, borderColor: '#262626' },
+  toolbarText: { color: '#fff', fontSize: 12, marginLeft: 6, fontWeight: '600' },
 
   checkinContainer: { padding: 16, gap: 12 },
-  checkinTitle: { color: '#fff', fontWeight: '700', fontSize: 16, marginBottom: 6 },
+
+  
+  checkinHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 },
+  checkinTitle: { color: '#fff', fontWeight: '700', fontSize: 16 },
+
   fieldBlock: { backgroundColor: '#1E1E1E', borderRadius: 12, padding: 12, borderWidth: 1, borderColor: '#262626' },
   fieldLabel: { color: '#ddd', marginBottom: 8, fontSize: 13, fontWeight: '600' },
   fieldInput: { backgroundColor: '#161616', borderRadius: 10, padding: 10, color: '#fff', minHeight: 44 },
