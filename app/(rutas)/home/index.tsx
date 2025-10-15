@@ -101,7 +101,8 @@ const HomeScreen: React.FC = () => {
     })();
   }, [WATER_KEY]);
 
-  const fmtWater = (ml: number) => (ml >= 1000 ? `${(ml / 1000).toFixed(1)} L` : `${ml} ml`);
+  const fmtWater = (ml: number) =>
+    ml >= 1000 ? `${(ml / 1000).toFixed(1)} L` : `${ml} ml`;
 
   const addWater = async (delta = 200) => {
     const next = Math.max(0, waterMl + delta);
@@ -162,13 +163,21 @@ const HomeScreen: React.FC = () => {
     } catch (error: any) {
       console.error(error);
       if (error.response?.data?.athlete) {
-        Alert.alert(language === "es" ? "Error" : "Error", error.response.data.athlete);
+        Alert.alert(
+          language === "es" ? "Error" : "Error",
+          error.response.data.athlete
+        );
       } else if (error.response?.data?.detail) {
-        Alert.alert(language === "es" ? "Error" : "Error", error.response.data.detail);
+        Alert.alert(
+          language === "es" ? "Error" : "Error",
+          error.response.data.detail
+        );
       } else {
         Alert.alert(
           language === "es" ? "Error" : "Error",
-          language === "es" ? "No se pudo generar la invitación" : "Could not generate the invitation"
+          language === "es"
+            ? "No se pudo generar la invitación"
+            : "Could not generate the invitation"
         );
       }
     }
@@ -190,7 +199,9 @@ const HomeScreen: React.FC = () => {
     return (
       <View style={[styles.centered, { backgroundColor: palette.background }]}>
         <Text style={{ color: palette.text }}>
-          {language === "es" ? "No se pudo cargar el perfil." : "Could not load profile."}
+          {language === "es"
+            ? "No se pudo cargar el perfil."
+            : "Could not load profile."}
         </Text>
       </View>
     );
@@ -213,32 +224,74 @@ const HomeScreen: React.FC = () => {
     <View style={[styles.container, { backgroundColor: palette.background }]}>
       <ScrollView contentContainerStyle={{ paddingBottom: 120 }}>
         {/* Hero */}
-        <View style={[styles.hero, { backgroundColor: palette.surface, borderBottomColor: palette.borderSoft }]}>
-          <Text style={[styles.greeting, { color: palette.subtext }]}>{greeting},</Text>
-          <Text style={[styles.heroName, { color: palette.text }]}>{profile.first_name || profile.email}</Text>
+        <View
+          style={[
+            styles.hero,
+            { backgroundColor: palette.surface, borderBottomColor: palette.borderSoft },
+          ]}
+        >
+          <Text style={[styles.greeting, { color: palette.subtext }]}>
+            {greeting},
+          </Text>
+          <Text style={[styles.heroName, { color: palette.text }]}>
+            {profile.first_name || profile.email}
+          </Text>
           <Text style={[styles.heroSubtitle, { color: palette.subtext }]}>
-            {language === "es" ? "¿Listo para tus metas? ¡Haz que hoy cuente!" : "Ready for your goals? Make today count!"}
+            {language === "es"
+              ? "¿Listo para tus metas? ¡Haz que hoy cuente!"
+              : "Ready for your goals? Make today count!"}
           </Text>
         </View>
 
         {/* Coach Panel */}
         {profile.role.toUpperCase() === "COACH" && (
           <View className="coach-section" style={styles.section}>
-            <Text style={[styles.sectionTitle, { color: palette.text }]}>{language === "es" ? "Mis Atletas" : "My Athletes"}</Text>
+            <Text style={[styles.sectionTitle, { color: palette.text }]}>
+              {language === "es" ? "Mis Atletas" : "My Athletes"}
+            </Text>
 
             {profile.athletes?.map((a) => (
-              <View key={a.id} style={[styles.block, { backgroundColor: palette.surface, borderColor: palette.border, shadowOpacity: isDarkMode ? 0.2 : 0.06 }]}>
-                <Ionicons name="person-circle-outline" size={22} color={palette.accent} />
+              <View
+                key={a.id}
+                style={[
+                  styles.block,
+                  {
+                    backgroundColor: palette.surface,
+                    borderColor: palette.border,
+                    shadowOpacity: isDarkMode ? 0.2 : 0.06,
+                  },
+                ]}
+              >
+                <Ionicons
+                  name="person-circle-outline"
+                  size={22}
+                  color={palette.accent}
+                />
                 <View style={{ marginLeft: 10 }}>
-                  <Text style={[styles.blockText, { color: palette.text }]}>{a.athlete_name}</Text>
-                  <Text style={[styles.blockInfo, { color: palette.subtext }]}>{a.athlete_email}</Text>
+                  <Text style={[styles.blockText, { color: palette.text }]}>
+                    {a.athlete_name}
+                  </Text>
+                  <Text style={[styles.blockInfo, { color: palette.subtext }]}>
+                    {a.athlete_email}
+                  </Text>
                 </View>
               </View>
             ))}
 
             <TextInput
-              style={[styles.input, { backgroundColor: palette.inputBg, color: palette.inputText, borderColor: palette.inputBorder }]}
-              placeholder={language === "es" ? "Correo del atleta (opcional)" : "Athlete email (optional)"}
+              style={[
+                styles.input,
+                {
+                  backgroundColor: palette.inputBg,
+                  color: palette.inputText,
+                  borderColor: palette.inputBorder,
+                },
+              ]}
+              placeholder={
+                language === "es"
+                  ? "Correo del atleta (opcional)"
+                  : "Athlete email (optional)"
+              }
               placeholderTextColor={palette.placeholder}
               value={athleteEmail}
               onChangeText={setAthleteEmail}
@@ -246,8 +299,13 @@ const HomeScreen: React.FC = () => {
               autoCapitalize="none"
             />
 
-            <TouchableOpacity style={[styles.generateButton, { backgroundColor: palette.success }]} onPress={handleGenerateCode}>
-              <Text style={styles.generateButtonText}>{language === "es" ? "Generar Código" : "Generate Code"}</Text>
+            <TouchableOpacity
+              style={[styles.generateButton, { backgroundColor: palette.success }]}
+              onPress={handleGenerateCode}
+            >
+              <Text style={styles.generateButtonText}>
+                {language === "es" ? "Generar Código" : "Generate Code"}
+              </Text>
             </TouchableOpacity>
           </View>
         )}
@@ -258,8 +316,17 @@ const HomeScreen: React.FC = () => {
             {/* Mi Progreso */}
             <View style={[styles.sectionHeader, styles.headerGapLarge]}>
               <View style={{ flexDirection: "row", alignItems: "center" }}>
-                <Ionicons name="stats-chart-outline" size={18} color={palette.accent} />
-                <Text style={[styles.sectionTitle, { marginLeft: 8, marginBottom: 0, color: palette.text }]}>
+                <Ionicons
+                  name="stats-chart-outline"
+                  size={18}
+                  color={palette.accent}
+                />
+                <Text
+                  style={[
+                    styles.sectionTitle,
+                    { marginLeft: 8, marginBottom: 0, color: palette.text },
+                  ]}
+                >
                   {language === "es" ? "Mi Progreso" : "My Progress"}
                 </Text>
               </View>
@@ -267,53 +334,134 @@ const HomeScreen: React.FC = () => {
 
             {/* Quick Stats (placeholders) */}
             <View style={styles.statsContainer}>
-              <View style={[styles.statCard, { backgroundColor: palette.surface, shadowOpacity: isDarkMode ? 0.2 : 0.06 }]}>
+              <View
+                style={[
+                  styles.statCard,
+                  {
+                    backgroundColor: palette.surface,
+                    shadowOpacity: isDarkMode ? 0.2 : 0.06,
+                  },
+                ]}
+              >
                 <Ionicons name="flame" size={28} color={palette.accent} />
                 <View style={{ marginLeft: 16 }}>
-                  <Text style={[styles.cardValue, { color: palette.text }]}>12</Text>
-                  <Text style={[styles.cardLabel, { color: palette.subtext }]}>{language === "es" ? "Días streak" : "Streak days"}</Text>
+                  <Text style={[styles.cardValue, { color: palette.text }]}>
+                    12
+                  </Text>
+                  <Text style={[styles.cardLabel, { color: palette.subtext }]}>
+                    {language === "es" ? "Días streak" : "Streak days"}
+                  </Text>
                 </View>
               </View>
 
-              <View style={[styles.statCard, { backgroundColor: palette.surface, shadowOpacity: isDarkMode ? 0.2 : 0.06 }]}>
+              <View
+                style={[
+                  styles.statCard,
+                  {
+                    backgroundColor: palette.surface,
+                    shadowOpacity: isDarkMode ? 0.2 : 0.06,
+                  },
+                ]}
+              >
                 <Ionicons name="barbell" size={28} color={palette.accent} />
                 <View style={{ marginLeft: 16 }}>
-                  <Text style={[styles.cardValue, { color: palette.text }]}>4</Text>
-                  <Text style={[styles.cardLabel, { color: palette.subtext }]}>{language === "es" ? "Workouts esta semana" : "Workouts this week"}</Text>
+                  <Text style={[styles.cardValue, { color: palette.text }]}>
+                    4
+                  </Text>
+                  <Text style={[styles.cardLabel, { color: palette.subtext }]}>
+                    {language === "es"
+                      ? "Workouts esta semana"
+                      : "Workouts this week"}
+                  </Text>
                 </View>
               </View>
 
-              <View style={[styles.statCard, { backgroundColor: palette.surface, shadowOpacity: isDarkMode ? 0.2 : 0.06 }]}>
+              <View
+                style={[
+                  styles.statCard,
+                  {
+                    backgroundColor: palette.surface,
+                    shadowOpacity: isDarkMode ? 0.2 : 0.06,
+                  },
+                ]}
+              >
                 <Ionicons name="calendar" size={28} color={palette.accent} />
                 <View style={{ marginLeft: 16 }}>
-                  <Text style={[styles.cardValue, { color: palette.text }]}>Upper Body</Text>
-                  <Text style={[styles.cardLabel, { color: palette.subtext }]}>{language === "es" ? "Próximo workout" : "Next workout"}</Text>
+                  <Text style={[styles.cardValue, { color: palette.text }]}>
+                    Upper Body
+                  </Text>
+                  <Text style={[styles.cardLabel, { color: palette.subtext }]}>
+                    {language === "es" ? "Próximo workout" : "Next workout"}
+                  </Text>
                 </View>
               </View>
             </View>
           </View>
         )}
 
-        {/* Calculadora RM (Coach o Athlete) */}
+        {/* === Calculadoras (Coach o Athlete) === */}
         <View style={styles.section}>
           <View style={[styles.sectionHeader, styles.headerGapLarge]}>
             <View style={{ flexDirection: "row", alignItems: "center" }}>
               <Ionicons name="calculator-outline" size={18} color={palette.accent} />
-              <Text style={[styles.sectionTitle, { marginLeft: 8, marginBottom: 0, color: palette.text }]}>
-                {language === "es" ? "Calculadora RM" : "1RM Calculator"}
+              <Text
+                style={[
+                  styles.sectionTitle,
+                  { marginLeft: 8, marginBottom: 0, color: palette.text },
+                ]}
+              >
+                {language === "es" ? "Calculadoras" : "Calculators"}
               </Text>
             </View>
           </View>
 
+          {/* Botón: 1RM */}
           <TouchableOpacity
             onPress={() => router.push("/calculadora")}
-            style={[styles.statCard, { backgroundColor: palette.surface, shadowOpacity: isDarkMode ? 0.2 : 0.06, borderWidth: 1, borderColor: palette.border }]}
+            style={[
+              styles.statCard,
+              {
+                backgroundColor: palette.surface,
+                shadowOpacity: isDarkMode ? 0.2 : 0.06,
+                borderWidth: 1,
+                borderColor: palette.border,
+              },
+            ]}
             activeOpacity={0.85}
           >
             <Ionicons name="calculator-outline" size={28} color={palette.accent} />
             <View style={{ marginLeft: 16 }}>
-              <Text style={[styles.cardValue, { color: palette.text }]}>{language === "es" ? "Calcular 1RM" : "Calculate 1RM"}</Text>
-              <Text style={[styles.cardLabel, { color: palette.subtext }]}>{language === "es" ? "Por RPE y repeticiones" : "By RPE & reps"}</Text>
+              <Text style={[styles.cardValue, { color: palette.text }]}>
+                {language === "es" ? "Calcular 1RM" : "Calculate 1RM"}
+              </Text>
+              <Text style={[styles.cardLabel, { color: palette.subtext }]}>
+                {language === "es" ? "Por RPE y repeticiones" : "By RPE & reps"}
+              </Text>
+            </View>
+          </TouchableOpacity>
+
+          {/* Botón: Discos */}
+          <TouchableOpacity
+            onPress={() => router.push("/discos")}
+            style={[
+              styles.statCard,
+              {
+                backgroundColor: palette.surface,
+                shadowOpacity: isDarkMode ? 0.2 : 0.06,
+                borderWidth: 1,
+                borderColor: palette.border,
+              },
+            ]}
+            activeOpacity={0.85}
+          >
+            <Ionicons name="disc-outline" size={28} color={palette.accent} />
+            <View style={{ marginLeft: 16 }}>
+              <Text style={[styles.cardValue, { color: palette.text }]}>
+                {language === "es" ? "Calcular discos" : "Plate calculator"}
+              </Text>
+              <Text style={[styles.cardLabel, { color: palette.subtext }]}>
+                {language === "es" ? "Desglose por lado" : "Per-side breakdown"}
+              </Text>
             </View>
           </TouchableOpacity>
         </View>
@@ -324,13 +472,23 @@ const HomeScreen: React.FC = () => {
           <View style={[styles.sectionHeader, styles.headerGapLarge]}>
             <View style={{ flexDirection: "row", alignItems: "center" }}>
               <Ionicons name="body-outline" size={18} color={palette.accent} />
-              <Text style={[styles.sectionTitle, { marginLeft: 8, marginBottom: 0, color: palette.text }]}>
+              <Text
+                style={[
+                  styles.sectionTitle,
+                  { marginLeft: 8, marginBottom: 0, color: palette.text },
+                ]}
+              >
                 {language === "es" ? "Movilidad" : "Mobility"}
               </Text>
             </View>
           </View>
 
-          <View style={[styles.mobilityCard, { backgroundColor: palette.surface, borderColor: palette.border }]}>
+          <View
+            style={[
+              styles.mobilityCard,
+              { backgroundColor: palette.surface, borderColor: palette.border },
+            ]}
+          >
             <Text style={[styles.challengeText, { color: palette.text }]}>
               {language === "es"
                 ? "Drills sugeridos para preparar cadera, hombro y cadena posterior antes de entrenar."
@@ -339,10 +497,15 @@ const HomeScreen: React.FC = () => {
 
             <TouchableOpacity
               onPress={() => router.push("/movilidad")}
-              style={[styles.generateButton, { backgroundColor: palette.accent, marginTop: 12 }]}
+              style={[
+                styles.generateButton,
+                { backgroundColor: palette.accent, marginTop: 12 },
+              ]}
               activeOpacity={0.9}
             >
-              <Text style={styles.generateButtonText}>{language === "es" ? "Movilidad articular" : "Joint mobility"}</Text>
+              <Text style={styles.generateButtonText}>
+                {language === "es" ? "Movilidad articular" : "Joint mobility"}
+              </Text>
             </TouchableOpacity>
           </View>
 
@@ -350,21 +513,36 @@ const HomeScreen: React.FC = () => {
           <View style={[styles.sectionHeader, styles.headerGap]}>
             <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
               <Ionicons name="water-outline" size={18} color={palette.accent} />
-              <Text style={[styles.sectionTitle, { marginBottom: 0, color: palette.text }]}>
+              <Text
+                style={[
+                  styles.sectionTitle,
+                  { marginBottom: 0, color: palette.text },
+                ]}
+              >
                 {language === "es" ? "Hidratación" : "Hydration"} — {fmtWater(waterMl)}
               </Text>
             </View>
 
             <TouchableOpacity
               onPress={confirmResetWater}
-              style={[styles.resetBtn, { backgroundColor: palette.surface, borderColor: palette.border }]}
+              style={[
+                styles.resetBtn,
+                { backgroundColor: palette.surface, borderColor: palette.border },
+              ]}
             >
-              <Text style={[styles.resetBtnText, { color: palette.accent }]}>{language === "es" ? "Reset" : "Reset"}</Text>
+              <Text style={[styles.resetBtnText, { color: palette.accent }]}>
+                {language === "es" ? "Reset" : "Reset"}
+              </Text>
             </TouchableOpacity>
           </View>
 
           {/* Card con la gota (dentro del container) */}
-          <View style={[styles.hydrationCard, { backgroundColor: palette.surface, borderColor: palette.border }]}>
+          <View
+            style={[
+              styles.hydrationCard,
+              { backgroundColor: palette.surface, borderColor: palette.border },
+            ]}
+          >
             <TouchableOpacity
               onPress={async () => {
                 await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -379,9 +557,13 @@ const HomeScreen: React.FC = () => {
               style={styles.bigDrop}
             >
               <Ionicons name="water" size={40} color={palette.accent} />
-              <Text style={[styles.bigDropText, { color: palette.accent }]}>+200 ml</Text>
+              <Text style={[styles.bigDropText, { color: palette.accent }]}>
+                +200 ml
+              </Text>
               <Text style={{ fontSize: 11, color: palette.subtext, marginTop: 4 }}>
-                {language === "es" ? "Mantén presionado para -200 ml" : "Long-press for −200 ml"}
+                {language === "es"
+                  ? "Mantén presionado para -200 ml"
+                  : "Long-press for −200 ml"}
               </Text>
             </TouchableOpacity>
           </View>
@@ -389,7 +571,10 @@ const HomeScreen: React.FC = () => {
       </ScrollView>
 
       {/* burbuja de chat IA */}
-      <AIChatWidget userName={profile.first_name || profile.email} role={profile.role} />
+      <AIChatWidget
+        userName={profile.first_name || profile.email}
+        role={profile.role}
+      />
 
       <BottomNav />
     </View>
