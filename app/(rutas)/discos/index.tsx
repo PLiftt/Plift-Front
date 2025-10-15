@@ -9,6 +9,7 @@ import {
   TextInput,
   Platform,
   KeyboardAvoidingView,
+  LayoutChangeEvent,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
@@ -34,7 +35,6 @@ const KG_PLATES: Plate[] = [
 ];
 
 const LB_PLATES: Plate[] = [
-  // Colores genéricos en lb (frecuente que sean negros o mixtos)
   { value: 45, color: "#111111", label: "45 lb" },
   { value: 35, color: "#333333", label: "35 lb" },
   { value: 25, color: "#555555", label: "25 lb" },
@@ -44,18 +44,33 @@ const LB_PLATES: Plate[] = [
   { value: 1.25,color:"#C8C8C8", label: "1.25 lb" },
 ];
 
-/** Conversión */
+/** Conversión y helpers numéricos */
 const kg2lb = (kg: number) => kg * 2.2046226218;
 const lb2kg = (lb: number) => lb / 2.2046226218;
-
-/** Redondeo al incremento más cercano */
-const roundTo = (x: number, step: number) => Math.round(x / step) * step;
-
 type Unit = "kg" | "lb";
+const toNum = (s: string) => parseFloat((s || "").replace(",", "."));
+const fmt = (x: number, u: Unit) => (u === "kg" ? x.toFixed(1) : Math.round(x).toString()); // kg con 1 decimal, lb entero
 
 // Selecciones de barra por unidad
 const BAR_OPTIONS_KG = [20, 15, 10];
 const BAR_OPTIONS_LB = [45, 35, 22];
+
+/** Utils de color para contraste de texto en placa */
+const hexToRgb = (hex: string) => {
+  const h = hex.replace("#", "");
+  const bigint = parseInt(h.length === 3 ? h.split("").map(c => c + c).join("") : h, 16);
+  return { r: (bigint >> 16) & 255, g: (bigint >> 8) & 255, b: bigint & 255 };
+};
+const relLuminance = (hex: string) => {
+  const { r, g, b } = hexToRgb(hex);
+  const toLin = (v: number) => {
+    const s = v / 255;
+    return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+  };
+  const R = toLin(r), G = toLin(g), B = toLin(b);
+  return 0.2126 * R + 0.7152 * G + 0.0722 * B;
+};
+const textOn = (bgHex: string) => (relLuminance(bgHex) > 0.5 ? "#111" : "#fff");
 
 export default function DiscosScreen() {
   const router = useRouter();
@@ -72,6 +87,7 @@ export default function DiscosScreen() {
         border: "#2A2A2A",
         accent: "#EF233C",
         input: "#1A1A1A",
+        barMetal: "#A7A7A7",
       }
     : {
         bg: "#F8FAFC",
@@ -81,84 +97,138 @@ export default function DiscosScreen() {
         border: "#E5E7EB",
         accent: "#EF233C",
         input: "#FFFFFF",
+        barMetal: "#4B5563",
       };
 
   /** =============================
    *  Inputs
    *  =============================*/
   const [unit, setUnit] = useState<Unit>("kg");
-  const [target, setTarget] = useState<string>("140");           // peso objetivo total (con barra)
-  const [bar, setBar] = useState<number>(20);                    // peso de la barra
-  const [collars, setCollars] = useState<string>("0");           // peso total de collares (sumados ambos)
-  const [step, setStep] = useState<string>(unit === "kg" ? "0.5" : "1"); // redondeo
+  const [target, setTarget] = useState<string>("140");  // peso objetivo total (con barra)
+  const [bar, setBar] = useState<number>(20);           // peso de la barra
 
-  // al cambiar unidad, ajusta barra y step por defecto
+  // al cambiar unidad, convierte target y ajusta barra por defecto
   const onUnitChange = (u: Unit) => {
-    setUnit(u);
-    if (u === "kg") {
-      setBar(20);
-      setStep("0.5");
-    } else {
-      setBar(45);
-      setStep("1");
-    }
+    setUnit((prevUnit) => {
+      const curr = toNum(target);
+      if (isFinite(curr)) {
+        const converted = u === "kg" ? lb2kg(curr) : kg2lb(curr);
+        setTarget(fmt(converted, u));
+      }
+      setBar(u === "kg" ? 20 : 45);
+      return u;
+    });
   };
 
   /** =============================
-   *  Cálculo
+   *  Cálculo (sin collares y sin redondeo)
    *  =============================*/
   const { perSide, usedTotal, diff, breakdown, visual } = useMemo(() => {
-    const tRaw = parseFloat((target || "").replace(",", "."));
-    const stepNum = parseFloat((step || "").replace(",", "."));
-    const collarsNum = parseFloat((collars || "").replace(",", "."));
-    if (!isFinite(tRaw) || !isFinite(stepNum) || stepNum <= 0) {
+    const tRaw = toNum(target);
+    if (!isFinite(tRaw)) {
       return { perSide: NaN, usedTotal: NaN, diff: NaN, breakdown: [] as { plate: Plate; count: number }[], visual: [] as Plate[] };
     }
 
     const plates = unit === "kg" ? KG_PLATES : LB_PLATES;
-    // Aseguramos que barra y collares estén en la unidad actual
     const barW = bar;
-    const collarsW = isFinite(collarsNum) && collarsNum > 0 ? collarsNum : 0;
 
-    // Redondeo del objetivo al incremento global de la unidad
-    const roundedTarget = roundTo(tRaw, stepNum);
-
-    // carga por lado:
-    let perSideLoad = (roundedTarget - barW - collarsW) / 2;
-
-    // Si carga por lado es negativa, imposible
+    let perSideLoad = (tRaw - barW) / 2;
     if (!isFinite(perSideLoad) || perSideLoad < 0) {
       return { perSide: NaN, usedTotal: NaN, diff: NaN, breakdown: [], visual: [] };
     }
 
-    // Greedy: usar placas de mayor a menor
+    // Greedy de mayor a menor
     const list: { plate: Plate; count: number }[] = [];
     let rem = perSideLoad;
 
     for (const p of plates) {
-      const n = Math.floor(rem / p.value + 1e-9); // número de placas de ese valor por lado
+      const n = Math.floor(rem / p.value + 1e-9);
       if (n > 0) {
         list.push({ plate: p, count: n });
         rem -= n * p.value;
       }
     }
 
-    // Ajuste por redondeo residual: si queda muy poco remanente, se ignora
     const usedPerSide = perSideLoad - rem;
-    const totalUsed = usedPerSide * 2 + barW + collarsW;
-    const delta = totalUsed - roundedTarget;
+    const totalUsed = usedPerSide * 2 + barW;
+    const delta = totalUsed - tRaw;
 
-    // Visual simple: array plano de placas (por lado) de mayor a menor para el stack
+    // Visual: array plano de placas por lado (interior→exterior)
     const vis: Plate[] = list.flatMap(({ plate, count }) => Array.from({ length: count }, () => plate));
 
     return {
       perSide: usedPerSide,
       usedTotal: totalUsed,
-      diff: delta, // positivo: sobró; negativo: faltó
+      diff: delta,
       breakdown: list,
       visual: vis,
     };
-  }, [unit, target, bar, step, collars]);
+  }, [unit, target, bar]);
+
+  /** =============================
+   *  Auto–scaling + Compactor “+N”
+   *  =============================*/
+  const BAR_WIDTH = 14;    // px
+  const SIDE_PADDING = 12; // px
+  const MIN_W = 14;        // ancho mínimo de disco (⬅️ más chico para pesos extremos)
+  const MAX_W = 36;        // ancho máximo estético
+  const MIN_GAP = 2;       // gap mínimo
+  const BASE_GAP = 6;      // gap base
+
+  const [stackWidth, setStackWidth] = useState(0);
+  const onStackLayout = (e: LayoutChangeEvent) => setStackWidth(e.nativeEvent.layout.width);
+
+  const sizing = useMemo(() => {
+    // valores por defecto (antes del layout)
+    if (!stackWidth) {
+      return {
+        plateW: 36, plateH: 72, gap: BASE_GAP, fontSize: 10, showText: true,
+        compactCount: 0, compactVisual: visual,
+      };
+    }
+
+    const count = Math.max(visual.length, 1);
+    const usable = Math.max(0, stackWidth - BAR_WIDTH - SIDE_PADDING * 2);
+    const perSideAvail = usable / 2;
+
+    // 1) Intento con gap base
+    let gap = BASE_GAP;
+    let plateW = Math.floor((perSideAvail - (count - 1) * gap) / count);
+    if (plateW > MAX_W) plateW = MAX_W;
+
+    // 2) Si no entra, prueba bajar el gap
+    if (plateW < MIN_W) {
+      gap = MIN_GAP;
+      plateW = Math.floor((perSideAvail - (count - 1) * gap) / count);
+    }
+
+    // 3) Si aun así supera el límite mínimo, compactor
+    let compactCount = 0;
+    let compactVisual = visual;
+    if (plateW < MIN_W) {
+      // máximo ítems que caben con MIN_W y MIN_GAP
+      const maxCountFit = Math.max(
+        1,
+        Math.floor((perSideAvail + MIN_GAP) / (MIN_W + MIN_GAP))
+      );
+
+      if (count > maxCountFit) {
+        // reservamos 1 slot para el badge "+N"
+        const keep = Math.max(1, maxCountFit - 1);
+        compactCount = count - keep;
+        compactVisual = visual.slice(0, keep); // mantenemos los más cercanos a la barra
+      }
+
+      gap = MIN_GAP;
+      plateW = Math.min(MAX_W, Math.max(MIN_W, Math.floor((perSideAvail - (Math.max(compactVisual.length,1) - 1) * gap) / Math.max(compactVisual.length,1))));
+    }
+
+    const plateH = Math.round(plateW * 2); // proporción 1:2
+    const fontSize = plateW >= 30 ? 10 : plateW >= 24 ? 9 : plateW >= 18 ? 8 : 7;
+    const showText = plateW >= 18;
+
+    return { plateW, plateH, gap, fontSize, showText, compactCount, compactVisual };
+  }, [stackWidth, visual]);
 
   /** UI helpers */
   const UnitSwitch = () => (
@@ -223,6 +293,9 @@ export default function DiscosScreen() {
     );
   };
 
+  /** =============================
+   *  Render
+   *  =============================*/
   return (
     <KeyboardAvoidingView
       style={[styles.container, { backgroundColor: palette.bg }]}
@@ -271,46 +344,11 @@ export default function DiscosScreen() {
             {t("Barra", "Barbell")}
           </Text>
           <BarSelector />
-
-          {/* Collares + Redondeo */}
-          <View style={[styles.row, { marginTop: 12 }]}>
-            <View style={{ flex: 1 }}>
-              <Text style={[styles.label, { color: palette.sub }]}>{t("Collares (total)", "Collars (total)")}</Text>
-              <TextInput
-                keyboardType="decimal-pad"
-                value={collars}
-                onChangeText={setCollars}
-                placeholder={unit === "kg" ? "0 (p. ej. 2.5)" : "0 (e.g. 5)"}
-                placeholderTextColor={palette.sub}
-                style={[
-                  styles.input,
-                  { backgroundColor: palette.input, color: palette.text, borderColor: palette.border },
-                ]}
-              />
-            </View>
-            <View style={{ width: 12 }} />
-            <View style={{ flex: 1 }}>
-              <Text style={[styles.label, { color: palette.sub }]}>{t("Redondeo", "Rounding step")}</Text>
-              <TextInput
-                keyboardType="decimal-pad"
-                value={step}
-                onChangeText={setStep}
-                placeholder={unit === "kg" ? "0.5" : "1"}
-                placeholderTextColor={palette.sub}
-                style={[
-                  styles.input,
-                  { backgroundColor: palette.input, color: palette.text, borderColor: palette.border },
-                ]}
-              />
-            </View>
-          </View>
         </View>
 
         {/* Card: Resultado */}
         <View style={[styles.card, { backgroundColor: palette.surface, borderColor: palette.border }]}>
-          <Text style={[styles.cardTitle, { color: palette.text }]}>
-            {t("Desglose por lado", "Per-side breakdown")}
-          </Text>
+          <Text style={[styles.cardTitle, { color: palette.text }]}>{t("Desglose por lado", "Per-side breakdown")}</Text>
 
           {/* Totales */}
           <View style={[styles.totals, { borderColor: palette.border, backgroundColor: isDarkMode ? "#161616" : "#FAFAFA" }]}>
@@ -329,41 +367,129 @@ export default function DiscosScreen() {
             </View>
           </View>
 
-          {/* Diferencia (si no es exacto) */}
+          {/* Diferencia */}
           <DiffBadge />
 
-          {/* Visual stack simple */}
-          <View style={styles.stackRow}>
-            <View style={[styles.barCore, { backgroundColor: isDarkMode ? "#999" : "#444" }]} />
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ alignItems: "center" }}>
-              {visual.length === 0 && (
-                <Text style={{ color: palette.sub, fontSize: 12 }}>
-                  {t("Sin placas", "No plates")}
-                </Text>
+          {/* Visual: barra al medio y discos a ambos lados (auto-scaling + compactor) */}
+          <View
+            style={[styles.stackRow, { paddingHorizontal: SIDE_PADDING }]}
+            onLayout={onStackLayout}
+          >
+            {/* LADO IZQUIERDO (interior → exterior, visible) */}
+            <View style={[styles.stackSide, { flexDirection: "row-reverse" }]}>
+              {sizing.compactVisual.length === 0 ? (
+                <Text style={{ color: palette.sub, fontSize: 12 }}>{t("Sin placas", "No plates")}</Text>
+              ) : (
+                sizing.compactVisual.map((p, idx) => (
+                  <View
+                    key={`L-${p.value}-${idx}`}
+                    style={{
+                      height: sizing.plateH,
+                      width: sizing.plateW,
+                      borderRadius: 6,
+                      alignItems: "center",
+                      justifyContent: "center",
+                      borderWidth: 1,
+                      borderColor: "#00000020",
+                      backgroundColor: p.color,
+                      marginLeft: idx === sizing.compactVisual.length - 1 ? 0 : sizing.gap,
+                    }}
+                  >
+                    {sizing.showText && (
+                      <Text style={{ fontWeight: "900", fontSize: sizing.fontSize, color: textOn(p.color) }}>
+                        {p.value}{unit}
+                      </Text>
+                    )}
+                  </View>
+                ))
               )}
-              {visual.map((p, idx) => (
-                <View key={`${p.value}-${idx}`} style={[styles.plateVis, { backgroundColor: p.color, borderColor: "#00000020" }]}>
-                  <Text style={[styles.plateVisText]}>
-                    {p.value}{unit}
+              {/* Badge +N si hubo compactación */}
+              {sizing.compactCount > 0 && (
+                <View
+                  style={{
+                    height: sizing.plateH,
+                    width: sizing.plateW,
+                    borderRadius: 6,
+                    alignItems: "center",
+                    justifyContent: "center",
+                    borderWidth: 1,
+                    borderColor: "#00000020",
+                    backgroundColor: isDarkMode ? "#2A2A2A" : "#E5E7EB",
+                    marginLeft: sizing.compactVisual.length ? sizing.gap : 0,
+                  }}
+                >
+                  <Text style={{ fontWeight: "900", fontSize: sizing.fontSize, color: isDarkMode ? "#fff" : "#111" }}>
+                    +{sizing.compactCount}
                   </Text>
                 </View>
-              ))}
-            </ScrollView>
+              )}
+            </View>
+
+            {/* BARRA CENTRAL */}
+            <View style={[styles.barCore, { backgroundColor: palette.barMetal, width: BAR_WIDTH }]} />
+
+            {/* LADO DERECHO (interior → exterior, visible) */}
+            <View style={[styles.stackSide, { flexDirection: "row" }]}>
+              {sizing.compactVisual.length === 0 ? (
+                <Text style={{ color: palette.sub, fontSize: 12 }}>{t("Sin placas", "No plates")}</Text>
+              ) : (
+                sizing.compactVisual.map((p, idx) => (
+                  <View
+                    key={`R-${p.value}-${idx}`}
+                    style={{
+                      height: sizing.plateH,
+                      width: sizing.plateW,
+                      borderRadius: 6,
+                      alignItems: "center",
+                      justifyContent: "center",
+                      borderWidth: 1,
+                      borderColor: "#00000020",
+                      backgroundColor: p.color,
+                      marginRight: idx === sizing.compactVisual.length - 1 ? 0 : sizing.gap,
+                    }}
+                  >
+                    {sizing.showText && (
+                      <Text style={{ fontWeight: "900", fontSize: sizing.fontSize, color: textOn(p.color) }}>
+                        {p.value}{unit}
+                      </Text>
+                    )}
+                  </View>
+                ))
+              )}
+              {/* Badge +N también en el lado derecho */}
+              {sizing.compactCount > 0 && (
+                <View
+                  style={{
+                    height: sizing.plateH,
+                    width: sizing.plateW,
+                    borderRadius: 6,
+                    alignItems: "center",
+                    justifyContent: "center",
+                    borderWidth: 1,
+                    borderColor: "#00000020",
+                    backgroundColor: isDarkMode ? "#2A2A2A" : "#E5E7EB",
+                    marginRight: sizing.compactVisual.length ? sizing.gap : 0,
+                  }}
+                >
+                  <Text style={{ fontWeight: "900", fontSize: sizing.fontSize, color: isDarkMode ? "#fff" : "#111" }}>
+                    +{sizing.compactCount}
+                  </Text>
+                </View>
+              )}
+            </View>
           </View>
 
           {/* Lista detallada */}
           <View style={{ marginTop: 10 }}>
             {breakdown.length === 0 ? (
               <Text style={{ color: palette.sub, fontSize: 12 }}>
-                {t("Ajusta el objetivo o el redondeo.", "Adjust target or rounding.")}
+                {t("Ajusta el objetivo o la barra.", "Adjust target or barbell.")}
               </Text>
             ) : (
               breakdown.map(({ plate, count }) => (
                 <View key={plate.label} style={styles.rowLine}>
                   <View style={[styles.dot, { backgroundColor: plate.color }]} />
-                  <Text style={{ color: palette.text, fontWeight: "700", flex: 1 }}>
-                    {plate.label}
-                  </Text>
+                  <Text style={{ color: palette.text, fontWeight: "700", flex: 1 }}>{plate.label}</Text>
                   <Text style={{ color: palette.sub, fontWeight: "700" }}>× {count}</Text>
                 </View>
               ))
@@ -376,8 +502,8 @@ export default function DiscosScreen() {
           <Ionicons name="information-circle-outline" size={16} color={palette.accent} />
           <Text style={{ color: palette.sub, fontSize: 12, flex: 1, marginLeft: 6 }}>
             {t(
-              "El cálculo usa greedy de mayor a menor. Si tu gimnasio no tiene ciertas placas, ajusta el redondeo o el objetivo.",
-              "We use a greedy largest-first approach. If your gym lacks some plates, tweak rounding or target weight."
+              "Los discos se escalan y, si es necesario, se agrupan con “+N” para no salir del contenedor.",
+              "Plates auto-scale and group with “+N” if needed so they never overflow."
             )}
           </Text>
         </View>
@@ -462,30 +588,23 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
 
+  /* Visual central */
   stackRow: {
-    marginTop: 10,
+    marginTop: 14,
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
+    justifyContent: "center",
+    gap: 12,
+  },
+  stackSide: {
+    flexDirection: "row",
+    alignItems: "center",
+    minHeight: 72,
+    flexShrink: 1,
   },
   barCore: {
-    width: 14,
-    height: 72,
+    height: 84,
     borderRadius: 6,
-  },
-  plateVis: {
-    height: 72,
-    width: 36,
-    borderRadius: 6,
-    marginRight: 6,
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 1,
-  },
-  plateVisText: {
-    color: "#111",
-    fontWeight: "900",
-    fontSize: 10,
   },
 
   rowLine: {

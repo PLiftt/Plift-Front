@@ -6,97 +6,36 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Linking,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useAppContext } from "app/context/appContext";
 
-type MobilityEx = { name: string; prescription: string; url?: string };
+type MobilityEx = { name: string; prescription: string };
 
-// --- Data (según tus imágenes) ---
+// --- Data (sin videos/links) ---
 const SQUAT: MobilityEx[] = [
-  {
-    name: "Dorsiflexión de tobillo",
-    prescription: "2×10 (aguantar 3s abajo)",
-    url: "https://www.youtube.com/shorts/dYS9cgYk2lY",
-  },
-  {
-    name: "Aductores en máquina",
-    prescription: "2×15  RIR 3",
-    url: "https://www.youtube.com/shorts/Nz402JWDedU",
-  },
-  {
-    name: "Rock back",
-    prescription: "2×10",
-    url: "https://www.youtube.com/shorts/pbBaFw-5vn0",
-  },
-  {
-    name: "Deep isometric squat",
-    prescription: "2×1 min (aguantar abajo)",
-    url: "https://www.youtube.com/shorts/G-uQoo9TpuU",
-  },
+  { name: "Dorsiflexión de tobillo", prescription: "2×10 (aguantar 3s abajo)" },
+  { name: "Aductores en máquina", prescription: "2×15  RIR 3" },
+  { name: "Rock back", prescription: "2×10" },
+  { name: "Deep isometric squat", prescription: "2×1 min (aguantar abajo)" },
 ];
 
 const BENCH: MobilityEx[] = [
-  {
-    name: "Rotación spiderman",
-    prescription: "3×8",
-    url: "https://www.youtube.com/shorts/6ztwnP8LPIY",
-  },
-  {
-    name: "Extensión torácica con foam roller",
-    prescription: "3×10",
-    url: "https://www.youtube.com/shorts/zXVlUo3a3tg",
-  },
-  {
-    name: "Rotación externa de hombro",
-    prescription: "2×10",
-    url: "https://www.youtube.com/shorts/iNn_sNA6TbU",
-  },
-  {
-    name: "Cat Camel",
-    prescription: "2×15",
-    url: "https://www.youtube.com/watch?v=1cs3SKwQZpM",
-  },
-  {
-    name: "Foam roller scapular retraction",
-    prescription: "2×10",
-    url: "https://www.youtube.com/watch?v=mVk2_-C6BBI",
-  },
+  { name: "Rotación spiderman", prescription: "3×8" },
+  { name: "Extensión torácica con foam roller", prescription: "3×10" },
+  { name: "Rotación externa de hombro", prescription: "2×10" },
+  { name: "Cat Camel", prescription: "2×15" },
+  { name: "Foam roller scapular retraction", prescription: "2×10" },
 ];
 
 const DEADLIFT: MobilityEx[] = [
-  {
-    name: "Banded Cat Camel stretch",
-    prescription: "2×10",
-    url: "https://www.youtube.com/watch?v=uI45iawksrk",
-  },
-  {
-    name: "Aductores en máquina",
-    prescription: "2×15  RIR 3",
-    url: "https://www.youtube.com/shorts/xlp6FYwBFLU",
-  },
-  {
-    name: "Extensión en banco romano",
-    prescription: "2×15  RIR 3",
-    url: "https://www.youtube.com/shorts/pl7mZQbvGbI",
-  },
-  {
-    name: "Rock back",
-    prescription: "2×10",
-    url: "https://www.youtube.com/shorts/pbBaFw-5vn0",
-  },
-  {
-    name: "90/90 Hip Flips",
-    prescription: "2×10",
-    url: "https://www.youtube.com/shorts/-cQqV5q52FQ",
-  },
-  {
-    name: "Sumo stance kettlebell swing",
-    prescription: "2×15–20",
-    url: "https://www.youtube.com/shorts/moK1eINw7NY",
-  },
+  { name: "Banded Cat Camel stretch", prescription: "2×10" },
+  { name: "Aductores en máquina", prescription: "2×15  RIR 3" },
+  { name: "Extensión en banco romano", prescription: "2×15  RIR 3" },
+  { name: "Rock back", prescription: "2×10" },
+  { name: "90/90 Hip Flips", prescription: "2×10" },
+  { name: "Sumo stance kettlebell swing", prescription: "2×15–20" },
 ];
 
 export default function MovilidadScreen() {
@@ -159,15 +98,7 @@ export default function MovilidadScreen() {
                   <Text style={[styles.exName, { color: palette.text }]}>{ex.name}</Text>
                   <Text style={[styles.exPresc, { color: palette.sub }]}>{ex.prescription}</Text>
                 </View>
-                {!!ex.url && (
-                  <TouchableOpacity
-                    onPress={() => Linking.openURL(ex.url!)}
-                    style={[styles.linkBtn, { backgroundColor: palette.chip, borderColor: palette.border }]}
-                  >
-                    <Ionicons name="logo-youtube" size={16} color={palette.accent} />
-                    <Text style={[styles.linkText, { color: palette.accent }]}>Video</Text>
-                  </TouchableOpacity>
-                )}
+                {/* 🔒 Sin botones ni enlaces a videos */}
               </View>
             ))}
           </View>
@@ -264,15 +195,4 @@ const styles = StyleSheet.create({
   },
   exName: { fontSize: 14, fontWeight: "700" },
   exPresc: { fontSize: 12, marginTop: 2 },
-
-  linkBtn: {
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 10,
-    borderWidth: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-  },
-  linkText: { fontSize: 12, fontWeight: "800" },
 });
