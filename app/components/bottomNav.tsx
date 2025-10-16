@@ -92,7 +92,7 @@ export default function BottomNav() {
       {renderNavButton(
         "contacto-coach",
         <MaterialIcons name="chat" size={28} color="#EF233C" />,
-        "Contacto coach",
+        "Contacto",
         "/contacto-coach"
       )}
       {renderNavButton(
