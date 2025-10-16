@@ -1,138 +1,93 @@
-// app/services/aiService.ts
-import axios, { AxiosError } from "axios";
+// services/aiService.ts
 import { API_URL } from "@env";
-import { getToken, saveToken, deleteToken } from "./secureStore";
+import { getToken } from "./secureStore";
 
-// ---------- Tipos ----------
-export type PlannedExercise = {
-  name: string;
-  sets: number;
-  reps: number;
-  load: number;       // kg
-  rpe_target?: number;
-};
+export interface CheckinData {
+  sleep_quality: number;
+  fatigue: number;
+  stress: number;
+  soreness: string;
+  last_rpe: number;
+}
 
-export type ExerciseAdjustment = {
-  name: string;
-  percent_change_load: number; // ej: -10
-  new_load: number;
-  new_sets: number;
-  new_reps: number;
-  new_rpe_target: number;
-  notes: string;
-};
+async function authHeaders() {
+  const token = await getToken("accessToken");
+  return {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${token}`,
+  };
+}
 
-export type AdjustSessionOutput = {
-  overall_modifier: "maintain" | "taper_10" | "taper_20" | "overreach_5";
-  session_message: string;
-  adjustments: ExerciseAdjustment[];
-};
+// --- 1️⃣ Enviar feedback diario a la IA ---
+export async function sendCheckin(data: CheckinData) {
+  try {
+    const res = await fetch(`${API_URL}/feedback/`, {
+      method: "POST",
+      headers: await authHeaders(),
+      body: JSON.stringify(data),
+    });
 
-// ---------- Axios base ----------
-const api = axios.create({
-  baseURL: API_URL?.replace(/\/+$/, "") || "http://localhost:8000",
-  timeout: 20000,
-});
+    if (!res.ok) {
+      const text = await res.text();
+      return { error: `Error en backend: ${res.status} - ${text}` };
+    }
 
-// Bandera para evitar loops infinitos
-let isRefreshing = false;
-let pendingRequests: Array<() => void> = [];
-
-// Obtiene access de SecureStore y lo inyecta
-api.interceptors.request.use(async (config) => {
-  const access = await getToken("accessToken");
-  if (access) {
-    config.headers = config.headers ?? {};
-    (config.headers as any).Authorization = `Bearer ${access}`;
+    const result = await res.json();
+    return result; // contiene adjustments, modified_exercises, session_id
+  } catch (error: any) {
+    return { error: error.message || "Error desconocido" };
   }
-  (config.headers as any)["Content-Type"] = "application/json";
-  return config;
-});
+}
 
-// Si 401, intenta refresh y reintenta UNA vez
-api.interceptors.response.use(
-  (res) => res,
-  async (error: AxiosError) => {
-    const original = error.config as any;
+// --- 2️⃣ Confirmar los ajustes sugeridos ---
+export async function confirmAdjustments(
+  sessionId: number,
+  accepted: Record<string, boolean>
+) {
+  try {
+    const res = await fetch(`${API_URL}/feedback/confirm/`, {
+      method: "POST",
+      headers: await authHeaders(),
+      body: JSON.stringify({ session_id: sessionId, accepted }),
+    });
 
-    // Si no es 401 o ya se reintentó, rechaza
-    if (error.response?.status !== 401 || original?._retry) {
-      return Promise.reject(error);
+    if (!res.ok) {
+      const text = await res.text();
+      return { error: `Error en backend: ${res.status} - ${text}` };
     }
 
-    // Marca para evitar reintentos múltiples del mismo request
-    original._retry = true;
+    const result = await res.json();
+    return result;
+  } catch (error: any) {
+    return { error: error.message || "Error desconocido" };
+  }
+}
 
-    // Espera a que otro refresh termine si ya está en curso
-    if (isRefreshing) {
-      await new Promise<void>((resolve) => pendingRequests.push(resolve));
-      return api(original); // reintenta tras refresh ajeno
-    }
-
-    // Ejecuta refresh
-    isRefreshing = true;
-    try {
-      const refresh = await getToken("refreshToken");
-      if (!refresh) throw new Error("No refresh token");
-
-      const refreshRes = await axios.post(
-        `${api.defaults.baseURL}/token/refresh/`,
-        { refresh },
-        { headers: { "Content-Type": "application/json" } }
+// --- 3️⃣ Función auxiliar para mostrar texto legible ---
+export function formatExerciseAdjustments(
+  modifiedExercises: any[],
+  adjustments: any
+) {
+  return modifiedExercises
+    .map((ex) => {
+      const aiName = Object.keys(adjustments).find(
+        (k) =>
+          ex.name.toLowerCase().includes(k.toLowerCase()) ||
+          k.toLowerCase().includes(ex.name.toLowerCase())
       );
 
-      const newAccess = (refreshRes.data as any)?.access;
-      const newRefresh = (refreshRes.data as any)?.refresh ?? refresh;
+      const adj = aiName ? adjustments[aiName] : null;
+      if (!adj) return `${ex.name}: sin cambios sugeridos`;
 
-      if (!newAccess) throw new Error("Refresh sin access");
+      const parts: string[] = [];
 
-      // Guarda tokens
-      await saveToken("accessToken", newAccess);
-      if (newRefresh) await saveToken("refreshToken", newRefresh);
+      if (adj.weight !== undefined) parts.push(`Peso: ${adj.weight} kg`);
+      if (adj.reps !== undefined) parts.push(`Reps: ${adj.reps}`);
+      if (adj.sets !== undefined) parts.push(`Sets: ${adj.sets}`);
+      if (adj.rpe !== undefined) parts.push(`RPE: ${adj.rpe}`);
+      if (adj.reason) parts.push(`Motivo: ${adj.reason}`);
 
-      // Despierta a los que esperaban
-      pendingRequests.forEach((cb) => cb());
-      pendingRequests = [];
-      isRefreshing = false;
-
-      // Reintenta request original con nuevo token
-      original.headers = original.headers ?? {};
-      original.headers.Authorization = `Bearer ${newAccess}`;
-      return api(original);
-    } catch (e) {
-      // Refresh falló: limpiar tokens
-      await deleteToken("accessToken");
-      await deleteToken("refreshToken");
-      pendingRequests.forEach((cb) => cb());
-      pendingRequests = [];
-      isRefreshing = false;
-      return Promise.reject(e);
-    }
-  }
-);
-
-// ---------- Servicio: ajustar sesión ----------
-export async function adjustSession(payload: {
-  sleep: number;                  // 1..10
-  fatigue: number;                // 1..10
-  stress: number;                 // 1..10
-  rpe_last: number;               // 1..10
-  pain?: string;
-  goal?: "strength" | "hypertrophy" | "technique";
-  planned_session: PlannedExercise[];
-}): Promise<AdjustSessionOutput> {
-  try {
-    const { data } = await api.post<AdjustSessionOutput>(
-      "/ai/adjust-session/",
-      payload
-    );
-    return data;
-  } catch (err: any) {
-    // Mensaje legible para el widget
-    const msg =
-      err?.response?.data
-        ? JSON.stringify(err.response.data)
-        : err?.message || "Error desconocido";
-    throw new Error(`Error al ajustar sesión: ${msg}`);
-  }
+      return `${ex.name} → ${parts.join(", ")}`;
+    })
+    .join("\n");
 }
