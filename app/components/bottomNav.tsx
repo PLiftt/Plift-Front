@@ -90,10 +90,10 @@ export default function BottomNav() {
         <FontAwesome5 name="dumbbell" size={36} color="#fff" />
       </TouchableOpacity>
       {renderNavButton(
-        "chat",
+        "contacto-coach",
         <MaterialIcons name="chat" size={28} color="#EF233C" />,
-        "Chat Coach",
-        "/chat"
+        "Contacto",
+        "/contacto-coach"
       )}
       {renderNavButton(
         "perfil",

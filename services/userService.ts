@@ -94,3 +94,26 @@ export const validateToken = async () => {
     return false; // No hay token → ir al login
   }
 };
+
+// Trae el perfil del usuario autenticado
+export const getProfile = async () => {
+  try {
+    let token = await AsyncStorage.getItem("access");
+    if (!token) token = await SecureStore.getItemAsync("accessToken");
+    if (!token) throw new Error("No se encontró token de acceso");
+
+    const response = await axios.get(`${API_URL}/profile/`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    return response.data; // debe incluir al menos { id, first_name, role, ... }
+  } catch (error: any) {
+    console.error(
+      "Error en getProfile:",
+      error.response?.data || error.message
+    );
+    throw error;
+  }
+};

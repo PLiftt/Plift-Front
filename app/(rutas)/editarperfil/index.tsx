@@ -10,12 +10,84 @@ import {
   Platform,
   Alert,
 } from "react-native";
-import { User, Lock, Dumbbell } from "lucide-react-native";
+import { User, Lock, Dumbbell, ArrowLeft } from "lucide-react-native";
 import { getUserProfile, updateProfile } from "../../../services/userService";
 import { useRouter } from "expo-router";
+import { useAppContext } from "app/context/appContext";
 
 export default function ProfileForm() {
   const router = useRouter();
+  const { isDarkMode, language } = useAppContext();
+
+  // 🎨 Paleta por tema (solo estilos)
+  const palette = isDarkMode
+    ? {
+        background: "#0F0F0F",
+        card: "#1F1F1F",
+        input: "#111",
+        text: "#fff",
+        subtext: "#ccc",
+        placeholder: "#888",
+        borderErr: "#d00000",
+        accent: "#EF233C",
+        neutralBtn: "#555",
+      }
+    : {
+        background: "#F8FAFC",
+        card: "#FFFFFF",
+        input: "#FFFFFF",
+        text: "#111827",
+        subtext: "#6B7280",
+        placeholder: "#9CA3AF",
+        borderErr: "#dc2626",
+        accent: "#EF233C",
+        neutralBtn: "#374151",
+      };
+
+  // 🗣️ Textos (no cambia tu lógica)
+  const T = {
+    header: language === "es" ? "Editar Perfil" : "Edit Profile",
+    subtitle:
+      language === "es"
+        ? "Actualiza tu información personal y métricas de entrenamiento"
+        : "Update your personal info and training metrics",
+    personalInfo: language === "es" ? "Información Personal" : "Personal Info",
+    firstName: language === "es" ? "Primer Nombre" : "First Name",
+    middleName: language === "es" ? "Segundo Nombre" : "Middle Name",
+    lastName: language === "es" ? "Apellido" : "Last Name",
+    secondLastName: language === "es" ? "Segundo Apellido" : "Second Last Name",
+    weightTitle: language === "es" ? "Modificar Peso" : "Edit Weight",
+    weightPh: language === "es" ? "Peso (kg)" : "Weight (kg)",
+    oneRmTitle: language === "es" ? "1RM Inicial" : "Initial 1RM",
+    squatPh: "Squat (kg)",
+    benchPh: "Bench Press (kg)",
+    deadliftPh: "Deadlift (kg)",
+    save: language === "es" ? "Guardar Cambios" : "Save Changes",
+    reset: language === "es" ? "Restablecer" : "Reset",
+    back: language === "es" ? "Volver a Perfil" : "Back to Profile",
+    // alerts
+    updatedTitle: language === "es" ? "✅ Perfil actualizado" : "✅ Profile updated",
+    updatedMsg:
+      language === "es"
+        ? "Tus cambios se guardaron con éxito"
+        : "Your changes were saved successfully",
+    updateErrTitle: language === "es" ? "❌ Error" : "❌ Error",
+    updateErrMsg:
+      language === "es"
+        ? "No se pudo actualizar el perfil"
+        : "Could not update profile",
+    // validation (mantengo los mismos textos originales en ES para no alterar tu UX)
+    vFirst: "Primer Nombre es obligatorio",
+    vMiddle: "Segundo Nombre es obligatorio",
+    vLast: "Apellido es obligatorio",
+    vSecondLast: "Segundo Apellido es obligatorio",
+    vWeightReq: "El peso es obligatorio",
+    vWeightNum: "Por favor, ingresa un peso válido",
+    vSquat: "Squat obligatorio y positivo",
+    vBench: "Bench Press obligatorio y positivo",
+    vDead: "Deadlift obligatorio y positivo",
+  };
+
   // Estado del formulario
   const [formData, setFormData] = useState({
     firstName: "",
@@ -40,12 +112,12 @@ export default function ProfileForm() {
         const data = await getUserProfile();
         setFormData({
           firstName: data.first_name || "",
-          middleName: data.second_name || "", // 🔹 mapeo correcto
+          middleName: data.second_name || "",
           lastName: data.last_name || "",
           secondLastName: data.second_last_name || "",
-          weight: data.bodyweight_kg ? String(data.bodyweight_kg) : "", // 🔹 mapeo correcto
+          weight: data.bodyweight_kg ? String(data.bodyweight_kg) : "",
           initialOneRM: {
-            squat: data.squat_1rm ? String(data.squat_1rm) : "", // 🔹 mapeo correcto
+            squat: data.squat_1rm ? String(data.squat_1rm) : "",
             benchPress: data.bench_1rm ? String(data.bench_1rm) : "",
             deadlift: data.deadlift_1rm ? String(data.deadlift_1rm) : "",
           },
@@ -54,7 +126,6 @@ export default function ProfileForm() {
         console.error("Error al cargar perfil:", err);
       }
     };
-
     fetchProfile();
   }, []);
 
@@ -71,57 +142,37 @@ export default function ProfileForm() {
     }
   };
 
-  // 🔹 Validación
+  // 🔹 Validación (misma lógica, textos mantenidos)
   const validateForm = () => {
     const newErrors: any = {};
 
-    // Campos de texto obligatorios
-    if (!formData.firstName.trim())
-      newErrors.firstName = "Primer Nombre es obligatorio";
-    if (!formData.middleName.trim())
-      newErrors.middleName = "Segundo Nombre es obligatorio";
-    if (!formData.lastName.trim())
-      newErrors.lastName = "Apellido es obligatorio";
-    if (!formData.secondLastName.trim())
-      newErrors.secondLastName = "Segundo Apellido es obligatorio";
+    if (!formData.firstName.trim()) newErrors.firstName = T.vFirst;
+    if (!formData.middleName.trim()) newErrors.middleName = T.vMiddle;
+    if (!formData.lastName.trim()) newErrors.lastName = T.vLast;
+    if (!formData.secondLastName.trim()) newErrors.secondLastName = T.vSecondLast;
 
-    // Peso obligatorio y positivo
     if (!formData.weight.trim()) {
-      newErrors.weight = "El peso es obligatorio";
+      newErrors.weight = T.vWeightReq;
     } else if (isNaN(Number(formData.weight)) || Number(formData.weight) <= 0) {
-      newErrors.weight = "Por favor, ingresa un peso válido";
+      newErrors.weight = T.vWeightNum;
     }
 
-    // 1RM obligatorios y positivos
     const { squat, benchPress, deadlift } = formData.initialOneRM;
     if (!squat.trim() || isNaN(Number(squat)) || Number(squat) <= 0) {
-      newErrors.initialOneRM = {
-        ...(newErrors.initialOneRM || {}),
-        squat: "Squat obligatorio y positivo",
-      };
+      newErrors.initialOneRM = { ...(newErrors.initialOneRM || {}), squat: T.vSquat };
     }
-    if (
-      !benchPress.trim() ||
-      isNaN(Number(benchPress)) ||
-      Number(benchPress) <= 0
-    ) {
-      newErrors.initialOneRM = {
-        ...(newErrors.initialOneRM || {}),
-        benchPress: "Bench Press obligatorio y positivo",
-      };
+    if (!benchPress.trim() || isNaN(Number(benchPress)) || Number(benchPress) <= 0) {
+      newErrors.initialOneRM = { ...(newErrors.initialOneRM || {}), benchPress: T.vBench };
     }
     if (!deadlift.trim() || isNaN(Number(deadlift)) || Number(deadlift) <= 0) {
-      newErrors.initialOneRM = {
-        ...(newErrors.initialOneRM || {}),
-        deadlift: "Deadlift obligatorio y positivo",
-      };
+      newErrors.initialOneRM = { ...(newErrors.initialOneRM || {}), deadlift: T.vDead };
     }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  // 🔹 Enviar cambios al backend
+  // 🔹 Enviar cambios al backend (misma lógica)
   const handleSubmit = async () => {
     if (!validateForm()) return;
 
@@ -140,13 +191,10 @@ export default function ProfileForm() {
 
       await updateProfile(payload);
 
-      Alert.alert(
-        "✅ Perfil actualizado",
-        "Tus cambios se guardaron con éxito"
-      );
-      router.push("/home"); // Redirigir a la página de inicio
+      Alert.alert(T.updatedTitle, T.updatedMsg);
+      router.push("/perfil"); // ← volver al perfil (según pediste)
     } catch (err) {
-      Alert.alert("❌ Error", "No se pudo actualizar el perfil");
+      Alert.alert(T.updateErrTitle, T.updateErrMsg);
       console.error("Error en handleSubmit:", err);
     } finally {
       setLoading(false);
@@ -155,13 +203,12 @@ export default function ProfileForm() {
 
   return (
     <KeyboardAvoidingView
-      style={{ flex: 1, backgroundColor: "#111" }}
+      style={{ flex: 1, backgroundColor: palette.background }}
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
       <ScrollView
         contentContainerStyle={{
           flexGrow: 1,
-          justifyContent: "center",
           alignItems: "center",
           padding: 20,
           paddingBottom: 40,
@@ -169,145 +216,132 @@ export default function ProfileForm() {
         keyboardShouldPersistTaps="handled"
       >
         <View style={{ width: "100%", maxWidth: 400 }}>
-          <View style={styles.card}>
-            <Text style={styles.title}>Editar Perfil</Text>
-            <Text style={styles.subtitle}>
-              Actualiza tu información personal y métricas de entrenamiento
-            </Text>
+          {/* Header con botón volver */}
+          <TouchableOpacity
+            style={{ flexDirection: "row", alignItems: "center", marginBottom: 12 }}
+            onPress={() => router.push("/perfil")}
+          >
+            <ArrowLeft size={22} color={palette.text} />
+            <Text style={{ color: palette.text, marginLeft: 8, fontWeight: "600" }}>{T.back}</Text>
+          </TouchableOpacity>
+
+          <View style={[styles.card, { backgroundColor: palette.card }]}>
+            <Text style={[styles.title, { color: palette.text }]}>{T.header}</Text>
+            <Text style={[styles.subtitle, { color: palette.subtext }]}>{T.subtitle}</Text>
 
             {/* Personal Info */}
             <View style={styles.section}>
               <View style={styles.sectionHeader}>
-                <User size={20} color="#EF233C" />
-                <Text style={styles.sectionTitle}>Información Personal</Text>
+                <User size={20} color={palette.accent} />
+                <Text style={[styles.sectionTitle, { color: palette.text }]}>{T.personalInfo}</Text>
               </View>
+
               <TextInput
-                placeholder="Primer Nombre"
-                placeholderTextColor="#888"
+                placeholder={T.firstName}
+                placeholderTextColor={palette.placeholder}
                 value={formData.firstName}
                 onChangeText={(val) => handleInputChange("firstName", val)}
-                style={[styles.input, errors.firstName && styles.inputError]}
+                style={[
+                  styles.input,
+                  { backgroundColor: palette.input, color: palette.text },
+                  errors.firstName && { borderWidth: 1, borderColor: palette.borderErr },
+                ]}
               />
-              {errors.firstName && (
-                <Text style={styles.error}>{errors.firstName}</Text>
-              )}
+              {errors.firstName && <Text style={[styles.error, { color: palette.borderErr }]}>{errors.firstName}</Text>}
 
               <TextInput
-                placeholder="Segundo Nombre"
-                placeholderTextColor="#888"
+                placeholder={T.middleName}
+                placeholderTextColor={palette.placeholder}
                 value={formData.middleName}
                 onChangeText={(val) => handleInputChange("middleName", val)}
-                style={styles.input}
+                style={[styles.input, { backgroundColor: palette.input, color: palette.text }]}
               />
 
               <TextInput
-                placeholder="Apellido"
-                placeholderTextColor="#888"
+                placeholder={T.lastName}
+                placeholderTextColor={palette.placeholder}
                 value={formData.lastName}
                 onChangeText={(val) => handleInputChange("lastName", val)}
-                style={[styles.input, errors.lastName && styles.inputError]}
+                style={[
+                  styles.input,
+                  { backgroundColor: palette.input, color: palette.text },
+                  errors.lastName && { borderWidth: 1, borderColor: palette.borderErr },
+                ]}
               />
-              {errors.lastName && (
-                <Text style={styles.error}>{errors.lastName}</Text>
-              )}
+              {errors.lastName && <Text style={[styles.error, { color: palette.borderErr }]}>{errors.lastName}</Text>}
 
               <TextInput
-                placeholder="Segundo Apellido"
-                placeholderTextColor="#888"
+                placeholder={T.secondLastName}
+                placeholderTextColor={palette.placeholder}
                 value={formData.secondLastName}
                 onChangeText={(val) => handleInputChange("secondLastName", val)}
-                style={styles.input}
+                style={[styles.input, { backgroundColor: palette.input, color: palette.text }]}
               />
             </View>
 
-            {/* Security */}
-            {/* <View style={styles.section}>
-              <View style={styles.sectionHeader}>
-                <Lock size={20} color="#EF233C" />
-                <Text style={styles.sectionTitle}>Seguridad</Text>
-              </View>
-              <TextInput
-                placeholder="Nueva contraseña"
-                placeholderTextColor="#888"
-                secureTextEntry
-                value={formData.password}
-                onChangeText={(val) => handleInputChange("password", val)}
-                style={[styles.input, errors.password && styles.inputError]}
-              />
-              <TextInput
-                placeholder="Confirmar contraseña"
-                placeholderTextColor="#888"
-                secureTextEntry
-                value={formData.confirmPassword}
-                onChangeText={(val) =>
-                  handleInputChange("confirmPassword", val)
-                }
-                style={[
-                  styles.input,
-                  errors.confirmPassword && styles.inputError,
-                ]}
-              />
-            </View> */}
-
             {/* Peso */}
-            <View style={styles.section}>
+            <View className="section" style={styles.section}>
               <View style={styles.sectionHeader}>
-                <Dumbbell size={20} color="#EF233C" />
-                <Text style={styles.sectionTitle}>Modificar Peso</Text>
+                <Dumbbell size={20} color={palette.accent} />
+                <Text style={[styles.sectionTitle, { color: palette.text }]}>{T.weightTitle}</Text>
               </View>
               <TextInput
-                placeholder="Peso (kg)"
-                placeholderTextColor="#888"
+                placeholder={T.weightPh}
+                placeholderTextColor={palette.placeholder}
                 keyboardType="numeric"
                 value={formData.weight}
                 onChangeText={(val) => handleInputChange("weight", val)}
-                style={[styles.input, errors.weight && styles.inputError]}
+                style={[
+                  styles.input,
+                  { backgroundColor: palette.input, color: palette.text },
+                  errors.weight && { borderWidth: 1, borderColor: palette.borderErr },
+                ]}
               />
             </View>
 
             {/* 1RM */}
             <View style={styles.section}>
               <View style={styles.sectionHeader}>
-                <Dumbbell size={20} color="#EF233C" />
-                <Text style={styles.sectionTitle}>1RM Inicial</Text>
+                <Dumbbell size={20} color={palette.accent} />
+                <Text style={[styles.sectionTitle, { color: palette.text }]}>{T.oneRmTitle}</Text>
               </View>
+
               <TextInput
-                placeholder="Squat (kg)"
-                placeholderTextColor="#888"
+                placeholder={T.squatPh}
+                placeholderTextColor={palette.placeholder}
                 keyboardType="numeric"
                 value={formData.initialOneRM.squat}
-                onChangeText={(val) =>
-                  handleInputChange("initialOneRM.squat", val)
-                }
+                onChangeText={(val) => handleInputChange("initialOneRM.squat", val)}
                 style={[
                   styles.input,
-                  errors.initialOneRM?.squat && styles.inputError,
+                  { backgroundColor: palette.input, color: palette.text },
+                  errors.initialOneRM?.squat && { borderWidth: 1, borderColor: palette.borderErr },
                 ]}
               />
+
               <TextInput
-                placeholder="Bench Press (kg)"
-                placeholderTextColor="#888"
+                placeholder={T.benchPh}
+                placeholderTextColor={palette.placeholder}
                 keyboardType="numeric"
                 value={formData.initialOneRM.benchPress}
-                onChangeText={(val) =>
-                  handleInputChange("initialOneRM.benchPress", val)
-                }
+                onChangeText={(val) => handleInputChange("initialOneRM.benchPress", val)}
                 style={[
                   styles.input,
-                  errors.initialOneRM?.benchPress && styles.inputError,
+                  { backgroundColor: palette.input, color: palette.text },
+                  errors.initialOneRM?.benchPress && { borderWidth: 1, borderColor: palette.borderErr },
                 ]}
               />
+
               <TextInput
-                placeholder="Deadlift (kg)"
-                placeholderTextColor="#888"
+                placeholder={T.deadliftPh}
+                placeholderTextColor={palette.placeholder}
                 keyboardType="numeric"
                 value={formData.initialOneRM.deadlift}
-                onChangeText={(val) =>
-                  handleInputChange("initialOneRM.deadlift", val)
-                }
+                onChangeText={(val) => handleInputChange("initialOneRM.deadlift", val)}
                 style={[
                   styles.input,
-                  errors.initialOneRM?.deadlift && styles.inputError,
+                  { backgroundColor: palette.input, color: palette.text },
+                  errors.initialOneRM?.deadlift && { borderWidth: 1, borderColor: palette.borderErr },
                 ]}
               />
             </View>
@@ -315,16 +349,18 @@ export default function ProfileForm() {
             {/* Buttons */}
             <View style={styles.buttonContainer}>
               <TouchableOpacity
-                style={styles.submitButton}
+                style={[styles.submitButton, { backgroundColor: palette.accent }]}
                 onPress={handleSubmit}
+                disabled={loading}
               >
-                <Text style={styles.buttonText}>Guardar Cambios</Text>
+                <Text style={styles.buttonText}>{T.save}</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.submitButton, styles.resetButton]}
-                onPress={handleSubmit}
+                style={[styles.submitButton, { backgroundColor: palette.neutralBtn }]}
+                onPress={handleSubmit /* (mantengo tu lógica original) */}
+                disabled={loading}
               >
-                <Text style={styles.buttonText}>Restablecer</Text>
+                <Text style={styles.buttonText}>{T.reset}</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -334,24 +370,21 @@ export default function ProfileForm() {
   );
 }
 
-// Estilos (se mantienen igual)
+// Estilos base (mantengo estructura y tamaños; colores se sobrescriben con palette)
 const styles = StyleSheet.create({
   card: {
     width: "100%",
-    backgroundColor: "#1F1F1F",
     borderRadius: 16,
     padding: 20,
   },
   title: {
     fontSize: 26,
     fontWeight: "700",
-    color: "#fff",
     marginBottom: 4,
     textAlign: "center",
   },
   subtitle: {
     fontSize: 16,
-    color: "#ccc",
     marginBottom: 20,
     textAlign: "center",
   },
@@ -362,17 +395,15 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     gap: 8,
   },
-  sectionTitle: { fontSize: 18, fontWeight: "600", color: "#fff" },
+  sectionTitle: { fontSize: 18, fontWeight: "600" },
   input: {
-    backgroundColor: "#111",
-    color: "#fff",
     borderRadius: 8,
     padding: 12,
     marginBottom: 8,
     width: "100%",
   },
-  inputError: { borderWidth: 1, borderColor: "#d00000" },
-  error: { color: "#d00000", marginBottom: 6 },
+  inputError: { borderWidth: 1 },
+  error: { marginBottom: 6 },
   buttonContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -380,12 +411,10 @@ const styles = StyleSheet.create({
   },
   submitButton: {
     flex: 1,
-    backgroundColor: "#EF233C",
     padding: 14,
     borderRadius: 8,
     alignItems: "center",
     marginHorizontal: 5,
   },
-  resetButton: { backgroundColor: "#555" },
   buttonText: { color: "#fff", fontWeight: "600", fontSize: 16 },
 });
