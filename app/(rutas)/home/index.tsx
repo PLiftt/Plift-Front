@@ -12,7 +12,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
-import * as Clipboard from "expo-clipboard";
+import * as Clipboard from "expo-clipboard"; // ⬅️ NUEVO
 import { useRouter } from "expo-router";
 import { getUserProfile } from "../../../services/userService";
 import { deleteToken, getToken } from "../../../services/secureStore";
@@ -20,12 +20,15 @@ import { createInvitation } from "../../../services/invitationService";
 import BottomNav from "../../components/bottomNav";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useAppContext } from "app/context/appContext";
-import { BarChart } from "react-native-chart-kit";
+import { BarChart } from "react-native-chart-kit"; // ⬅️ gráfico de barras
+
+// ⬇️ Burbuja de chat IA
 import AIChatWidget from "../../components/AIChatWidget";
 
 const { width } = Dimensions.get("window");
+// 👇 padding interno del card y ancho real del chart (evita que "coma" el borde derecho)
 const CHART_CARD_SIDE_PADDING = 16;
-const chartWidth = width - 40 - CHART_CARD_SIDE_PADDING * 2;
+const chartWidth = width - 40 - CHART_CARD_SIDE_PADDING * 2; // 40 = márgenes laterales de la sección (20+20)
 
 interface UserProfile {
   first_name?: string;
@@ -391,7 +394,7 @@ const HomeScreen: React.FC = () => {
             >
               <BarChart
                 data={progressData}
-                width={chartWidth} 
+                width={chartWidth}   // 👈 ancho real del gráfico dentro del card
                 height={220}
                 fromZero
                 yAxisSuffix="kg"
@@ -406,6 +409,7 @@ const HomeScreen: React.FC = () => {
                   propsForBackgroundLines: { stroke: palette.border },
                   barPercentage: 0.6,
                 }}
+                // que el redondeo sea del card, no del chart
                 style={{ borderRadius: 0, marginRight: 0 }}
               />
               <Text
@@ -689,7 +693,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     borderWidth: 1,
     paddingVertical: 8,
-    paddingHorizontal: CHART_CARD_SIDE_PADDING,
-    overflow: "hidden",
+    paddingHorizontal: CHART_CARD_SIDE_PADDING, // 👈 da aire lateral
+    overflow: "hidden", // 👈 evita que el chart se “salga” del borde redondeado
   },
 });
