@@ -12,7 +12,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
-import * as Clipboard from "expo-clipboard"; // ⬅️ NUEVO
+import * as Clipboard from "expo-clipboard";
 import { useRouter } from "expo-router";
 import { getUserProfile } from "../../../services/userService";
 import { deleteToken, getToken } from "../../../services/secureStore";
@@ -20,11 +20,12 @@ import { createInvitation } from "../../../services/invitationService";
 import BottomNav from "../../components/bottomNav";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useAppContext } from "app/context/appContext";
-
-// ⬇️ Burbuja de chat IA
+import { BarChart } from "react-native-chart-kit";
 import AIChatWidget from "../../components/AIChatWidget";
 
 const { width } = Dimensions.get("window");
+const CHART_CARD_SIDE_PADDING = 16;
+const chartWidth = width - 40 - CHART_CARD_SIDE_PADDING * 2;
 
 interface UserProfile {
   first_name?: string;
@@ -39,6 +40,11 @@ interface UserProfile {
     athlete_name: string;
     athlete_email: string;
   }[];
+  // campos usados también en Estadísticas:
+  bodyweight_kg?: number;
+  squat_1rm?: number;
+  bench_1rm?: number;
+  deadlift_1rm?: number;
 }
 
 const HomeScreen: React.FC = () => {
@@ -158,8 +164,7 @@ const HomeScreen: React.FC = () => {
       const result = await createInvitation(token, payload);
 
       const title = language === "es" ? "Código generado" : "Code generated";
-      const labelCopy =
-        language === "es" ? "Copiar código" : "Copy code";
+      const labelCopy = language === "es" ? "Copiar código" : "Copy code";
       const labelOk = language === "es" ? "OK" : "OK";
       const msg =
         (language === "es" ? "El código es: " : "Your code: ") +
@@ -245,6 +250,25 @@ const HomeScreen: React.FC = () => {
       return "Good evening";
     }
   })();
+
+  // Datos reales que ya tienes (igual que la Screen de estadísticas)
+  const squat = Number(profile.squat_1rm ?? 0);
+  const bench = Number(profile.bench_1rm ?? 0);
+  const deadlift = Number(profile.deadlift_1rm ?? 0);
+
+  // Dataset del gráfico de barras (SQ/BP/DL)
+  const progressData = {
+    labels: ["SQ", "BP", "DL"],
+    datasets: [
+      {
+        data: [squat, bench, deadlift],
+        strokeWidth: 2,
+      },
+    ],
+    legend: [
+      language === "es" ? "1RM por levantamiento (kg)" : "1RM per lift (kg)",
+    ],
+  };
 
   return (
     <View style={[styles.container, { backgroundColor: palette.background }]}>
@@ -358,69 +382,44 @@ const HomeScreen: React.FC = () => {
               </View>
             </View>
 
-            {/* Quick Stats (placeholders) */}
-            <View style={styles.statsContainer}>
-              <View
-                style={[
-                  styles.statCard,
-                  {
-                    backgroundColor: palette.surface,
-                    shadowOpacity: isDarkMode ? 0.2 : 0.06,
-                  },
-                ]}
+            {/* Gráfico de barras con datos reales (1RM actuales) */}
+            <View
+              style={[
+                styles.progressCard,
+                { backgroundColor: palette.surface, borderColor: palette.border },
+              ]}
+            >
+              <BarChart
+                data={progressData}
+                width={chartWidth} 
+                height={220}
+                fromZero
+                yAxisSuffix="kg"
+                yAxisLabel=""
+                chartConfig={{
+                  backgroundGradientFrom: palette.surface,
+                  backgroundGradientTo: palette.surface,
+                  decimalPlaces: 0,
+                  color: (opacity = 1) => `rgba(239, 35, 60, ${opacity})`,
+                  labelColor: (opacity = 1) =>
+                    `rgba(${isDarkMode ? "255,255,255" : "17,17,17"}, ${opacity})`,
+                  propsForBackgroundLines: { stroke: palette.border },
+                  barPercentage: 0.6,
+                }}
+                style={{ borderRadius: 0, marginRight: 0 }}
+              />
+              <Text
+                style={{
+                  marginTop: 8,
+                  textAlign: "center",
+                  color: palette.subtext,
+                  fontSize: 12,
+                }}
               >
-                <Ionicons name="flame" size={28} color={palette.accent} />
-                <View style={{ marginLeft: 16 }}>
-                  <Text style={[styles.cardValue, { color: palette.text }]}>
-                    12
-                  </Text>
-                  <Text style={[styles.cardLabel, { color: palette.subtext }]}>
-                    {language === "es" ? "Días streak" : "Streak days"}
-                  </Text>
-                </View>
-              </View>
-
-              <View
-                style={[
-                  styles.statCard,
-                  {
-                    backgroundColor: palette.surface,
-                    shadowOpacity: isDarkMode ? 0.2 : 0.06,
-                  },
-                ]}
-              >
-                <Ionicons name="barbell" size={28} color={palette.accent} />
-                <View style={{ marginLeft: 16 }}>
-                  <Text style={[styles.cardValue, { color: palette.text }]}>
-                    4
-                  </Text>
-                  <Text style={[styles.cardLabel, { color: palette.subtext }]}>
-                    {language === "es"
-                      ? "Workouts esta semana"
-                      : "Workouts this week"}
-                  </Text>
-                </View>
-              </View>
-
-              <View
-                style={[
-                  styles.statCard,
-                  {
-                    backgroundColor: palette.surface,
-                    shadowOpacity: isDarkMode ? 0.2 : 0.06,
-                  },
-                ]}
-              >
-                <Ionicons name="calendar" size={28} color={palette.accent} />
-                <View style={{ marginLeft: 16 }}>
-                  <Text style={[styles.cardValue, { color: palette.text }]}>
-                    Upper Body
-                  </Text>
-                  <Text style={[styles.cardLabel, { color: palette.subtext }]}>
-                    {language === "es" ? "Próximo workout" : "Next workout"}
-                  </Text>
-                </View>
-              </View>
+                {language === "es"
+                  ? "1RM actuales por levantamiento"
+                  : "Current 1RM by lift"}
+              </Text>
             </View>
           </View>
         )}
@@ -653,7 +652,7 @@ const styles = StyleSheet.create({
   generateButton: { paddingVertical: 12, borderRadius: 12, alignItems: "center", marginTop: 15 },
   generateButtonText: { color: "#fff", fontWeight: "600", fontSize: 16 },
 
-  // Stats (placeholders)
+  // Stats / cards
   statsContainer: { marginTop: 15, flexDirection: "column", gap: 15 },
   statCard: {
     flexDirection: "row",
@@ -684,4 +683,13 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   bigDropText: { fontWeight: "800", fontSize: 16, marginTop: 6 },
+
+  // Progreso (gráfico)
+  progressCard: {
+    borderRadius: 16,
+    borderWidth: 1,
+    paddingVertical: 8,
+    paddingHorizontal: CHART_CARD_SIDE_PADDING,
+    overflow: "hidden",
+  },
 });
