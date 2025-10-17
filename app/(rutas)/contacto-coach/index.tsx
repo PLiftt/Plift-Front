@@ -10,7 +10,7 @@ import { useNavigation } from "@react-navigation/native";
 import { useAppContext } from "app/context/appContext";
 import BottomNav from "../../components/bottomNav";
 import { sendContactMessage } from "services/contactService";
-import { API_URL } from "@env"; // ⬅️ para debug en runtime
+import { API_URL } from "@env"; //
 
 type Attachment = { uri: string; name?: string; type?: string };
 
@@ -130,7 +130,6 @@ export default function ContactCoachScreen() {
     try {
       setSending(true);
 
-      // 👀 Debug visible en consola
       if (__DEV__) {
         console.log("[CONTACT] API_URL:", API_URL);
         console.log("[CONTACT] Payload:", {
@@ -161,7 +160,6 @@ export default function ContactCoachScreen() {
       setMessage("");
       setAttachments([]);
     } catch (e: any) {
-      // Logs útiles
       const debug = {
         message: e?.message,
         code: e?.code,
@@ -174,7 +172,6 @@ export default function ContactCoachScreen() {
       };
       if (__DEV__) console.log("CONTACT ERROR >>>", debug);
 
-      // Mensaje para usuario
       let userMsg =
         e?.response?.data?.detail ||
         e?.response?.data?.message ||
@@ -202,7 +199,6 @@ export default function ContactCoachScreen() {
     }
   };
 
-  // Banner de ayuda solo en dev
   const DevBanner = () => {
     if (!__DEV_HINT__) return null;
     const tip =
@@ -224,21 +220,18 @@ export default function ContactCoachScreen() {
       behavior={Platform.OS === "ios" ? "padding" : undefined}
       keyboardVerticalOffset={100}
     >
-      <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 120 }} keyboardShouldPersistTaps="handled">
+      {/* 👇 Centrado vertical y horizontal de la card */}
+      <ScrollView
+        contentContainerStyle={{
+          padding: 20,
+          paddingBottom: 120,
+          flexGrow: 1,
+          justifyContent: "center",
+          alignItems: "center",
+        }}
+        keyboardShouldPersistTaps="handled"
+      >
         {/* 🔙 Volver */}
-        <View style={{ marginBottom: 12 }}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backInline} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-            <Ionicons name="arrow-back" size={24} color={palette.text} />
-            <Text style={{ color: palette.text, marginLeft: 8, fontWeight: "600" }}>
-              {language === "es" ? "Volver" : "Back"}
-            </Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* 🧪 Dev banner */}
-        <DevBanner />
-
-        {/* 🧰 Card */}
         <View style={{ marginBottom: 12 }}>
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backInline} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
             <Ionicons name="arrow-back" size={24} color={palette.text} />
@@ -387,11 +380,14 @@ export default function ContactCoachScreen() {
   );
 }
 
+// al final del archivo, en styles:
 const styles = StyleSheet.create({
   backInline: { flexDirection: "row", alignItems: "center" },
-  card: { width: "100%", borderRadius: 16, padding: 20 },
+  card: { width: "100%", maxWidth: 600, borderRadius: 16, padding: 20 },
 
   bodyText: { fontSize: 16, lineHeight: 22 },
+
+  // 👇 agregado marginBottom para separar etiqueta e input
   label: { fontSize: 12, fontWeight: "700", marginBottom: 6 },
 
   hint: { fontSize: 11, marginTop: 4, alignSelf: "flex-end" },
