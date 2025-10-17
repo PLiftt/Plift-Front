@@ -101,8 +101,14 @@ export default function AthleteHistoryScreen() {
 
             // Ordenar sesiones por estado
             const sortedSessions = [...sessions].sort((a, b) => {
-              const order = { in_progress: 0, pending: 1, completed: 2 };
-              return order[a.status] - order[b.status];
+              const order: Record<
+                "in_progress" | "pending" | "completed",
+                number
+              > = { in_progress: 0, pending: 1, completed: 2 };
+              return (
+                order[a.status as "in_progress" | "pending" | "completed"] -
+                order[b.status as "in_progress" | "pending" | "completed"]
+              );
             });
 
             const sessionsWithExercises = await Promise.all(
