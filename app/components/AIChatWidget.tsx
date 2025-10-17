@@ -151,23 +151,9 @@ export default function AIChatWidget({
         }))
       );
 
-      // 🔹 Traemos la sesión para mostrar notes, fecha y bloque
-      const sessionData = await getSessions(data.session_id);
-      const sessionNotes = sessionData.notes || "Sin notas";
-      const sessionDate = sessionData.date || "Sin fecha";
-      const sessionBlock = sessionData.block || "Sin bloque";
-
       pushMessage({
         role: "assistant",
-        text: `📝 Ajustes sugeridos para la sesión:\n• Bloque: ${sessionBlock}\n• Fecha: ${sessionDate}\n• Notes: "${sessionNotes}"\n${data.modified_exercises
-          .map((ex: any) => `• ${ex.name}: ${ex.reason}`)
-          .join("\n")}\n\nPuedes aceptar o rechazar cada ajuste.`,
-        read: open,
-      });
-    } else {
-      pushMessage({
-        role: "assistant",
-        text: "✅ Check-in recibido, no se requieren ajustes por ahora.",
+        text: `📝 Ajustes sugeridos por la IA:\nPuedes aceptar o rechazar cada ajuste.`,
         read: open,
       });
     }
@@ -269,38 +255,76 @@ export default function AIChatWidget({
                       ]}
                     >
                       <Text style={styles.bubbleText}>{m.text}</Text>
-                    </View>
-                  ))}
 
-                  {/* Ajustes pendientes */}
-                  {pendingAdjustments.map((adj) => (
-                    <View key={adj.name} style={{ marginVertical: 6 }}>
-                      <Text style={{ color: "#fff" }}>
-                        • {adj.name}: {adj.sets}x{adj.reps}, {adj.weight}kg, RPE{" "}
-                        {adj.rpe} ({adj.reason})
-                      </Text>
-                      {adj.accepted === null && (
-                        <View
-                          style={{ flexDirection: "row", gap: 8, marginTop: 4 }}
-                        >
-                          <TouchableOpacity
-                            style={[
-                              styles.submitBtn,
-                              { backgroundColor: "#28a745" },
-                            ]}
-                            onPress={() => handleAdjustment(adj.name, true)}
-                          >
-                            <Text style={styles.submitText}>Aceptar</Text>
-                          </TouchableOpacity>
-                          <TouchableOpacity
-                            style={[
-                              styles.submitBtn,
-                              { backgroundColor: "#dc3545" },
-                            ]}
-                            onPress={() => handleAdjustment(adj.name, false)}
-                          >
-                            <Text style={styles.submitText}>Rechazar</Text>
-                          </TouchableOpacity>
+                      {/* Si el mensaje es el de ajustes sugeridos por la IA */}
+                      {m.text.includes("Ajustes sugeridos por la IA") && (
+                        <View style={{ marginTop: 10 }}>
+                          {pendingAdjustments.map((adj) => (
+                            <View
+                              key={adj.name}
+                              style={{
+                                backgroundColor: "#2C2C2C",
+                                borderRadius: 10,
+                                padding: 10,
+                                marginBottom: 8,
+                              }}
+                            >
+                              <Text
+                                style={{ color: "#fff", fontWeight: "600" }}
+                              >
+                                {adj.name}: {adj.proposed_sets}x
+                                {adj.proposed_reps}, {adj.proposed_weight}kg
+                              </Text>
+                              <Text style={{ color: "#bbb", marginTop: 4 }}>
+                                {adj.reason}
+                              </Text>
+
+                              {adj.accepted === null && (
+                                <View
+                                  style={{
+                                    flexDirection: "row",
+                                    justifyContent: "space-around",
+                                    marginTop: 8,
+                                  }}
+                                >
+                                  <TouchableOpacity
+                                    style={[
+                                      styles.submitBtn,
+                                      {
+                                        backgroundColor: "#28a745",
+                                        flex: 1,
+                                        marginRight: 4,
+                                      },
+                                    ]}
+                                    onPress={() =>
+                                      handleAdjustment(adj.name, true)
+                                    }
+                                  >
+                                    <Text style={styles.submitText}>
+                                      Aceptar
+                                    </Text>
+                                  </TouchableOpacity>
+                                  <TouchableOpacity
+                                    style={[
+                                      styles.submitBtn,
+                                      {
+                                        backgroundColor: "#dc3545",
+                                        flex: 1,
+                                        marginLeft: 4,
+                                      },
+                                    ]}
+                                    onPress={() =>
+                                      handleAdjustment(adj.name, false)
+                                    }
+                                  >
+                                    <Text style={styles.submitText}>
+                                      Rechazar
+                                    </Text>
+                                  </TouchableOpacity>
+                                </View>
+                              )}
+                            </View>
+                          ))}
                         </View>
                       )}
                     </View>
