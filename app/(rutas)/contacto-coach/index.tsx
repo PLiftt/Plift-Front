@@ -220,7 +220,6 @@ export default function ContactCoachScreen() {
       behavior={Platform.OS === "ios" ? "padding" : undefined}
       keyboardVerticalOffset={100}
     >
-      {/* 👇 Centrado vertical y horizontal de la card */}
       <ScrollView
         contentContainerStyle={{
           padding: 20,
@@ -231,18 +230,12 @@ export default function ContactCoachScreen() {
         }}
         keyboardShouldPersistTaps="handled"
       >
-        {/* 🔙 Volver */}
-        <View style={{ marginBottom: 12 }}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backInline} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-            <Ionicons name="arrow-back" size={24} color={palette.text} />
-            <Text style={{ color: palette.text, marginLeft: 8, fontWeight: "600" }}>
-              {language === "es" ? "Volver" : "Back"}
-            </Text>
-          </TouchableOpacity>
+        {/* ▶️ Título arriba del card */}
+        <View style={{ width: "100%", maxWidth: 600, alignSelf: "center", marginTop: -14, marginBottom: 28 }}>
+          <Text style={{ textAlign: "center", color: palette.text, fontSize: 24, fontWeight: "bold" }}>
+            Contacto Coach
+          </Text>
         </View>
-
-        {/* 🧪 Dev banner */}
-        <DevBanner />
 
         {/* 🧰 Card */}
         <View style={[styles.card, { backgroundColor: palette.card }]}>
@@ -386,8 +379,6 @@ const styles = StyleSheet.create({
   card: { width: "100%", maxWidth: 600, borderRadius: 16, padding: 20 },
 
   bodyText: { fontSize: 16, lineHeight: 22 },
-
-  // 👇 agregado marginBottom para separar etiqueta e input
   label: { fontSize: 12, fontWeight: "700", marginBottom: 6 },
 
   hint: { fontSize: 11, marginTop: 4, alignSelf: "flex-end" },
