@@ -1,8 +1,17 @@
 ﻿// app/(rutas)/contacto-coach/index.tsx
 import React, { useState, useRef } from "react";
 import {
-  View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity,
-  KeyboardAvoidingView, Platform, Image, Alert, ActivityIndicator,
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TextInput,
+  TouchableOpacity,
+  KeyboardAvoidingView,
+  Platform,
+  Image,
+  Alert,
+  ActivityIndicator,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { Ionicons } from "@expo/vector-icons";
@@ -45,8 +54,8 @@ export default function ContactCoachScreen() {
         cardBorder: "#2A2A2A",
       }
     : {
-        background: "#F8FAFC",       // gris muy claro
-        card: "#FFFFFF",             // blanco puro para el card
+        background: "#F8FAFC", // gris muy claro
+        card: "#FFFFFF", // blanco puro para el card
         input: "#FFFFFF",
         text: "#111827",
         subtext: "#6B7280",
@@ -54,7 +63,7 @@ export default function ContactCoachScreen() {
         borderErr: "#dc2626",
         accent: "#EF233C",
         neutralBtn: "#374151",
-        cardBorder: "#E5E7EB",       // borde sutil para destacar sobre fondo blanco
+        cardBorder: "#E5E7EB", // borde sutil para destacar sobre fondo blanco
       };
 
   const [yourEmail, setYourEmail] = useState("");
@@ -88,7 +97,10 @@ export default function ContactCoachScreen() {
     if (status !== "granted") {
       Alert.alert(
         t("Permiso denegado", "Permission denied"),
-        t("Necesitamos acceso a tus fotos para adjuntar imÃ¡genes.", "We need photo library access to attach images.")
+        t(
+          "Necesitamos acceso a tus fotos para adjuntar imÃ¡genes.",
+          "We need photo library access to attach images."
+        )
       );
       return false;
     }
@@ -121,7 +133,9 @@ export default function ContactCoachScreen() {
   };
 
   function uuidLike() {
-    return "crid_" + Math.random().toString(36).slice(2) + Date.now().toString(36);
+    return (
+      "crid_" + Math.random().toString(36).slice(2) + Date.now().toString(36)
+    );
   }
 
   const submit = async () => {
@@ -134,7 +148,10 @@ export default function ContactCoachScreen() {
         t("Formulario incompleto", "Incomplete form"),
         emailErr
           ? emailErr
-          : t("Revisa asunto (â‰¥3) y mensaje (â‰¥10) antes de enviar.", "Check subject (â‰¥3) and message (â‰¥10) before sending.")
+          : t(
+              "Revisa asunto (â‰¥3) y mensaje (â‰¥10) antes de enviar.",
+              "Check subject (â‰¥3) and message (â‰¥10) before sending."
+            )
       );
       return;
     }
@@ -165,7 +182,10 @@ export default function ContactCoachScreen() {
 
       Alert.alert(
         t("Enviado", "Sent"),
-        t("Tu mensaje fue enviado. Te contactaremos al correo indicado.", "Your message was sent. We'll reply to your email.")
+        t(
+          "Tu mensaje fue enviado. Te contactaremos al correo indicado.",
+          "Your message was sent. We'll reply to your email."
+        )
       );
       setYourEmail("");
       setSubject("");
@@ -188,9 +208,15 @@ export default function ContactCoachScreen() {
         e?.response?.data?.detail ||
         e?.response?.data?.message ||
         e?.message ||
-        t("No pudimos enviar tu mensaje. Intenta nuevamente.", "We couldn't send your message. Please try again.");
+        t(
+          "No pudimos enviar tu mensaje. Intenta nuevamente.",
+          "We couldn't send your message. Please try again."
+        );
 
-      if (typeof userMsg === "string" && userMsg.toLowerCase().includes("network")) {
+      if (
+        typeof userMsg === "string" &&
+        userMsg.toLowerCase().includes("network")
+      ) {
         const platformTip =
           Platform.OS === "android"
             ? t(
@@ -217,8 +243,21 @@ export default function ContactCoachScreen() {
         ? "Android emu â‡’ API_URL=http://10.0.2.2:8000"
         : "iOS sim â‡’ API_URL=http://127.0.0.1:8000";
     return (
-      <View style={{ padding: 8, borderRadius: 8, backgroundColor: isDarkMode ? "#132" : "#E6FFFA", marginBottom: 12 }}>
-        <Text style={{ color: isDarkMode ? "#9FF" : "#065F46", fontSize: 12, fontWeight: "700" }}>
+      <View
+        style={{
+          padding: 8,
+          borderRadius: 8,
+          backgroundColor: isDarkMode ? "#132" : "#E6FFFA",
+          marginBottom: 12,
+        }}
+      >
+        <Text
+          style={{
+            color: isDarkMode ? "#9FF" : "#065F46",
+            fontSize: 12,
+            fontWeight: "700",
+          }}
+        >
           DEV: {tip} Â· Actual: {API_URL || "(sin API_URL)"}
         </Text>
       </View>
@@ -248,8 +287,23 @@ export default function ContactCoachScreen() {
         }}
       >
         {/* â–¶ï¸ TÃ­tulo arriba del card */}
-        <View style={{ width: "100%", maxWidth: 600, alignSelf: "center", marginTop: -14, marginBottom: 28 }}>
-          <Text style={{ textAlign: "center", color: palette.text, fontSize: 24, fontWeight: "bold" }}>
+        <View
+          style={{
+            width: "100%",
+            maxWidth: 600,
+            alignSelf: "center",
+            marginTop: -14,
+            marginBottom: 28,
+          }}
+        >
+          <Text
+            style={{
+              textAlign: "center",
+              color: palette.text,
+              fontSize: 24,
+              fontWeight: "bold",
+            }}
+          >
             Contacto Coach
           </Text>
         </View>
@@ -266,14 +320,20 @@ export default function ContactCoachScreen() {
         >
           <Text style={styles.bodyText}>
             <Text style={{ color: palette.text, fontWeight: "600" }}>
-              {language === "es" ? "Completa el formulario" : "Fill out the form"}
+              {language === "es"
+                ? "Completa el formulario"
+                : "Fill out the form"}
             </Text>
             <Text style={{ color: palette.subtext }}>
-              {language === "es" ? " te responderemos al correo indicado." : " We will respond to the indicated email."}
+              {language === "es"
+                ? " te responderemos al correo indicado."
+                : " We will respond to the indicated email."}
             </Text>
           </Text>
 
-          <Text style={[styles.label, { color: palette.subtext, marginTop: 16 }]}>
+          <Text
+            style={[styles.label, { color: palette.subtext, marginTop: 16 }]}
+          >
             {t("Tu correo (opcional)", "Your email (optional)")}
           </Text>
           <TextInput
@@ -300,50 +360,98 @@ export default function ContactCoachScreen() {
             onSubmitEditing={() => messageRef.current?.focus()}
             editable={!sending}
           />
-          {!!emailError && <Text style={{ color: palette.borderErr, fontSize: 11 }}>{emailError}</Text>}
+          {!!emailError && (
+            <Text style={{ color: palette.borderErr, fontSize: 11 }}>
+              {emailError}
+            </Text>
+          )}
 
-          <Text style={[styles.label, { color: palette.subtext, marginTop: 12 }]}>{t("Asunto", "Subject")} *</Text>
+          <Text
+            style={[styles.label, { color: palette.subtext, marginTop: 12 }]}
+          >
+            {t("Asunto", "Subject")} *
+          </Text>
           <TextInput
             value={subject}
             onChangeText={(v) => setSubject(v.slice(0, SUBJECT_MAX))}
             placeholder={t("Escribe un asunto breve", "Write a short subject")}
             placeholderTextColor={palette.placeholder}
-            style={[styles.input, { backgroundColor: palette.input, color: palette.text }]}
+            style={[
+              styles.input,
+              { backgroundColor: palette.input, color: palette.text },
+            ]}
             returnKeyType="next"
             onSubmitEditing={() => messageRef.current?.focus()}
             editable={!sending}
           />
-          <Text style={[styles.hint, { color: palette.subtext }]}>{subject.length}/{SUBJECT_MAX}</Text>
+          <Text style={[styles.hint, { color: palette.subtext }]}>
+            {subject.length}/{SUBJECT_MAX}
+          </Text>
 
-          <Text style={[styles.label, { color: palette.subtext, marginTop: 12 }]}>{t("Mensaje", "Message")} *</Text>
+          <Text
+            style={[styles.label, { color: palette.subtext, marginTop: 12 }]}
+          >
+            {t("Mensaje", "Message")} *
+          </Text>
           <TextInput
             ref={messageRef}
             value={message}
             onChangeText={(v) => setMessage(v.slice(0, MESSAGE_MAX))}
-            placeholder={t("Cuentanos en detalle como podemos ayudarte.¦", "Tell us how we can help you in detail.")}
+            placeholder={t(
+              "Cuentanos en detalle como podemos ayudarte.¦",
+              "Tell us how we can help you in detail."
+            )}
             placeholderTextColor={palette.placeholder}
-            style={[styles.textarea, { backgroundColor: palette.input, color: palette.text }]}
+            style={[
+              styles.textarea,
+              { backgroundColor: palette.input, color: palette.text },
+            ]}
             multiline
             textAlignVertical="top"
             editable={!sending}
           />
-          <Text style={[styles.hint, { color: palette.subtext }]}>{message.length}/{MESSAGE_MAX}</Text>
+          <Text style={[styles.hint, { color: palette.subtext }]}>
+            {message.length}/{MESSAGE_MAX}
+          </Text>
 
           {/* Adjuntos */}
           <View style={{ marginTop: 12 }}>
-            <Text style={[styles.label, { color: palette.subtext }]}>{t("Adjuntar imÃ¡genes (opcional)", "Attach images (optional)")}</Text>
+            <Text style={[styles.label, { color: palette.subtext }]}>
+              {t("Adjuntar imÃ¡genes (opcional)", "Attach images (optional)")}
+            </Text>
 
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginTop: 6 }}>
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 8,
+                marginTop: 6,
+              }}
+            >
               <TouchableOpacity
                 onPress={pickImages}
                 disabled={attachments.length >= ATTACH_MAX || sending}
                 style={[
                   styles.attachBtn,
-                  { backgroundColor: isDarkMode ? "#262626" : "#F3F4F6", opacity: attachments.length >= ATTACH_MAX || sending ? 0.6 : 1 },
+                  {
+                    backgroundColor: isDarkMode ? "#262626" : "#F3F4F6",
+                    opacity:
+                      attachments.length >= ATTACH_MAX || sending ? 0.6 : 1,
+                  },
                 ]}
               >
-                <Ionicons name="image-outline" size={18} color={palette.accent} />
-                <Text style={{ color: palette.accent, fontWeight: "800", fontSize: 12 }}>
+                <Ionicons
+                  name="image-outline"
+                  size={18}
+                  color={palette.accent}
+                />
+                <Text
+                  style={{
+                    color: palette.accent,
+                    fontWeight: "800",
+                    fontSize: 12,
+                  }}
+                >
                   {t("GalerÃ­a", "Gallery")}
                 </Text>
               </TouchableOpacity>
@@ -361,7 +469,13 @@ export default function ContactCoachScreen() {
                     <TouchableOpacity
                       onPress={() => removeAttachment(idx)}
                       disabled={sending}
-                      style={[styles.removeThumb, { backgroundColor: palette.accent, opacity: sending ? 0.6 : 1 }]}
+                      style={[
+                        styles.removeThumb,
+                        {
+                          backgroundColor: palette.accent,
+                          opacity: sending ? 0.6 : 1,
+                        },
+                      ]}
                     >
                       <Ionicons name="close" size={12} color="#fff" />
                     </TouchableOpacity>
@@ -375,7 +489,10 @@ export default function ContactCoachScreen() {
           <TouchableOpacity
             onPress={submit}
             disabled={!canSend}
-            style={[styles.sendButton, { backgroundColor: palette.accent, opacity: canSend ? 1 : 0.6 }]}
+            style={[
+              styles.sendButton,
+              { backgroundColor: palette.accent, opacity: canSend ? 1 : 0.6 },
+            ]}
           >
             {sending ? (
               <ActivityIndicator color="#fff" />
@@ -388,26 +505,26 @@ export default function ContactCoachScreen() {
           </TouchableOpacity>
 
           <Text style={{ color: palette.subtext, fontSize: 11, marginTop: 8 }}>
-            {t("Los campos marcados con * son obligatorios.", "Fields marked with * are required.")}
+            {t(
+              "Los campos marcados con * son obligatorios.",
+              "Fields marked with * are required."
+            )}
           </Text>
         </View>
       </PullToRefresh>
 
-      {/* BottomNav moved below overlay */}
-
-      {/* Overlay borroso + "PrÃ³ximamente" */}
+      {/* Overlay "Próximamente": fondo full + bloqueo solo del contenido; BottomNav usable */}
       <View
+        style={[StyleSheet.absoluteFillObject as any]}
         pointerEvents="box-none"
-        style={[
-          StyleSheet.absoluteFillObject as any,
-          { bottom: 110, justifyContent: "center", alignItems: "center" },
-        ]}
       >
+        {/* Fondo translúcido/blur FULL SCREEN (no bloquea toques) */}
         {BlurViewComp ? (
           <BlurViewComp
             intensity={90}
             tint={isDarkMode ? "dark" : "light"}
             style={StyleSheet.absoluteFillObject}
+            pointerEvents="none"
           />
         ) : (
           <View
@@ -419,11 +536,45 @@ export default function ContactCoachScreen() {
                   : "rgba(255,255,255,0.9)",
               },
             ]}
+            pointerEvents="none"
           />
         )}
-        <Text style={{ color: palette.text, fontSize: 28, fontWeight: "800", opacity: 0.85 }}>
-          {language === "es" ? "Próximamente" : "Coming soon"}
-        </Text>
+
+        {/* Bloqueador SOLO del área de contenido (deja libre el BottomNav) */}
+        <View
+          style={[StyleSheet.absoluteFillObject as any, { bottom: 110 }]} // ← altura del BottomNav
+          pointerEvents="auto"
+        >
+          <TouchableOpacity
+            activeOpacity={1}
+            onPress={() => {}}
+            style={StyleSheet.absoluteFillObject}
+          />
+        </View>
+
+        {/* 3) Título centrado (no intercepta toques) */}
+        <View
+          style={[
+            StyleSheet.absoluteFillObject as any,
+            {
+              justifyContent: "center",
+              alignItems: "center",
+              paddingBottom: 110,
+            },
+          ]}
+          pointerEvents="none"
+        >
+          <Text
+            style={{
+              color: palette.text,
+              fontSize: 28,
+              fontWeight: "800",
+              opacity: 0.85,
+            }}
+          >
+            {language === "es" ? "Próximamente" : "Coming soon"}
+          </Text>
+        </View>
       </View>
 
       <BottomNav />
@@ -468,19 +619,55 @@ const styles = StyleSheet.create({
   buttonText: { color: "#fff", fontWeight: "600", fontSize: 16 },
 
   input: { borderRadius: 8, padding: 12, marginBottom: 8, width: "100%" },
-  textarea: { borderRadius: 8, padding: 12, marginBottom: 8, width: "100%", minHeight: 120 },
+  textarea: {
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 8,
+    width: "100%",
+    minHeight: 120,
+  },
 
   attachBtn: {
-    paddingHorizontal: 10, paddingVertical: 8, borderRadius: 10,
-    flexDirection: "row", alignItems: "center", gap: 6, alignSelf: "flex-start",
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    borderRadius: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    alignSelf: "flex-start",
   },
-  attachGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10, marginTop: 10 },
-  thumbWrap: { width: 80, height: 80, borderRadius: 10, overflow: "hidden", position: "relative" },
+  attachGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 10,
+    marginTop: 10,
+  },
+  thumbWrap: {
+    width: 80,
+    height: 80,
+    borderRadius: 10,
+    overflow: "hidden",
+    position: "relative",
+  },
   thumb: { width: "100%", height: "100%" },
-  removeThumb: { position: "absolute", top: 6, right: 6, width: 20, height: 20, borderRadius: 10, alignItems: "center", justifyContent: "center" },
+  removeThumb: {
+    position: "absolute",
+    top: 6,
+    right: 6,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    alignItems: "center",
+    justifyContent: "center",
+  },
 
   sendButton: {
-    marginTop: 14, borderRadius: 8, paddingVertical: 14,
-    alignItems: "center", justifyContent: "center", flexDirection: "row", gap: 8,
+    marginTop: 14,
+    borderRadius: 8,
+    paddingVertical: 14,
+    alignItems: "center",
+    justifyContent: "center",
+    flexDirection: "row",
+    gap: 8,
   },
 });

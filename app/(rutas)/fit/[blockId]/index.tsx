@@ -414,14 +414,14 @@ export default function SessionsScreen() {
 
               {role === "coach" && (
                 <View style={[styles.buttonsRow, { flexWrap: "wrap" }]}>
-                  {/* Ver sesión (disponible siempre) */}
+                  {/* Ver sesión */}
                   <TouchableOpacity
                     style={[
                       styles.modalBtn,
                       {
                         backgroundColor: palette.accent,
                         flex: 1,
-                        marginBottom: 6,
+                        marginRight: 8,
                       },
                     ]}
                     onPress={() => viewSession(item.id!)}
@@ -429,7 +429,7 @@ export default function SessionsScreen() {
                     <Text style={styles.modalBtnText}>{T.view}</Text>
                   </TouchableOpacity>
 
-                  {/* Editar sesión (si no está completada) */}
+                  {/* Editar sesión */}
                   <TouchableOpacity
                     style={[
                       styles.modalBtn,
@@ -451,7 +451,7 @@ export default function SessionsScreen() {
                   <TouchableOpacity
                     style={[
                       styles.modalBtn,
-                      { backgroundColor: palette.accent },
+                      { backgroundColor: palette.accent, flex: 1 },
                     ]}
                     onPress={() => {
                       Alert.alert(T.confirmDel, T.confirmDelMsg(item.date), [
