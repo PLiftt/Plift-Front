@@ -88,24 +88,37 @@ export default function ExercisesScreen() {
 
   // 🗣️ Textos UI (no toca EXERCISE_CHOICES ni payloads)
   const T = {
-    title: language === "es" ? `Ejercicios de la sesión ${sessionId}` : `Session ${sessionId} exercises`,
+    title:
+      language === "es"
+        ? `Ejercicios de la sesión ${sessionId}`
+        : `Session ${sessionId} exercises`,
     add: language === "es" ? "+ Añadir ejercicio" : "+ Add exercise",
     edit: language === "es" ? "Editar ejercicio" : "Edit exercise",
-    log: language === "es" ? "Registrar progreso del atleta" : "Log athlete progress",
+    log:
+      language === "es"
+        ? "Registrar progreso del atleta"
+        : "Log athlete progress",
     sets: language === "es" ? "Sets" : "Sets",
     reps: language === "es" ? "Reps" : "Reps",
     plannedWeight: language === "es" ? "Peso planificado" : "Planned weight",
     plannedRpe: language === "es" ? "RPE objetivo" : "Target RPE",
     realWeight: language === "es" ? "Peso real" : "Actual weight",
     realRpe: language === "es" ? "RPE real" : "Actual RPE",
-    completed: language === "es" ? "Ejercicio completado" : "Exercise completed",
+    completed:
+      language === "es" ? "Ejercicio completado" : "Exercise completed",
     register: language === "es" ? "Registrar progreso" : "Log progress",
     cancel: language === "es" ? "Cancelar" : "Cancel",
     save: language === "es" ? "Guardar" : "Save",
-    loadingErr: language === "es" ? "No se pudieron cargar los ejercicios" : "Could not load exercises",
-    delConfirm: language === "es" ? "Confirmar eliminación" : "Confirm deletion",
+    loadingErr:
+      language === "es"
+        ? "No se pudieron cargar los ejercicios"
+        : "Could not load exercises",
+    delConfirm:
+      language === "es" ? "Confirmar eliminación" : "Confirm deletion",
     delMsg: (n: string) =>
-      language === "es" ? `¿Eliminar el ejercicio "${n}"?` : `Delete exercise "${n}"?`,
+      language === "es"
+        ? `¿Eliminar el ejercicio "${n}"?`
+        : `Delete exercise "${n}"?`,
     del: language === "es" ? "Eliminar" : "Delete",
     back: language === "es" ? "Volver" : "Back",
   };
@@ -127,9 +140,12 @@ export default function ExercisesScreen() {
     setLoading(true);
     try {
       const token = await getToken("accessToken");
-      const res = await fetch(`${API_URL.replace(/\/$/, "")}/exercises/?session=${sessionId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await fetch(
+        `${API_URL.replace(/\/$/, "")}/exercises/?session=${sessionId}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
       const data = await res.json();
       setExercises(data);
     } catch (err) {
@@ -241,10 +257,13 @@ export default function ExercisesScreen() {
   const deleteExercise = async (id: number) => {
     const token = await getToken("accessToken");
     try {
-      const res = await fetch(`${API_URL.replace(/\/$/, "")}/exercises/${id}/`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await fetch(
+        `${API_URL.replace(/\/$/, "")}/exercises/${id}/`,
+        {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
       if (!res.ok) throw new Error("Error eliminando ejercicio");
       fetchExercises();
     } catch (err) {
@@ -262,16 +281,26 @@ export default function ExercisesScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: palette.background }]}>
-      <PullToRefresh contentContainerStyle={{ paddingBottom: 120, paddingHorizontal: 16 }} showsVerticalScrollIndicator={false}>
+      <PullToRefresh
+        contentContainerStyle={{ paddingBottom: 120, paddingHorizontal: 16 }}
+        showsVerticalScrollIndicator={false}
+      >
         <TouchableOpacity style={{ padding: 16 }} onPress={() => router.back()}>
           <ArrowLeft size={24} color={palette.text} />
         </TouchableOpacity>
 
-        <Text style={[styles.title, { color: palette.text, textAlign: "center" }]}>{T.title}</Text>
+        <Text
+          style={[styles.title, { color: palette.text, textAlign: "center" }]}
+        >
+          {T.title}
+        </Text>
 
         {role === "coach" && (
           <TouchableOpacity
-            style={[styles.addButton, { backgroundColor: isDarkMode ? "#3F3F46" : "#374151" }]}
+            style={[
+              styles.addButton,
+              { backgroundColor: isDarkMode ? "#3F3F46" : "#374151" },
+            ]}
             onPress={() =>
               setCurrentExercise({
                 predefined_name: EXERCISE_CHOICES[0],
@@ -285,31 +314,59 @@ export default function ExercisesScreen() {
         )}
 
         {/* Lista de ejercicios ordenada */}
+        {/* Lista de ejercicios separada por tipo */}
         <View>
+          {/* Filtrar y ordenar los básicos */}
+          <Text
+            style={{
+              color: palette.text,
+              fontWeight: "700",
+              fontSize: 18,
+              marginBottom: 8,
+            }}
+          >
+            {language === "es" ? "Ejercicios básicos" : "Main lifts"}
+          </Text>
+
           {exercises
-            ?.slice()
-            .sort((a, b) => {
-              if (a.completed === b.completed) return 0;
-              return a.completed ? 1 : -1; // no completados arriba
-            })
+            ?.filter((ex) =>
+              ["Sentadilla", "Bench Press", "Peso muerto"].includes(
+                ex.predefined_name || ex.name || ""
+              )
+            )
+            .sort((a, b) =>
+              a.completed === b.completed ? 0 : a.completed ? 1 : -1
+            )
             .map((item, index) => (
               <TouchableOpacity
-                key={index}
+                key={`basic-${index}`}
                 style={[
                   styles.card,
-                  { backgroundColor: palette.surface, borderColor: palette.accent, borderWidth: 2, elevation: 4 },
+                  {
+                    backgroundColor: palette.surface,
+                    borderColor: palette.border, // mismo borde que accesorios
+                    borderWidth: 1, // igual que accesorios
+                    elevation: 2, // más sutil
+                  },
                 ]}
                 activeOpacity={0.8}
               >
-                <Text style={{ color: palette.text, fontWeight: "600", fontSize: 16 }}>
-                  {item.name || "Sin nombre"}
+                <Text
+                  style={{
+                    color: palette.text,
+                    fontWeight: "600",
+                    fontSize: 16,
+                  }}
+                >
+                  {item.name || item.predefined_name || "Sin nombre"}
                 </Text>
 
                 <Text style={{ color: palette.subtext }}>
                   {T.sets}: {item.sets} | {T.reps}: {item.reps}
                 </Text>
                 <Text style={{ color: palette.subtext }}>
-                  {T.plannedWeight}: {item.weight || "-"} | {T.plannedRpe}: {item.rpe || "-"}
+                  {T.plannedWeight}: {item.weight || "-"} | {T.plannedRpe}:{" "}
+                  {item.rpe || "-"}
                 </Text>
                 <Text
                   style={{
@@ -317,27 +374,51 @@ export default function ExercisesScreen() {
                     fontWeight: "600",
                   }}
                 >
-                  {T.realWeight}: {item.weight_actual ?? "-"} | {T.realRpe}: {item.rpe_actual ?? "-"} |{" "}
-                  {language === "es" ? "Completado" : "Completed"}: {item.completed ? (language === "es" ? "Sí" : "Yes") : (language === "es" ? "No" : "No")}
+                  {T.realWeight}: {item.weight_actual ?? "-"} | {T.realRpe}:{" "}
+                  {item.rpe_actual ?? "-"} |{" "}
+                  {language === "es" ? "Completado" : "Completed"}:{" "}
+                  {item.completed
+                    ? language === "es"
+                      ? "Sí"
+                      : "Yes"
+                    : language === "es"
+                    ? "No"
+                    : "No"}
                 </Text>
 
                 {role === "coach" ? (
                   <View style={styles.buttonsRow}>
                     <TouchableOpacity
-                      style={[styles.modalBtn, { backgroundColor: isDarkMode ? "#3F3F46" : "#374151" }]}
+                      style={[
+                        styles.modalBtn,
+                        { backgroundColor: isDarkMode ? "#3F3F46" : "#374151" },
+                      ]}
                       onPress={() => setCurrentExercise(item)}
                     >
-                      <Text style={styles.modalBtnText}>{language === "es" ? "Editar" : "Edit"}</Text>
+                      <Text style={styles.modalBtnText}>
+                        {language === "es" ? "Editar" : "Edit"}
+                      </Text>
                     </TouchableOpacity>
                     <TouchableOpacity
-                      style={[styles.modalBtn, { backgroundColor: palette.accent }]}
+                      style={[
+                        styles.modalBtn,
+                        { backgroundColor: palette.accent },
+                      ]}
                       onPress={() => {
                         Alert.alert(
                           T.delConfirm,
-                          T.delMsg(item.predefined_name || item.custom_name || (language === "es" ? "Sin nombre" : "Unnamed")),
+                          T.delMsg(
+                            item.predefined_name ||
+                              item.custom_name ||
+                              (language === "es" ? "Sin nombre" : "Unnamed")
+                          ),
                           [
                             { text: T.cancel, style: "cancel" },
-                            { text: T.del, style: "destructive", onPress: () => deleteExercise(item.id!) },
+                            {
+                              text: T.del,
+                              style: "destructive",
+                              onPress: () => deleteExercise(item.id!),
+                            },
                           ]
                         );
                       }}
@@ -347,7 +428,146 @@ export default function ExercisesScreen() {
                   </View>
                 ) : (
                   <TouchableOpacity
-                    style={[styles.modalBtn, { backgroundColor: palette.accent, marginTop: 10 }]}
+                    style={[
+                      styles.modalBtn,
+                      { backgroundColor: palette.accent, marginTop: 10 },
+                    ]}
+                    onPress={() => setCurrentExercise(item)}
+                  >
+                    <Text style={styles.modalBtnText}>{T.register}</Text>
+                  </TouchableOpacity>
+                )}
+              </TouchableOpacity>
+            ))}
+
+          {/* Línea divisoria */}
+          <View
+            style={{
+              height: 1,
+              backgroundColor: palette.border,
+              marginVertical: 16,
+            }}
+          />
+
+          {/* Filtrar accesorios */}
+          <Text
+            style={{
+              color: palette.text,
+              fontWeight: "700",
+              fontSize: 18,
+              marginBottom: 8,
+            }}
+          >
+            {language === "es"
+              ? "Ejercicios accesorios"
+              : "Accessory exercises"}
+          </Text>
+
+          {exercises
+            ?.filter(
+              (ex) =>
+                !["Sentadilla", "Bench Press", "Peso muerto"].includes(
+                  ex.predefined_name || ex.name || ""
+                )
+            )
+            .sort((a, b) =>
+              a.completed === b.completed ? 0 : a.completed ? 1 : -1
+            )
+            .map((item, index) => (
+              <TouchableOpacity
+                key={`acc-${index}`}
+                style={[
+                  styles.card,
+                  {
+                    backgroundColor: palette.surface,
+                    borderColor: palette.border,
+                    borderWidth: 1,
+                    elevation: 2,
+                  },
+                ]}
+                activeOpacity={0.8}
+              >
+                <Text
+                  style={{
+                    color: palette.text,
+                    fontWeight: "600",
+                    fontSize: 16,
+                  }}
+                >
+                  {item.name || item.predefined_name || "Sin nombre"}
+                </Text>
+
+                <Text style={{ color: palette.subtext }}>
+                  {T.sets}: {item.sets} | {T.reps}: {item.reps}
+                </Text>
+                <Text style={{ color: palette.subtext }}>
+                  {T.plannedWeight}: {item.weight || "-"} | {T.plannedRpe}:{" "}
+                  {item.rpe || "-"}
+                </Text>
+                <Text
+                  style={{
+                    color: item.completed ? palette.success : palette.warn,
+                    fontWeight: "600",
+                  }}
+                >
+                  {T.realWeight}: {item.weight_actual ?? "-"} | {T.realRpe}:{" "}
+                  {item.rpe_actual ?? "-"} |{" "}
+                  {language === "es" ? "Completado" : "Completed"}:{" "}
+                  {item.completed
+                    ? language === "es"
+                      ? "Sí"
+                      : "Yes"
+                    : language === "es"
+                    ? "No"
+                    : "No"}
+                </Text>
+
+                {role === "coach" ? (
+                  <View style={styles.buttonsRow}>
+                    <TouchableOpacity
+                      style={[
+                        styles.modalBtn,
+                        { backgroundColor: isDarkMode ? "#3F3F46" : "#374151" },
+                      ]}
+                      onPress={() => setCurrentExercise(item)}
+                    >
+                      <Text style={styles.modalBtnText}>
+                        {language === "es" ? "Editar" : "Edit"}
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[
+                        styles.modalBtn,
+                        { backgroundColor: palette.accent },
+                      ]}
+                      onPress={() => {
+                        Alert.alert(
+                          T.delConfirm,
+                          T.delMsg(
+                            item.predefined_name ||
+                              item.custom_name ||
+                              (language === "es" ? "Sin nombre" : "Unnamed")
+                          ),
+                          [
+                            { text: T.cancel, style: "cancel" },
+                            {
+                              text: T.del,
+                              style: "destructive",
+                              onPress: () => deleteExercise(item.id!),
+                            },
+                          ]
+                        );
+                      }}
+                    >
+                      <Text style={styles.modalBtnText}>{T.del}</Text>
+                    </TouchableOpacity>
+                  </View>
+                ) : (
+                  <TouchableOpacity
+                    style={[
+                      styles.modalBtn,
+                      { backgroundColor: palette.accent, marginTop: 10 },
+                    ]}
                     onPress={() => setCurrentExercise(item)}
                   >
                     <Text style={styles.modalBtnText}>{T.register}</Text>
@@ -359,8 +579,18 @@ export default function ExercisesScreen() {
 
         {/* Modal */}
         <Modal visible={!!currentExercise} animationType="slide" transparent>
-          <View style={[styles.modalBackground, { backgroundColor: palette.overlay }]}>
-            <View style={[styles.modalContent, { backgroundColor: palette.surface }]}>
+          <View
+            style={[
+              styles.modalBackground,
+              { backgroundColor: palette.overlay },
+            ]}
+          >
+            <View
+              style={[
+                styles.modalContent,
+                { backgroundColor: palette.surface },
+              ]}
+            >
               <Text style={[styles.modalTitle, { color: palette.text }]}>
                 {role === "coach" ? T.edit : T.log}
               </Text>
@@ -370,9 +600,15 @@ export default function ExercisesScreen() {
                   <Picker
                     selectedValue={currentExercise?.predefined_name}
                     onValueChange={(value) =>
-                      setCurrentExercise((prev) => (prev ? { ...prev, predefined_name: value } : null))
+                      setCurrentExercise((prev) =>
+                        prev ? { ...prev, predefined_name: value } : null
+                      )
                     }
-                    style={{ color: palette.text, backgroundColor: palette.surfaceAlt, marginBottom: 12 }}
+                    style={{
+                      color: palette.text,
+                      backgroundColor: palette.surfaceAlt,
+                      marginBottom: 12,
+                    }}
                   >
                     {EXERCISE_CHOICES.map((ex) => (
                       <Picker.Item key={ex} label={ex} value={ex} />
@@ -381,12 +617,25 @@ export default function ExercisesScreen() {
 
                   {currentExercise?.predefined_name === "Otro" && (
                     <TextInput
-                      placeholder={language === "es" ? "Nombre personalizado" : "Custom name"}
+                      placeholder={
+                        language === "es"
+                          ? "Nombre personalizado"
+                          : "Custom name"
+                      }
                       placeholderTextColor={palette.subtext}
-                      style={[styles.input, { color: palette.text, borderColor: palette.border, backgroundColor: palette.surfaceAlt }]}
+                      style={[
+                        styles.input,
+                        {
+                          color: palette.text,
+                          borderColor: palette.border,
+                          backgroundColor: palette.surfaceAlt,
+                        },
+                      ]}
                       value={currentExercise.custom_name || ""}
                       onChangeText={(text) =>
-                        setCurrentExercise((prev) => (prev ? { ...prev, custom_name: text } : null))
+                        setCurrentExercise((prev) =>
+                          prev ? { ...prev, custom_name: text } : null
+                        )
                       }
                     />
                   )}
@@ -394,49 +643,86 @@ export default function ExercisesScreen() {
                   <TextInput
                     placeholder={T.sets}
                     placeholderTextColor={palette.subtext}
-                    style={[styles.input, { color: palette.text, borderColor: palette.border, backgroundColor: palette.surfaceAlt }]}
+                    style={[
+                      styles.input,
+                      {
+                        color: palette.text,
+                        borderColor: palette.border,
+                        backgroundColor: palette.surfaceAlt,
+                      },
+                    ]}
                     keyboardType="numeric"
                     value={
-                      currentExercise?.sets === 0 || currentExercise?.sets == null
+                      currentExercise?.sets === 0 ||
+                      currentExercise?.sets == null
                         ? ""
                         : currentExercise.sets.toString()
                     }
                     onChangeText={(text) =>
-                      setCurrentExercise((prev) => (prev ? { ...prev, sets: Number(text) } : null))
+                      setCurrentExercise((prev) =>
+                        prev ? { ...prev, sets: Number(text) } : null
+                      )
                     }
                   />
                   <TextInput
                     placeholder={T.reps}
                     placeholderTextColor={palette.subtext}
-                    style={[styles.input, { color: palette.text, borderColor: palette.border, backgroundColor: palette.surfaceAlt }]}
+                    style={[
+                      styles.input,
+                      {
+                        color: palette.text,
+                        borderColor: palette.border,
+                        backgroundColor: palette.surfaceAlt,
+                      },
+                    ]}
                     keyboardType="numeric"
                     value={
-                      currentExercise?.reps === 0 || currentExercise?.reps == null
+                      currentExercise?.reps === 0 ||
+                      currentExercise?.reps == null
                         ? ""
                         : currentExercise.reps.toString()
                     }
                     onChangeText={(text) =>
-                      setCurrentExercise((prev) => (prev ? { ...prev, reps: Number(text) } : null))
+                      setCurrentExercise((prev) =>
+                        prev ? { ...prev, reps: Number(text) } : null
+                      )
                     }
                   />
                   <TextInput
                     placeholder={language === "es" ? "Peso" : "Weight"}
                     placeholderTextColor={palette.subtext}
-                    style={[styles.input, { color: palette.text, borderColor: palette.border, backgroundColor: palette.surfaceAlt }]}
+                    style={[
+                      styles.input,
+                      {
+                        color: palette.text,
+                        borderColor: palette.border,
+                        backgroundColor: palette.surfaceAlt,
+                      },
+                    ]}
                     keyboardType="numeric"
                     value={
-                      currentExercise?.weight === 0 || currentExercise?.weight == null
+                      currentExercise?.weight === 0 ||
+                      currentExercise?.weight == null
                         ? ""
                         : currentExercise.weight.toString()
                     }
                     onChangeText={(text) =>
-                      setCurrentExercise((prev) => (prev ? { ...prev, weight: Number(text) } : null))
+                      setCurrentExercise((prev) =>
+                        prev ? { ...prev, weight: Number(text) } : null
+                      )
                     }
                   />
                   <TextInput
                     placeholder="RPE"
                     placeholderTextColor={palette.subtext}
-                    style={[styles.input, { color: palette.text, borderColor: palette.border, backgroundColor: palette.surfaceAlt }]}
+                    style={[
+                      styles.input,
+                      {
+                        color: palette.text,
+                        borderColor: palette.border,
+                        backgroundColor: palette.surfaceAlt,
+                      },
+                    ]}
                     keyboardType="numeric"
                     value={
                       currentExercise?.rpe === 0 || currentExercise?.rpe == null
@@ -444,61 +730,100 @@ export default function ExercisesScreen() {
                         : currentExercise.rpe.toString()
                     }
                     onChangeText={(text) =>
-                      setCurrentExercise((prev) => (prev ? { ...prev, rpe: Number(text) } : null))
+                      setCurrentExercise((prev) =>
+                        prev ? { ...prev, rpe: Number(text) } : null
+                      )
                     }
                   />
                 </>
               ) : (
                 <>
                   <TextInput
-                    placeholder={language === "es" ? "Peso actual (kg)" : "Actual weight (kg)"}
+                    placeholder={
+                      language === "es"
+                        ? "Peso actual (kg)"
+                        : "Actual weight (kg)"
+                    }
                     placeholderTextColor={palette.subtext}
-                    style={[styles.input, { color: palette.text, borderColor: palette.border, backgroundColor: palette.surfaceAlt }]}
+                    style={[
+                      styles.input,
+                      {
+                        color: palette.text,
+                        borderColor: palette.border,
+                        backgroundColor: palette.surfaceAlt,
+                      },
+                    ]}
                     keyboardType="numeric"
                     value={
-                      currentExercise?.weight_actual === 0 || currentExercise?.weight_actual == null
+                      currentExercise?.weight_actual === 0 ||
+                      currentExercise?.weight_actual == null
                         ? ""
                         : currentExercise.weight_actual.toString()
                     }
                     onChangeText={(text) =>
-                      setCurrentExercise((prev) => (prev ? { ...prev, weight_actual: Number(text) } : null))
+                      setCurrentExercise((prev) =>
+                        prev ? { ...prev, weight_actual: Number(text) } : null
+                      )
                     }
                   />
                   <TextInput
                     placeholder={language === "es" ? "RPE real" : "Actual RPE"}
                     placeholderTextColor={palette.subtext}
-                    style={[styles.input, { color: palette.text, borderColor: palette.border, backgroundColor: palette.surfaceAlt }]}
+                    style={[
+                      styles.input,
+                      {
+                        color: palette.text,
+                        borderColor: palette.border,
+                        backgroundColor: palette.surfaceAlt,
+                      },
+                    ]}
                     keyboardType="numeric"
                     value={
-                      currentExercise?.rpe_actual === 0 || currentExercise?.rpe_actual == null
+                      currentExercise?.rpe_actual === 0 ||
+                      currentExercise?.rpe_actual == null
                         ? ""
                         : currentExercise.rpe_actual.toString()
                     }
                     onChangeText={(text) =>
-                      setCurrentExercise((prev) => (prev ? { ...prev, rpe_actual: Number(text) } : null))
+                      setCurrentExercise((prev) =>
+                        prev ? { ...prev, rpe_actual: Number(text) } : null
+                      )
                     }
                   />
                   <View style={{ flexDirection: "row", alignItems: "center" }}>
                     <Switch
                       value={currentExercise?.completed || false}
                       onValueChange={(value) =>
-                        setCurrentExercise((prev) => (prev ? { ...prev, completed: value } : null))
+                        setCurrentExercise((prev) =>
+                          prev ? { ...prev, completed: value } : null
+                        )
                       }
                     />
-                    <Text style={{ color: palette.text, marginLeft: 8 }}>{T.completed}</Text>
+                    <Text style={{ color: palette.text, marginLeft: 8 }}>
+                      {T.completed}
+                    </Text>
                   </View>
                 </>
               )}
 
               <View style={styles.modalButtons}>
                 <TouchableOpacity
-                  style={[styles.modalBtn, { backgroundColor: isDarkMode ? "#3F3F46" : "#374151", flex: 1 }]}
+                  style={[
+                    styles.modalBtn,
+                    {
+                      backgroundColor: isDarkMode ? "#3F3F46" : "#374151",
+                      flex: 1,
+                    },
+                  ]}
                   onPress={() => setCurrentExercise(null)}
                 >
                   <Text style={styles.modalBtnText}>{T.cancel}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  style={[styles.modalBtn, { backgroundColor: palette.accent, flex: 1 }]}
+                  style={[
+                    styles.modalBtn,
+                    { backgroundColor: palette.accent, flex: 1 },
+                  ]}
                   onPress={saveExercise}
                 >
                   <Text style={styles.modalBtnText}>{T.save}</Text>
@@ -539,9 +864,19 @@ const styles = StyleSheet.create({
 
   input: { borderWidth: 1, borderRadius: 6, padding: 8, marginBottom: 12 },
 
-  modalButtons: { flexDirection: "row", justifyContent: "space-between", marginTop: 16 },
+  modalButtons: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 16,
+  },
 
-  modalBtn: { flex: 1, marginHorizontal: 5, padding: 12, borderRadius: 6, alignItems: "center" },
+  modalBtn: {
+    flex: 1,
+    marginHorizontal: 5,
+    padding: 12,
+    borderRadius: 6,
+    alignItems: "center",
+  },
 
   modalBtnText: { color: "#fff", fontWeight: "bold" },
 });
