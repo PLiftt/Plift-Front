@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import { Ionicons, MaterialIcons, FontAwesome5 } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
+import { useAppContext } from "app/context/appContext";
 // import { getUserProfile } from "../../../services/userService";
 // import { deleteToken } from "../../../services/secureStore";
 
@@ -34,16 +35,19 @@ export default function BottomNav() {
 
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
-  const [isDarkMode, setIsDarkMode] = useState(true);
   const router = useRouter();
+  const { language, isDarkMode } = useAppContext();
+
+  const t = (es: string, en: string) => (language === "es" ? es : en);
 
   const colors = {
-    background: isDarkMode ? "#000" : "#f9f9f9",
-    rectangle: isDarkMode ? "rgba(26,26,26,0.9)" : "#fff",
+    background: isDarkMode ? "#000" : "#F8FAFC",
+    rectangle: isDarkMode ? "rgba(26,26,26,0.9)" : "#FFFFFF",
     textPrimary: isDarkMode ? "#fff" : "#000",
     textSecondary: "#EF233C",
-    cardBackground: isDarkMode ? "#1a1a1a" : "#e0e0e0",
-    navBackground: isDarkMode ? "#1a1a1a" : "#ddd",
+    cardBackground: isDarkMode ? "#1a1a1a" : "#EAEAEA",
+    // Bottom bar: dark keeps dark; light uses neutral gray
+    navBackground: isDarkMode ? "#1a1a1a" : "#EDEDED",
     navText: isDarkMode ? "#fff" : "#000",
     floatingButton: "#EF233C",
     watermark: isDarkMode ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)",
@@ -65,19 +69,18 @@ export default function BottomNav() {
     </TouchableOpacity>
   );
 
-  const toggleMode = () => setIsDarkMode(!isDarkMode);
   return (
     <View style={[styles.bottomNav, { backgroundColor: colors.navBackground }]}>
       {renderNavButton(
         "home",
         <Ionicons name="home-outline" size={28} color="#EF233C" />,
-        "Home",
+        t("Inicio", "Home"),
         "/home"
       )}
       {renderNavButton(
         "stats",
         <Ionicons name="stats-chart-outline" size={28} color="#EF233C" />,
-        "Estadísticas",
+        t("Estadísticas", "Statistics"),
         "/estadisticas"
       )}
       <TouchableOpacity
@@ -92,13 +95,13 @@ export default function BottomNav() {
       {renderNavButton(
         "contacto-coach",
         <MaterialIcons name="chat" size={28} color="#EF233C" />,
-        "Contacto",
+        t("Contacto", "Contact"),
         "/contacto-coach"
       )}
       {renderNavButton(
         "perfil",
         <Ionicons name="person-circle-outline" size={28} color="#EF233C" />,
-        "Perfil",
+        t("Perfil", "Profile"),
         "/perfil"
       )}
     </View>

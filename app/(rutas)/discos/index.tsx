@@ -4,7 +4,7 @@ import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
+  // ScrollView,
   TouchableOpacity,
   TextInput,
   Platform,
@@ -14,6 +14,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useAppContext } from "app/context/appContext";
+import PullToRefresh from "../../components/PullToRefresh";
 
 /** =============================
  *  Configuración de placas
@@ -301,7 +302,14 @@ export default function DiscosScreen() {
       style={[styles.container, { backgroundColor: palette.bg }]}
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
-      <ScrollView contentContainerStyle={{ paddingBottom: 24 }}>
+      <PullToRefresh
+        contentContainerStyle={{ paddingBottom: 24 }}
+        onRefresh={async () => {
+          setUnit("kg");
+          setTarget("140");
+          setBar(20);
+        }}
+      >
         {/* Header */}
         <View style={[styles.header, { backgroundColor: palette.surface, borderColor: palette.border }]}>
           <TouchableOpacity onPress={() => router.back()} style={{ padding: 6 }}>
@@ -507,7 +515,7 @@ export default function DiscosScreen() {
             )}
           </Text>
         </View>
-      </ScrollView>
+      </PullToRefresh>
     </KeyboardAvoidingView>
   );
 }

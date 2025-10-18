@@ -8,6 +8,7 @@ import * as ImagePicker from "expo-image-picker";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { useAppContext } from "app/context/appContext";
+import PullToRefresh from "../../components/PullToRefresh";
 import BottomNav from "../../components/bottomNav";
 import { sendContactMessage } from "services/contactService";
 import { API_URL } from "@env"; //
@@ -220,7 +221,7 @@ export default function ContactCoachScreen() {
       behavior={Platform.OS === "ios" ? "padding" : undefined}
       keyboardVerticalOffset={100}
     >
-      <ScrollView
+      <PullToRefresh
         contentContainerStyle={{
           padding: 20,
           paddingBottom: 120,
@@ -228,7 +229,13 @@ export default function ContactCoachScreen() {
           justifyContent: "center",
           alignItems: "center",
         }}
-        keyboardShouldPersistTaps="handled"
+        onRefresh={async () => {
+          setYourEmail("");
+          setSubject("");
+          setMessage("");
+          setAttachments([]);
+          setEmailError(null);
+        }}
       >
         {/* ▶️ Título arriba del card */}
         <View style={{ width: "100%", maxWidth: 600, alignSelf: "center", marginTop: -14, marginBottom: 28 }}>
@@ -366,7 +373,7 @@ export default function ContactCoachScreen() {
             {t("Los campos marcados con * son obligatorios.", "Fields marked with * are required.")}
           </Text>
         </View>
-      </ScrollView>
+      </PullToRefresh>
 
       <BottomNav />
     </KeyboardAvoidingView>

@@ -10,13 +10,14 @@ import {
   TextInput,
   Alert,
   StyleSheet,
-  ScrollView,
+  // ScrollView,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { getToken } from "services/secureStore";
 import { getUserProfile } from "services/userService";
 import { API_URL } from "@env";
 import BottomNav from "../../components/bottomNav";
+import PullToRefresh from "../../components/PullToRefresh";
 import { useAppContext } from "app/context/appContext";
 
 interface Block {
@@ -236,7 +237,7 @@ export default function BlocksScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: palette.background }]}>
-      <ScrollView
+      <PullToRefresh
         contentContainerStyle={{ paddingBottom: 120, paddingHorizontal: 16 }}
         showsVerticalScrollIndicator={false}
       >
@@ -356,7 +357,7 @@ export default function BlocksScreen() {
             />
           )}
         </View>
-      </ScrollView>
+      </PullToRefresh>
 
       {/* Modal */}
       <Modal visible={modalVisible} animationType="slide" transparent>

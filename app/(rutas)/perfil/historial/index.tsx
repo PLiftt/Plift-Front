@@ -3,7 +3,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import {
   View,
   Text,
-  ScrollView,
+  // ScrollView,
   TouchableOpacity,
   ActivityIndicator,
   StyleSheet,
@@ -15,6 +15,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { getUserProfile } from "services/userService";
 import { getBlocks, getSessions, getExercises } from "services/trainingService";
+import PullToRefresh from "../../../components/PullToRefresh";
 
 if (Platform.OS === "android") {
   UIManager.setLayoutAnimationEnabledExperimental &&
@@ -162,10 +163,11 @@ export default function AthleteHistoryScreen() {
         <Text style={styles.headerTitle}>Historial</Text>
       </View>
 
-      <ScrollView
+      <PullToRefresh
         style={styles.container}
         contentContainerStyle={{ paddingBottom: 30 }}
         showsVerticalScrollIndicator={false}
+        onRefresh={fetchHistory}
       >
         {athletes.length === 0 ? (
           <Text style={styles.emptyText}>No hay historial disponible.</Text>
@@ -288,7 +290,7 @@ export default function AthleteHistoryScreen() {
             </View>
           ))
         )}
-      </ScrollView>
+      </PullToRefresh>
     </SafeAreaView>
   );
 }

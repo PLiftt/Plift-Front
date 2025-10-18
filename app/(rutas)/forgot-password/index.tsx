@@ -5,11 +5,12 @@ import {
   TextInput,
   TouchableOpacity,
   Alert,
-  ScrollView,
+  // ScrollView,
   KeyboardAvoidingView,
   Platform,
   StyleSheet,
 } from "react-native";
+import PullToRefresh from "../../components/PullToRefresh";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import {
@@ -78,9 +79,15 @@ export default function ResetPasswordScreen() {
       style={{ flex: 1, backgroundColor: "#111" }}
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
-      <ScrollView
+      <PullToRefresh
         contentContainerStyle={{ flexGrow: 1 }}
-        keyboardShouldPersistTaps="handled"
+        onRefresh={async () => {
+          setEmail("");
+          setCode("");
+          setNewPassword("");
+          setConfirmPassword("");
+          setCodeSent(false);
+        }}
       >
         {/* Flecha de retroceso pegada al header */}
         <TouchableOpacity
@@ -162,7 +169,7 @@ export default function ResetPasswordScreen() {
             )}
           </View>
         </View>
-      </ScrollView>
+      </PullToRefresh>
     </KeyboardAvoidingView>
   );
 }

@@ -1,15 +1,9 @@
 import React, { useEffect, useState } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  ActivityIndicator,
-  Dimensions,
-} from "react-native";
+import { View, Text, StyleSheet, ActivityIndicator, Dimensions } from "react-native";
 import { getUserProfile } from "../../../services/userService";
 import BottomNav from "../../components/bottomNav";
 import { TrendingUp, TrendingDown, Activity } from "lucide-react-native";
+import PullToRefresh from "../../components/PullToRefresh";
 import { useAppContext } from "app/context/appContext";
 
 const { width } = Dimensions.get("window");
@@ -29,6 +23,7 @@ export default function EstadisticasPage() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const { isDarkMode, language } = useAppContext();
+  // no local anim state; handled by PullToRefresh
 
   // 🎨 Paleta por tema (solo estilos)
   const palette = isDarkMode
@@ -78,6 +73,10 @@ export default function EstadisticasPage() {
   useEffect(() => {
     fetchProfile();
   }, []);
+
+  const onRefresh = async () => {
+    await fetchProfile();
+  };
 
   if (loading) {
     return (
@@ -142,7 +141,13 @@ export default function EstadisticasPage() {
 
   return (
     <View style={[styles.container, { backgroundColor: palette.background }]}>
-      <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 120 }} showsVerticalScrollIndicator={false}>
+      <PullToRefresh
+        onRefresh={onRefresh}
+        accentColor={palette.primary}
+        bannerColor={palette.secondary}
+        isDarkMode={isDarkMode}
+        contentContainerStyle={{ padding: 20, paddingBottom: 120 }}
+      >
         {/* Header */}
         <Text style={[styles.header, { color: palette.textPrimary, textAlign: "center" }]}>{T.header}</Text>
 
@@ -191,7 +196,7 @@ export default function EstadisticasPage() {
         <RatioCard title={T.squatDead} value={squatDeadRatio} colors={palette} colorBar={palette.primary} />
         <RatioCard title={T.benchSquat} value={benchSquatRatio} colors={palette} colorBar={palette.secondary} />
         <RatioCard title={T.wilks} value={wilks} colors={palette} isWilks note={T.wilksNote} />
-      </ScrollView>
+      </PullToRefresh>
 
       <BottomNav />
     </View>

@@ -9,8 +9,8 @@ import {
   TextInput,
   Alert,
   StyleSheet,
-  ScrollView,
 } from "react-native";
+import PullToRefresh from "../../../components/PullToRefresh";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { getToken } from "services/secureStore";
 import { getUserProfile } from "services/userService";
@@ -242,7 +242,7 @@ export default function SessionsScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: palette.background }]}>
-      <ScrollView contentContainerStyle={{ paddingBottom: 120, paddingHorizontal: 16 }} showsVerticalScrollIndicator={false}>
+      <PullToRefresh contentContainerStyle={{ paddingBottom: 120, paddingHorizontal: 16 }} showsVerticalScrollIndicator={false} onRefresh={fetchSessions}>
         <TouchableOpacity style={{ padding: 16 }} onPress={() => router.back()}>
           <ArrowLeft size={24} color={palette.text} />
         </TouchableOpacity>
@@ -366,7 +366,7 @@ export default function SessionsScreen() {
             </View>
           )}
         />
-      </ScrollView>
+      </PullToRefresh>
 
       {/* Modal CRUD sesiones */}
       <Modal visible={!!currentSession} animationType="slide" transparent>

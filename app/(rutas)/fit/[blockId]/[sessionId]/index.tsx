@@ -19,6 +19,7 @@ import { getUserProfile } from "services/userService";
 import { API_URL } from "@env";
 import { ArrowLeft } from "lucide-react-native";
 import { useAppContext } from "app/context/appContext";
+import PullToRefresh from "../../../../components/PullToRefresh";
 
 interface Exercise {
   id?: number;
@@ -261,7 +262,7 @@ export default function ExercisesScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: palette.background }]}>
-      <ScrollView contentContainerStyle={{ paddingBottom: 120, paddingHorizontal: 16 }} showsVerticalScrollIndicator={false}>
+      <PullToRefresh contentContainerStyle={{ paddingBottom: 120, paddingHorizontal: 16 }} showsVerticalScrollIndicator={false}>
         <TouchableOpacity style={{ padding: 16 }} onPress={() => router.back()}>
           <ArrowLeft size={24} color={palette.text} />
         </TouchableOpacity>
@@ -506,7 +507,7 @@ export default function ExercisesScreen() {
             </View>
           </View>
         </Modal>
-      </ScrollView>
+      </PullToRefresh>
     </View>
   );
 }

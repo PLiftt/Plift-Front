@@ -18,8 +18,9 @@ import {
   Dimensions,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { sendCheckin, confirmAdjustments } from "services/aiService";
 import { getSessions } from "services/trainingService";
+import { sendCheckin, confirmAdjustments } from "services/aiService";
+import { useAIChat } from "app/context/aiChatContext";
 
 const { width, height } = Dimensions.get("window");
 
@@ -39,7 +40,7 @@ export interface AIChatWidgetProps {
   onClose?: () => void;
 }
 
-const WIDGET_BOTTOM_OFFSET = 90;
+const WIDGET_BOTTOM_OFFSET = 130;
 const WIDGET_SIDE_OFFSET = 20;
 const SHEET_HEIGHT = Math.min(680, height * 0.8);
 
@@ -49,6 +50,7 @@ export default function AIChatWidget({
   onOpen,
   onClose,
 }: AIChatWidgetProps) {
+  const chat = useAIChat();
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState("");
   const [unread, setUnread] = useState(initialUnread);
@@ -74,6 +76,20 @@ export default function AIChatWidget({
   ]);
 
   const [pendingAdjustments, setPendingAdjustments] = useState<any[]>([]);
+
+  // Hidratar desde contexto si existe conversación previa
+  useEffect(() => {
+    if (chat && chat.messages && chat.messages.length > 0) {
+      setMessages(chat.messages as any);
+      setUnread(typeof chat.unread === "number" ? chat.unread : initialUnread);
+      setPendingAdjustments(chat.pendingAdjustments || []);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  // Sincronizar cambios locales al contexto (persistencia entre screens)
+  useEffect(() => { chat?.setMessages?.(messages as any); }, [messages]);
+  useEffect(() => { chat?.setUnread?.(unread); }, [unread]);
+  useEffect(() => { chat?.setPendingAdjustments?.(pendingAdjustments); }, [pendingAdjustments]);
 
   useEffect(() => {
     if (open) {

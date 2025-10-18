@@ -4,12 +4,13 @@ import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
+  // ScrollView,
   TouchableOpacity,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useAppContext } from "app/context/appContext";
+import PullToRefresh from "../../components/PullToRefresh";
 
 type MobilityEx = { name: string; prescription: string };
 
@@ -119,7 +120,7 @@ export default function MovilidadScreen() {
         </Text>
       </View>
 
-      <ScrollView contentContainerStyle={{ paddingBottom: 24 }}>
+      <PullToRefresh contentContainerStyle={{ paddingBottom: 24 }}>
         {/* Nota general */}
         <View
           style={[
@@ -139,7 +140,7 @@ export default function MovilidadScreen() {
         <Section title="SQUAT" data={SQUAT} expandedDefault />
         <Section title="BENCH" data={BENCH} />
         <Section title="DEADLIFT" data={DEADLIFT} />
-      </ScrollView>
+      </PullToRefresh>
     </View>
   );
 }

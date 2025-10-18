@@ -8,13 +8,14 @@ import {
   Alert,
   Modal,
   TextInput,
-  ScrollView,
+  // ScrollView,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { getUserProfile } from "../../../services/userService";
 import { deleteToken, getToken } from "../../../services/secureStore";
 import { useRouter } from "expo-router";
 import BottomNav from "../../components/bottomNav";
+import PullToRefresh from "../../components/PullToRefresh";
 import { acceptInvitation } from "../../../services/invitationService";
 import { logoutUser } from "../../../services/userService";
 import { useAppContext } from "app/context/appContext";
@@ -208,7 +209,7 @@ const PerfilScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
         { backgroundColor: isDarkMode ? "#0F0F0F" : "#F9F9F9" },
       ]}
     >
-      <ScrollView contentContainerStyle={{ paddingBottom: 120 }}>
+      <PullToRefresh contentContainerStyle={{ paddingBottom: 120 }} onRefresh={fetchProfile}>
         {/* HEADER */}
         <View style={[styles.header, { backgroundColor: "#EF233C" }]}>
           <View style={styles.avatarContainer}>
@@ -311,36 +312,57 @@ const PerfilScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
           )}
 
           <TouchableOpacity
-            style={styles.button}
+            style={[
+              styles.button,
+              {
+                backgroundColor: isDarkMode ? "#1A1A1A" : "#EDEDED",
+                borderWidth: 1,
+                borderColor: isDarkMode ? "#2A2A2A" : "#D1D5DB",
+              },
+            ]}
             onPress={() => router.push("/perfil/historial")}
           >
-            <Ionicons name="time-outline" size={20} color="#fff" />
-            <Text style={styles.buttonText}>
+            <Ionicons name="time-outline" size={20} color={isDarkMode ? "#fff" : "#111"} />
+            <Text style={[styles.buttonText, { color: isDarkMode ? "#fff" : "#111" }]}>
               {language === "es" ? "Historial" : "History"}
             </Text>
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={styles.button}
+            style={[
+              styles.button,
+              {
+                backgroundColor: isDarkMode ? "#1A1A1A" : "#EDEDED",
+                borderWidth: 1,
+                borderColor: isDarkMode ? "#2A2A2A" : "#D1D5DB",
+              },
+            ]}
             onPress={() => router.push("/editarperfil")}
           >
-            <Ionicons name="create-outline" size={20} color="#fff" />
-            <Text style={styles.buttonText}>
+            <Ionicons name="create-outline" size={20} color={isDarkMode ? "#fff" : "#111"} />
+            <Text style={[styles.buttonText, { color: isDarkMode ? "#fff" : "#111" }]}>
               {language === "es" ? "Editar Perfil" : "Edit Profile"}
             </Text>
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={styles.button}
+            style={[
+              styles.button,
+              {
+                backgroundColor: isDarkMode ? "#1A1A1A" : "#EDEDED",
+                borderWidth: 1,
+                borderColor: isDarkMode ? "#2A2A2A" : "#D1D5DB",
+              },
+            ]}
             onPress={() => router.push("/perfil/configuracion")}
           >
-            <Ionicons name="settings-outline" size={20} color="#fff" />
-            <Text style={styles.buttonText}>
+            <Ionicons name="settings-outline" size={20} color={isDarkMode ? "#fff" : "#111"} />
+            <Text style={[styles.buttonText, { color: isDarkMode ? "#fff" : "#111" }]}>
               {language === "es" ? "Configuración" : "Settings"}
             </Text>
           </TouchableOpacity>
         </View>
-      </ScrollView>
+      </PullToRefresh>
 
       {/* MODAL */}
       <Modal

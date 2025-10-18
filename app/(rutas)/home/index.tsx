@@ -3,7 +3,7 @@ import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
+  // ScrollView,
   TouchableOpacity,
   ActivityIndicator,
   Dimensions,
@@ -24,6 +24,7 @@ import { BarChart } from "react-native-chart-kit"; // ⬅️ gráfico de barras
 
 // ⬇️ Burbuja de chat IA
 import AIChatWidget from "../../components/AIChatWidget";
+import PullToRefresh from "../../components/PullToRefresh";
 
 const { width } = Dimensions.get("window");
 // 👇 padding interno del card y ancho real del chart (evita que "coma" el borde derecho)
@@ -97,18 +98,24 @@ const HomeScreen: React.FC = () => {
   const WATER_KEY = `water:${todayKey}`;
   const [waterMl, setWaterMl] = useState<number>(0);
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const raw = await AsyncStorage.getItem(WATER_KEY);
-        if (raw) {
-          const n = Number(raw);
-          if (Number.isFinite(n) && n >= 0) setWaterMl(n);
+  const loadTodayWater = async () => {
+    try {
+      const raw = await AsyncStorage.getItem(WATER_KEY);
+      if (raw) {
+        const n = Number(raw);
+        if (Number.isFinite(n) && n >= 0) {
+          setWaterMl(n);
+          return;
         }
-      } catch (e) {
-        console.warn("No se pudo cargar agua total:", e);
       }
-    })();
+      setWaterMl(0);
+    } catch (e) {
+      console.warn("No se pudo cargar agua total:", e);
+    }
+  };
+
+  useEffect(() => {
+    loadTodayWater();
   }, [WATER_KEY]);
 
   const fmtWater = (ml: number) =>
@@ -221,6 +228,7 @@ const HomeScreen: React.FC = () => {
     fetchProfile();
   }, []);
 
+
   if (loading) {
     return (
       <View style={[styles.centered, { backgroundColor: palette.background }]}>
@@ -275,7 +283,16 @@ const HomeScreen: React.FC = () => {
 
   return (
     <View style={[styles.container, { backgroundColor: palette.background }]}>
-      <ScrollView contentContainerStyle={{ paddingBottom: 120 }}>
+      <PullToRefresh
+        contentContainerStyle={{ paddingBottom: 120 }}
+        onRefresh={async () => {
+          await fetchProfile();
+          await loadTodayWater();
+        }}
+        accentColor={palette.accent}
+        bannerColor={palette.success}
+        isDarkMode={isDarkMode}
+      >
         {/* Hero */}
         <View
           style={[
@@ -597,13 +614,10 @@ const HomeScreen: React.FC = () => {
             </TouchableOpacity>
           </View>
         </View>
-      </ScrollView>
+      </PullToRefresh>
 
       {/* burbuja de chat IA */}
-      <AIChatWidget
-        userName={profile.first_name || profile.email}
-        role={profile.role}
-      />
+      <AIChatWidget userName={profile.first_name || profile.email} role={profile.role} />
 
       <BottomNav />
     </View>
@@ -693,7 +707,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     borderWidth: 1,
     paddingVertical: 8,
-    paddingHorizontal: CHART_CARD_SIDE_PADDING, // 👈 da aire lateral
-    overflow: "hidden", // 👈 evita que el chart se “salga” del borde redondeado
+    paddingHorizontal: CHART_CARD_SIDE_PADDING, 
+    overflow: "hidden", 
   },
 });

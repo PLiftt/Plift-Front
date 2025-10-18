@@ -4,7 +4,7 @@ import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
+  // ScrollView,
   TouchableOpacity,
   TextInput,
   KeyboardAvoidingView,
@@ -13,6 +13,8 @@ import {
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useAppContext } from "app/context/appContext";
+import PullToRefresh from "../../components/PullToRefresh";
+
 
 /** =============================
  *  Utilidades RPE / e1RM (OpenPowerlifting-like)
@@ -143,9 +145,13 @@ export default function CalculadoraScreen() {
       style={[styles.container, { backgroundColor: palette.background }]}
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
-      <ScrollView
-        keyboardShouldPersistTaps="handled"
+      <PullToRefresh
         contentContainerStyle={[styles.scrollContent]}
+        onRefresh={async () => {
+          setHaveWeight("");
+          setHaveReps("");
+          setHaveRpe("8");
+        }}
       >
         {/* Header */}
         <View style={[styles.header, { backgroundColor: palette.surface, borderBottomColor: palette.border }]}>
@@ -250,7 +256,7 @@ export default function CalculadoraScreen() {
             </Text>
           </View>
         </View>
-      </ScrollView>
+      </PullToRefresh>
     </KeyboardAvoidingView>
   );
 }

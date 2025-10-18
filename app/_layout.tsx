@@ -3,6 +3,7 @@ import { Slot } from "expo-router";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import { AppProvider } from "app/context/appContext";
+import { AIChatProvider } from "./context/aiChatContext";
 import { useAppContext } from "app/context/appContext";
 import React from "react";
 
@@ -21,9 +22,11 @@ function InnerLayout() {
 export default function RootLayout() {
   return (
     <AppProvider>
-      <SafeAreaProvider>
-        <InnerLayout />
-      </SafeAreaProvider>
+      <AIChatProvider>
+        <SafeAreaProvider>
+          <InnerLayout />
+        </SafeAreaProvider>
+      </AIChatProvider>
     </AppProvider>
   );
 }

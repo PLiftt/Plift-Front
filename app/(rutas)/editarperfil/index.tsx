@@ -4,7 +4,7 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  ScrollView,
+  // ScrollView,
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
@@ -14,6 +14,7 @@ import { User, Lock, Dumbbell, ArrowLeft } from "lucide-react-native";
 import { getUserProfile, updateProfile } from "../../../services/userService";
 import { useRouter } from "expo-router";
 import { useAppContext } from "app/context/appContext";
+import PullToRefresh from "../../components/PullToRefresh";
 
 export default function ProfileForm() {
   const router = useRouter();
@@ -206,14 +207,14 @@ export default function ProfileForm() {
       style={{ flex: 1, backgroundColor: palette.background }}
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
-      <ScrollView
+      <PullToRefresh
         contentContainerStyle={{
           flexGrow: 1,
           alignItems: "center",
           padding: 20,
           paddingBottom: 40,
         }}
-        keyboardShouldPersistTaps="handled"
+        onRefresh={async () => { try { const d = await getUserProfile(); setFormData({ firstName: d.first_name || "", middleName: d.second_name || "", lastName: d.last_name || "", secondLastName: d.second_last_name || "", weight: d.bodyweight_kg ? String(d.bodyweight_kg) : "", initialOneRM: { squat: d.squat_1rm ? String(d.squat_1rm) : "", benchPress: d.bench_1rm ? String(d.bench_1rm) : "", deadlift: d.deadlift_1rm ? String(d.deadlift_1rm) : "", }, }); } catch(e) { console.warn(e); } }}
       >
         <View style={{ width: "100%", maxWidth: 400 }}>
           {/* Header con botón volver */}
@@ -365,7 +366,7 @@ export default function ProfileForm() {
             </View>
           </View>
         </View>
-      </ScrollView>
+      </PullToRefresh>
     </KeyboardAvoidingView>
   );
 }
