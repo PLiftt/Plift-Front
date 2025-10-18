@@ -33,10 +33,11 @@ export default function ContactCoachScreen() {
         borderErr: "#d00000",
         accent: "#EF233C",
         neutralBtn: "#555",
+        cardBorder: "#2A2A2A",
       }
     : {
-        background: "#F8FAFC",
-        card: "#FFFFFF",
+        background: "#F8FAFC",       // gris muy claro
+        card: "#FFFFFF",             // blanco puro para el card
         input: "#FFFFFF",
         text: "#111827",
         subtext: "#6B7280",
@@ -44,6 +45,7 @@ export default function ContactCoachScreen() {
         borderErr: "#dc2626",
         accent: "#EF233C",
         neutralBtn: "#374151",
+        cardBorder: "#E5E7EB",       // borde sutil para destacar sobre fondo blanco
       };
 
   const [yourEmail, setYourEmail] = useState("");
@@ -179,7 +181,6 @@ export default function ContactCoachScreen() {
         e?.message ||
         t("No pudimos enviar tu mensaje. Intenta nuevamente.", "We couldn't send your message. Please try again.");
 
-      // Si es un "Network Error", dar pistas rápidas
       if (typeof userMsg === "string" && userMsg.toLowerCase().includes("network")) {
         const platformTip =
           Platform.OS === "android"
@@ -245,7 +246,15 @@ export default function ContactCoachScreen() {
         </View>
 
         {/* 🧰 Card */}
-        <View style={[styles.card, { backgroundColor: palette.card }]}>
+        <View
+          style={[
+            styles.card,
+            { backgroundColor: palette.card },
+            !isDarkMode ? styles.cardElevatedLight : styles.cardElevatedDark, // ⬅️ contraste en modo claro
+            // opcional: si quieres aún más contraste en blanco puro, descomenta:
+            // !isDarkMode && { backgroundColor: "#FFFFFFF2" }, // leve transparencia
+          ]}
+        >
           <Text style={styles.bodyText}>
             <Text style={{ color: palette.text, fontWeight: "600" }}>
               {language === "es" ? "Completa el formulario" : "Fill out the form"}
@@ -380,10 +389,35 @@ export default function ContactCoachScreen() {
   );
 }
 
-// al final del archivo, en styles:
+// estilos
 const styles = StyleSheet.create({
   backInline: { flexDirection: "row", alignItems: "center" },
-  card: { width: "100%", maxWidth: 600, borderRadius: 16, padding: 20 },
+
+  // Card base
+  card: {
+    width: "100%",
+    maxWidth: 600,
+    borderRadius: 16,
+    padding: 20,
+  },
+
+  // ✨ En modo claro: borde + sombra para que se note sobre fondo blanco
+  cardElevatedLight: {
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    // iOS shadow
+    shadowColor: "#000",
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 6 },
+    // Android shadow
+    elevation: 6,
+  },
+  // En modo oscuro: borde tenue (sin sombra fuerte)
+  cardElevatedDark: {
+    borderWidth: 1,
+    borderColor: "#2A2A2A",
+  },
 
   bodyText: { fontSize: 16, lineHeight: 22 },
   label: { fontSize: 12, fontWeight: "700", marginBottom: 6 },
