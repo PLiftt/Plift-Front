@@ -108,17 +108,17 @@ export default function DiscosScreen() {
   const [target, setTarget] = useState<string>("140");  // peso objetivo total (con barra)
   const [bar, setBar] = useState<number>(20);           // peso de la barra
 
-  // al cambiar unidad, convierte target y ajusta barra por defecto
+  // al cambiar unidad, convierte target y ajusta barra por defecto (sin callback para evitar warning)
   const onUnitChange = (u: Unit) => {
-    setUnit((prevUnit) => {
-      const curr = toNum(target);
-      if (isFinite(curr)) {
-        const converted = u === "kg" ? lb2kg(curr) : kg2lb(curr);
-        setTarget(fmt(converted, u));
-      }
-      setBar(u === "kg" ? 20 : 45);
-      return u;
-    });
+    if (u === unit) return; // nada que hacer si ya estamos en esa unidad
+
+    const curr = toNum(target);
+    if (isFinite(curr)) {
+      const converted = u === "kg" ? lb2kg(curr) : kg2lb(curr);
+      setTarget(fmt(converted, u));
+    }
+    setBar(u === "kg" ? 20 : 45);
+    setUnit(u);
   };
 
   /** =============================
