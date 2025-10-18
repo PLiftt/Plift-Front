@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   Switch,
   Dimensions,
+  Platform,
 } from "react-native";
 import { Ionicons, MaterialIcons, FontAwesome5 } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
@@ -65,7 +66,18 @@ export default function BottomNav() {
       style={styles.navButton}
     >
       {icon}
-      <Text style={[styles.navText, { color: colors.navText }]}>{label}</Text>
+      <Text
+        style={[
+          styles.navText,
+          { color: colors.navText, textAlignVertical: Platform.OS === "android" ? "center" : undefined },
+        ]}
+        numberOfLines={1}
+        adjustsFontSizeToFit
+        minimumFontScale={0.85}
+        allowFontScaling={false}
+      >
+        {label}
+      </Text>
     </TouchableOpacity>
   );
 
@@ -187,5 +199,10 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
 
-  navText: { fontSize: 12, marginTop: 4, fontWeight: "500" },
+  navText: {
+    fontSize: 11,
+    marginTop: 4,
+    fontWeight: "500",
+    includeFontPadding: false,
+  },
 });
