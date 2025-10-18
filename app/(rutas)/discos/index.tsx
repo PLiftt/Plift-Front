@@ -4,7 +4,6 @@ import {
   View,
   Text,
   StyleSheet,
-  // ScrollView,
   TouchableOpacity,
   TextInput,
   Platform,
@@ -73,6 +72,25 @@ const relLuminance = (hex: string) => {
 };
 const textOn = (bgHex: string) => (relLuminance(bgHex) > 0.5 ? "#111" : "#fff");
 
+/** =============================
+ *  Sanitizador numérico (solo dígitos + un separador decimal . o ,)
+ *  =============================*/
+const sanitizeNumberInput = (raw: string) => {
+  if (!raw) return "";
+  // permite solo dígitos y separadores . ,
+  let s = raw.replace(/[^\d.,]/g, "");
+  // deja solo el primer separador decimal y quita el resto
+  const firstSep = s.search(/[.,]/);
+  if (firstSep !== -1) {
+    const head = s.slice(0, firstSep + 1);
+    const tail = s.slice(firstSep + 1).replace(/[.,]/g, "");
+    s = head + tail;
+  }
+  // evita empezar por separador: ".123" -> "0.123"
+  if (/^[.,]/.test(s)) s = "0" + s;
+  return s;
+};
+
 export default function DiscosScreen() {
   const router = useRouter();
   const { isDarkMode, language } = useAppContext();
@@ -111,7 +129,6 @@ export default function DiscosScreen() {
   // al cambiar unidad, convierte target y ajusta barra por defecto (sin callback para evitar warning)
   const onUnitChange = (u: Unit) => {
     if (u === unit) return; // nada que hacer si ya estamos en esa unidad
-
     const curr = toNum(target);
     if (isFinite(curr)) {
       const converted = u === "kg" ? lb2kg(curr) : kg2lb(curr);
@@ -171,7 +188,7 @@ export default function DiscosScreen() {
    *  =============================*/
   const BAR_WIDTH = 14;    // px
   const SIDE_PADDING = 12; // px
-  const MIN_W = 14;        // ancho mínimo de disco (⬅️ más chico para pesos extremos)
+  const MIN_W = 14;        // ancho mínimo de disco
   const MAX_W = 36;        // ancho máximo estético
   const MIN_GAP = 2;       // gap mínimo
   const BASE_GAP = 6;      // gap base
@@ -180,7 +197,6 @@ export default function DiscosScreen() {
   const onStackLayout = (e: LayoutChangeEvent) => setStackWidth(e.nativeEvent.layout.width);
 
   const sizing = useMemo(() => {
-    // valores por defecto (antes del layout)
     if (!stackWidth) {
       return {
         plateW: 36, plateH: 72, gap: BASE_GAP, fontSize: 10, showText: true,
@@ -207,21 +223,28 @@ export default function DiscosScreen() {
     let compactCount = 0;
     let compactVisual = visual;
     if (plateW < MIN_W) {
-      // máximo ítems que caben con MIN_W y MIN_GAP
       const maxCountFit = Math.max(
         1,
         Math.floor((perSideAvail + MIN_GAP) / (MIN_W + MIN_GAP))
       );
 
       if (count > maxCountFit) {
-        // reservamos 1 slot para el badge "+N"
         const keep = Math.max(1, maxCountFit - 1);
         compactCount = count - keep;
-        compactVisual = visual.slice(0, keep); // mantenemos los más cercanos a la barra
+        compactVisual = visual.slice(0, keep);
       }
 
       gap = MIN_GAP;
-      plateW = Math.min(MAX_W, Math.max(MIN_W, Math.floor((perSideAvail - (Math.max(compactVisual.length,1) - 1) * gap) / Math.max(compactVisual.length,1))));
+      plateW = Math.min(
+        MAX_W,
+        Math.max(
+          MIN_W,
+          Math.floor(
+            (perSideAvail - (Math.max(compactVisual.length, 1) - 1) * gap) /
+              Math.max(compactVisual.length, 1)
+          )
+        )
+      );
     }
 
     const plateH = Math.round(plateW * 2); // proporción 1:2
@@ -333,14 +356,20 @@ export default function DiscosScreen() {
           <View style={styles.row}>
             <TextInput
               keyboardType="decimal-pad"
+              // inputMode ayuda en web/native-web, no afecta móvil nativo
+              // @ts-ignore
+              inputMode="decimal"
               value={target}
-              onChangeText={setTarget}
+              onChangeText={(txt) => setTarget(sanitizeNumberInput(txt))}
               placeholder={unit === "kg" ? "140" : "315"}
               placeholderTextColor={palette.sub}
               style={[
                 styles.input,
                 { backgroundColor: palette.input, color: palette.text, borderColor: palette.border },
               ]}
+              // opcional: evita espacios
+              autoCapitalize="none"
+              autoCorrect={false}
             />
             <View style={[styles.unitBox, { borderColor: palette.border }]}>
               <Text style={{ color: palette.text, fontWeight: "700" }}>{unit}</Text>
@@ -383,7 +412,7 @@ export default function DiscosScreen() {
             style={[styles.stackRow, { paddingHorizontal: SIDE_PADDING }]}
             onLayout={onStackLayout}
           >
-            {/* LADO IZQUIERDO (interior → exterior, visible) */}
+            {/* LADO IZQUIERDO */}
             <View style={[styles.stackSide, { flexDirection: "row-reverse" }]}>
               {sizing.compactVisual.length === 0 ? (
                 <Text style={{ color: palette.sub, fontSize: 12 }}>{t("Sin placas", "No plates")}</Text>
@@ -411,7 +440,6 @@ export default function DiscosScreen() {
                   </View>
                 ))
               )}
-              {/* Badge +N si hubo compactación */}
               {sizing.compactCount > 0 && (
                 <View
                   style={{
@@ -436,7 +464,7 @@ export default function DiscosScreen() {
             {/* BARRA CENTRAL */}
             <View style={[styles.barCore, { backgroundColor: palette.barMetal, width: BAR_WIDTH }]} />
 
-            {/* LADO DERECHO (interior → exterior, visible) */}
+            {/* LADO DERECHO */}
             <View style={[styles.stackSide, { flexDirection: "row" }]}>
               {sizing.compactVisual.length === 0 ? (
                 <Text style={{ color: palette.sub, fontSize: 12 }}>{t("Sin placas", "No plates")}</Text>
@@ -464,7 +492,6 @@ export default function DiscosScreen() {
                   </View>
                 ))
               )}
-              {/* Badge +N también en el lado derecho */}
               {sizing.compactCount > 0 && (
                 <View
                   style={{
