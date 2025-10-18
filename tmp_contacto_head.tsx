@@ -22,15 +22,6 @@ export default function ContactCoachScreen() {
   const { isDarkMode, language } = useAppContext();
   const t = (es: string, en: string) => (language === "es" ? es : en);
 
-  // Intentamos usar BlurView si estÃ¡ disponible (sin romper si no estÃ¡ instalado)
-  let BlurViewComp: any = null;
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    BlurViewComp = require("expo-blur").BlurView;
-  } catch (_) {
-    BlurViewComp = null;
-  }
-
   const palette = isDarkMode
     ? {
         background: "#0F0F0F",
@@ -72,7 +63,7 @@ export default function ContactCoachScreen() {
   const validateEmail = (v: string) => {
     if (!v.trim()) return null; // opcional
     const ok = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim());
-    return ok ? null : t("Correo invalido", "Invalid email");
+    return ok ? null : t("Correo inv├ílido", "Invalid email");
   };
 
   const canSend =
@@ -88,7 +79,7 @@ export default function ContactCoachScreen() {
     if (status !== "granted") {
       Alert.alert(
         t("Permiso denegado", "Permission denied"),
-        t("Necesitamos acceso a tus fotos para adjuntar imÃ¡genes.", "We need photo library access to attach images.")
+        t("Necesitamos acceso a tus fotos para adjuntar im├ígenes.", "We need photo library access to attach images.")
       );
       return false;
     }
@@ -134,7 +125,7 @@ export default function ContactCoachScreen() {
         t("Formulario incompleto", "Incomplete form"),
         emailErr
           ? emailErr
-          : t("Revisa asunto (â‰¥3) y mensaje (â‰¥10) antes de enviar.", "Check subject (â‰¥3) and message (â‰¥10) before sending.")
+          : t("Revisa asunto (ÔëÑ3) y mensaje (ÔëÑ10) antes de enviar.", "Check subject (ÔëÑ3) and message (ÔëÑ10) before sending.")
       );
       return;
     }
@@ -198,13 +189,13 @@ export default function ContactCoachScreen() {
                 "If using Android emulator, try API_URL=http://10.0.2.2:8000 and run Django on 0.0.0.0:8000."
               )
             : t(
-                "Si usas iOS simulador, usa API_URL=http://127.0.0.1:8000. En dispositivo fÃ­sico, usa la IP LAN (ej. http://192.168.x.x:8000).",
+                "Si usas iOS simulador, usa API_URL=http://127.0.0.1:8000. En dispositivo f├¡sico, usa la IP LAN (ej. http://192.168.x.x:8000).",
                 "If using iOS simulator, use API_URL=http://127.0.0.1:8000. On a real device, use your LAN IP (e.g. http://192.168.x.x:8000)."
               );
         userMsg += `\n\n${platformTip}`;
       }
 
-      Alert.alert(t("Ups, algo fallÃ³", "Something went wrong"), userMsg);
+      Alert.alert(t("Ups, algo fall├│", "Something went wrong"), userMsg);
     } finally {
       setSending(false);
     }
@@ -214,12 +205,12 @@ export default function ContactCoachScreen() {
     if (!__DEV_HINT__) return null;
     const tip =
       Platform.OS === "android"
-        ? "Android emu â‡’ API_URL=http://10.0.2.2:8000"
-        : "iOS sim â‡’ API_URL=http://127.0.0.1:8000";
+        ? "Android emu ÔçÆ API_URL=http://10.0.2.2:8000"
+        : "iOS sim ÔçÆ API_URL=http://127.0.0.1:8000";
     return (
       <View style={{ padding: 8, borderRadius: 8, backgroundColor: isDarkMode ? "#132" : "#E6FFFA", marginBottom: 12 }}>
         <Text style={{ color: isDarkMode ? "#9FF" : "#065F46", fontSize: 12, fontWeight: "700" }}>
-          DEV: {tip} Â· Actual: {API_URL || "(sin API_URL)"}
+          DEV: {tip} ┬À Actual: {API_URL || "(sin API_URL)"}
         </Text>
       </View>
     );
@@ -247,20 +238,20 @@ export default function ContactCoachScreen() {
           setEmailError(null);
         }}
       >
-        {/* â–¶ï¸ TÃ­tulo arriba del card */}
+        {/* ÔûÂ´©Å T├¡tulo arriba del card */}
         <View style={{ width: "100%", maxWidth: 600, alignSelf: "center", marginTop: -14, marginBottom: 28 }}>
           <Text style={{ textAlign: "center", color: palette.text, fontSize: 24, fontWeight: "bold" }}>
             Contacto Coach
           </Text>
         </View>
 
-        {/* ðŸ§° Card */}
+        {/* ­ƒº░ Card */}
         <View
           style={[
             styles.card,
             { backgroundColor: palette.card },
-            !isDarkMode ? styles.cardElevatedLight : styles.cardElevatedDark, // â¬…ï¸ contraste en modo claro
-            // opcional: si quieres aÃºn mÃ¡s contraste en blanco puro, descomenta:
+            !isDarkMode ? styles.cardElevatedLight : styles.cardElevatedDark, // Ô¼à´©Å contraste en modo claro
+            // opcional: si quieres a├║n m├ís contraste en blanco puro, descomenta:
             // !isDarkMode && { backgroundColor: "#FFFFFFF2" }, // leve transparencia
           ]}
         >
@@ -269,7 +260,7 @@ export default function ContactCoachScreen() {
               {language === "es" ? "Completa el formulario" : "Fill out the form"}
             </Text>
             <Text style={{ color: palette.subtext }}>
-              {language === "es" ? " te responderemos al correo indicado." : " We will respond to the indicated email."}
+              {language === "es" ? " te responderemos al correo indicado." : " weÔÇÖll reply to your email."}
             </Text>
           </Text>
 
@@ -320,7 +311,7 @@ export default function ContactCoachScreen() {
             ref={messageRef}
             value={message}
             onChangeText={(v) => setMessage(v.slice(0, MESSAGE_MAX))}
-            placeholder={t("Cuentanos en detalle como podemos ayudarte.¦", "Tell us how we can help you in detail.")}
+            placeholder={t("Cu├®ntanos en detalle c├│mo te podemos ayudarÔÇª", "Tell us how we can helpÔÇª")}
             placeholderTextColor={palette.placeholder}
             style={[styles.textarea, { backgroundColor: palette.input, color: palette.text }]}
             multiline
@@ -331,7 +322,7 @@ export default function ContactCoachScreen() {
 
           {/* Adjuntos */}
           <View style={{ marginTop: 12 }}>
-            <Text style={[styles.label, { color: palette.subtext }]}>{t("Adjuntar imÃ¡genes (opcional)", "Attach images (optional)")}</Text>
+            <Text style={[styles.label, { color: palette.subtext }]}>{t("Adjuntar im├ígenes (opcional)", "Attach images (optional)")}</Text>
 
             <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginTop: 6 }}>
               <TouchableOpacity
@@ -344,12 +335,12 @@ export default function ContactCoachScreen() {
               >
                 <Ionicons name="image-outline" size={18} color={palette.accent} />
                 <Text style={{ color: palette.accent, fontWeight: "800", fontSize: 12 }}>
-                  {t("GalerÃ­a", "Gallery")}
+                  {t("Galer├¡a", "Gallery")}
                 </Text>
               </TouchableOpacity>
 
               <Text style={{ color: palette.subtext, fontSize: 12 }}>
-                {t("MÃ¡x.", "Max.")} {ATTACH_MAX} {t("imÃ¡genes", "images")}
+                {t("M├íx.", "Max.")} {ATTACH_MAX} {t("im├ígenes", "images")}
               </Text>
             </View>
 
@@ -393,39 +384,6 @@ export default function ContactCoachScreen() {
         </View>
       </PullToRefresh>
 
-      {/* BottomNav moved below overlay */}
-
-      {/* Overlay borroso + "PrÃ³ximamente" */}
-      <View
-        pointerEvents="box-none"
-        style={[
-          StyleSheet.absoluteFillObject as any,
-          { bottom: 110, justifyContent: "center", alignItems: "center" },
-        ]}
-      >
-        {BlurViewComp ? (
-          <BlurViewComp
-            intensity={90}
-            tint={isDarkMode ? "dark" : "light"}
-            style={StyleSheet.absoluteFillObject}
-          />
-        ) : (
-          <View
-            style={[
-              StyleSheet.absoluteFillObject,
-              {
-                backgroundColor: isDarkMode
-                  ? "rgba(0,0,0,0.8)"
-                  : "rgba(255,255,255,0.9)",
-              },
-            ]}
-          />
-        )}
-        <Text style={{ color: palette.text, fontSize: 28, fontWeight: "800", opacity: 0.85 }}>
-          {language === "es" ? "Próximamente" : "Coming soon"}
-        </Text>
-      </View>
-
       <BottomNav />
     </KeyboardAvoidingView>
   );
@@ -443,7 +401,7 @@ const styles = StyleSheet.create({
     padding: 20,
   },
 
-  // âœ¨ En modo claro: borde + sombra para que se note sobre fondo blanco
+  // Ô£¿ En modo claro: borde + sombra para que se note sobre fondo blanco
   cardElevatedLight: {
     borderWidth: 1,
     borderColor: "#E5E7EB",

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { Platform } from "react-native";
 import {
   View,
   Text,
@@ -106,7 +107,7 @@ export default function ExercisesScreen() {
     realRpe: language === "es" ? "RPE real" : "Actual RPE",
     completed:
       language === "es" ? "Ejercicio completado" : "Exercise completed",
-    register: language === "es" ? "Registrar progreso" : "Log progress",
+    viewSession: language === "es" ? "Ver sesión" : "View session",
     cancel: language === "es" ? "Cancelar" : "Cancel",
     save: language === "es" ? "Guardar" : "Save",
     loadingErr:
@@ -301,6 +302,7 @@ export default function ExercisesScreen() {
               styles.addButton,
               { backgroundColor: isDarkMode ? "#3F3F46" : "#374151" },
             ]}
+            activeOpacity={0.85}
             onPress={() =>
               setCurrentExercise({
                 predefined_name: EXERCISE_CHOICES[0],
@@ -309,7 +311,9 @@ export default function ExercisesScreen() {
               })
             }
           >
-            <Text style={styles.addButtonText}>{T.add}</Text>
+            <Text style={styles.addButtonText} allowFontScaling={false}>
+              {T.add}
+            </Text>
           </TouchableOpacity>
         )}
 
@@ -393,9 +397,24 @@ export default function ExercisesScreen() {
                         styles.modalBtn,
                         { backgroundColor: isDarkMode ? "#3F3F46" : "#374151" },
                       ]}
+                      activeOpacity={0.85}
+                      hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
                       onPress={() => setCurrentExercise(item)}
                     >
-                      <Text style={styles.modalBtnText}>
+                      <Text style={styles.modalBtnText} allowFontScaling={false}>
+                        {T.viewSession}
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[
+                        styles.modalBtn,
+                        { backgroundColor: isDarkMode ? "#3F3F46" : "#374151" },
+                      ]}
+                      activeOpacity={0.85}
+                      hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+                      onPress={() => setCurrentExercise(item)}
+                    >
+                      <Text style={styles.modalBtnText} allowFontScaling={false}>
                         {language === "es" ? "Editar" : "Edit"}
                       </Text>
                     </TouchableOpacity>
@@ -404,6 +423,8 @@ export default function ExercisesScreen() {
                         styles.modalBtn,
                         { backgroundColor: palette.accent },
                       ]}
+                      activeOpacity={0.85}
+                      hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
                       onPress={() => {
                         Alert.alert(
                           T.delConfirm,
@@ -423,19 +444,27 @@ export default function ExercisesScreen() {
                         );
                       }}
                     >
-                      <Text style={styles.modalBtnText}>{T.del}</Text>
+                      <Text style={styles.modalBtnText} allowFontScaling={false}>
+                        {T.del}
+                      </Text>
                     </TouchableOpacity>
                   </View>
                 ) : (
-                  <TouchableOpacity
-                    style={[
-                      styles.modalBtn,
-                      { backgroundColor: palette.accent, marginTop: 10 },
-                    ]}
-                    onPress={() => setCurrentExercise(item)}
-                  >
-                    <Text style={styles.modalBtnText}>{T.register}</Text>
-                  </TouchableOpacity>
+                  <View style={styles.buttonsRow}>
+                    <TouchableOpacity
+                      style={[
+                        styles.modalBtn,
+                        { backgroundColor: palette.accent },
+                      ]}
+                      activeOpacity={0.85}
+                      hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+                      onPress={() => setCurrentExercise(item)}
+                      >
+                      <Text style={styles.modalBtnText} allowFontScaling={false}>
+                        {T.viewSession}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
                 )}
               </TouchableOpacity>
             ))}
@@ -529,9 +558,24 @@ export default function ExercisesScreen() {
                         styles.modalBtn,
                         { backgroundColor: isDarkMode ? "#3F3F46" : "#374151" },
                       ]}
+                      activeOpacity={0.85}
+                      hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
                       onPress={() => setCurrentExercise(item)}
                     >
-                      <Text style={styles.modalBtnText}>
+                      <Text style={styles.modalBtnText} allowFontScaling={false}>
+                        {T.viewSession}
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[
+                        styles.modalBtn,
+                        { backgroundColor: isDarkMode ? "#3F3F46" : "#374151" },
+                      ]}
+                      activeOpacity={0.85}
+                      hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+                      onPress={() => setCurrentExercise(item)}
+                    >
+                      <Text style={styles.modalBtnText} allowFontScaling={false}>
                         {language === "es" ? "Editar" : "Edit"}
                       </Text>
                     </TouchableOpacity>
@@ -540,6 +584,8 @@ export default function ExercisesScreen() {
                         styles.modalBtn,
                         { backgroundColor: palette.accent },
                       ]}
+                      activeOpacity={0.85}
+                      hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
                       onPress={() => {
                         Alert.alert(
                           T.delConfirm,
@@ -559,19 +605,27 @@ export default function ExercisesScreen() {
                         );
                       }}
                     >
-                      <Text style={styles.modalBtnText}>{T.del}</Text>
+                      <Text style={styles.modalBtnText} allowFontScaling={false}>
+                        {T.del}
+                      </Text>
                     </TouchableOpacity>
                   </View>
                 ) : (
-                  <TouchableOpacity
-                    style={[
-                      styles.modalBtn,
-                      { backgroundColor: palette.accent, marginTop: 10 },
-                    ]}
-                    onPress={() => setCurrentExercise(item)}
-                  >
-                    <Text style={styles.modalBtnText}>{T.register}</Text>
-                  </TouchableOpacity>
+                  <View style={styles.buttonsRow}>
+                    <TouchableOpacity
+                      style={[
+                        styles.modalBtn,
+                        { backgroundColor: palette.accent },
+                      ]}
+                      activeOpacity={0.85}
+                      hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+                      onPress={() => setCurrentExercise(item)}
+                      >
+                      <Text style={styles.modalBtnText} allowFontScaling={false}>
+                        {T.viewSession}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
                 )}
               </TouchableOpacity>
             ))}
@@ -815,18 +869,26 @@ export default function ExercisesScreen() {
                       flex: 1,
                     },
                   ]}
+                  activeOpacity={0.85}
+                  hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
                   onPress={() => setCurrentExercise(null)}
                 >
-                  <Text style={styles.modalBtnText}>{T.cancel}</Text>
+                  <Text style={styles.modalBtnText} allowFontScaling={false}>
+                    {T.cancel}
+                  </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={[
                     styles.modalBtn,
                     { backgroundColor: palette.accent, flex: 1 },
                   ]}
+                  activeOpacity={0.85}
+                  hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
                   onPress={saveExercise}
-                >
-                  <Text style={styles.modalBtnText}>{T.save}</Text>
+                  >
+                  <Text style={styles.modalBtnText} allowFontScaling={false}>
+                    {T.save}
+                  </Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -844,17 +906,40 @@ const styles = StyleSheet.create({
 
   addButton: {
     marginBottom: 16,
-    padding: 12,
-    borderRadius: 8,
+    height: 48,
+    paddingHorizontal: 16,
+    borderRadius: 12,
     alignItems: "center",
+    justifyContent: "center",
+    alignSelf: "stretch",
+    // shadow (iOS) + elevation (Android)
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 6,
+    elevation: 2,
   },
-  addButtonText: { color: "#fff", fontWeight: "bold" },
+  addButtonText: {
+    color: "#fff",
+    fontWeight: "700",
+    fontSize: 16,
+    letterSpacing: 0.3,
+  },
 
-  card: { padding: 16, marginBottom: 10, borderRadius: 8 },
+  card: {
+    padding: 18,
+    marginBottom: 12,
+    borderRadius: 12,
+    minHeight: 110,
+  },
 
   exerciseName: { fontSize: 16, fontWeight: "600" },
 
-  buttonsRow: { flexDirection: "row", marginTop: 10 },
+  buttonsRow: {
+    flexDirection: "row",
+    marginTop: 12,
+    alignItems: "stretch",
+  },
 
   modalBackground: { flex: 1, justifyContent: "center", alignItems: "center" },
 
@@ -864,19 +949,34 @@ const styles = StyleSheet.create({
 
   input: { borderWidth: 1, borderRadius: 6, padding: 8, marginBottom: 12 },
 
-  modalButtons: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: 16,
-  },
+  modalButtons: { flexDirection: "row", marginTop: 16 },
 
   modalBtn: {
     flex: 1,
     marginHorizontal: 5,
-    padding: 12,
-    borderRadius: 6,
+    height: 44,
+    paddingHorizontal: 12,
+    borderRadius: 12,
     alignItems: "center",
+    justifyContent: "center",
+    flexBasis: 0,
+    minWidth: 0,
+    // shadow (iOS) + elevation (Android)
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowOffset: { width: 0, height: 1 },
+    shadowRadius: 6,
+    elevation: 2,
+    alignSelf: "stretch",
   },
 
-  modalBtnText: { color: "#fff", fontWeight: "bold" },
+  modalBtnText: {
+    color: "#fff",
+    fontWeight: "700",
+    fontSize: 14,
+    letterSpacing: 0.2,
+    textAlign: "center",
+    textAlignVertical: Platform.OS === "android" ? "center" : undefined,
+    includeFontPadding: false,
+  },
 });
