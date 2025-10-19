@@ -1,18 +1,15 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useRef, useState } from "react";
 import {
   View,
   ScrollView,
-  Animated,
-  Easing,
   RefreshControl,
   ScrollViewProps,
-  Text,
   Platform,
   ActivityIndicator,
+  StyleSheet,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter, usePathname, useLocalSearchParams } from "expo-router";
-import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { useAppContext } from "app/context/appContext";
 
@@ -20,14 +17,12 @@ type Props = {
   onRefresh?: () => Promise<void> | void;
   children: React.ReactNode;
   accentColor?: string;
-  bannerColor?: string;
   isDarkMode?: boolean;
   useNativeControl?: boolean;
   threshold?: number;
   progressViewOffset?: number;
   indicatorSize?: number;
   indicatorTopOffset?: number;
-  bannerTopOffset?: number;
   hardRemount?: boolean;
   contentContainerStyle?: ScrollViewProps["contentContainerStyle"];
   style?: ScrollViewProps["style"];
@@ -41,15 +36,12 @@ export default function PullToRefresh({
   onRefresh,
   children,
   accentColor,
-  bannerColor,
   isDarkMode,
-  // En Android usamos el control nativo por fiabilidad del gesto
-  useNativeControl = Platform.OS === "android",
+  useNativeControl = false,
   threshold = 70,
   progressViewOffset,
   indicatorSize,
   indicatorTopOffset,
-  bannerTopOffset,
   hardRemount = true,
   contentContainerStyle,
   style,
@@ -58,49 +50,27 @@ export default function PullToRefresh({
   bounces = true,
   overScrollMode = "always",
 }: Props) {
-  const { isDarkMode: ctxDark, language } = useAppContext();
+  const { isDarkMode: ctxDark } = useAppContext();
   const dark = isDarkMode ?? ctxDark;
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useLocalSearchParams();
-  
 
   const [refreshing, setRefreshing] = useState(false);
-  const pullY = useRef(new Animated.Value(0)).current;
   const lastPullRef = useRef(0);
-  const updatedOpacity = useRef(new Animated.Value(0)).current;
-  const updatedTranslate = useRef(new Animated.Value(-10)).current;
 
-  const pullOpacity = pullY.interpolate({
-    inputRange: [0, 20],
-    outputRange: [0, 1],
-    extrapolate: "clamp",
-  });
-  const pullRotate = pullY.interpolate({
-    inputRange: [0, 100],
-    outputRange: ["0deg", "180deg"],
-    extrapolate: "clamp",
-  });
-  // Simple spinner style: sin anillo de progreso ni parallax
+  const iconSize =
+    indicatorSize ?? Platform.select({ ios: 24, android: 28, default: 26 });
+  const topOffsetBase =
+    indicatorTopOffset ?? (Platform.OS === "ios" ? insets.top : insets.top + 4);
 
-  
-
-  // Platform-aware sizing and offsets
-  const iconSize = indicatorSize ?? Platform.select({ ios: 24, android: 28, default: 26 });
-  const topOffset = indicatorTopOffset ?? (insets.top + (Platform.OS === "ios" ? 6 : 10));
-  const bannerOffset = bannerTopOffset ?? (topOffset + (typeof iconSize === "number" ? iconSize : 26) + 12);
-  const nativeOffset = progressViewOffset ?? Math.max(40, topOffset);
-  const showCustomIndicator = !useNativeControl; // evita doble indicador cuando usamos nativo
-
-  // No spinning animation loop needed; ActivityIndicator handles it
+  const topPad = Math.max(0, topOffsetBase - 8);
+  const nativeOffset = progressViewOffset ?? Math.max(32, topOffsetBase);
 
   const doRefresh = async () => {
     try {
       setRefreshing(true);
-      updatedOpacity.stopAnimation();
-      updatedOpacity.setValue(0);
-      updatedTranslate.setValue(-10);
       if (onRefresh) {
         await onRefresh();
       } else {
@@ -112,81 +82,20 @@ export default function PullToRefresh({
         try {
           const stamp = Date.now().toString();
           const params: Record<string, any> = { ...searchParams, _r: stamp };
-          // replace to same route with a busting param to force remount
           router.replace({ pathname, params } as any);
           return;
         } catch {}
       }
       try {
-        await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        await Haptics.notificationAsync(
+          Haptics.NotificationFeedbackType.Success
+        );
       } catch {}
-      Animated.sequence([
-        Animated.parallel([
-          Animated.timing(updatedOpacity, { toValue: 1, duration: 160, useNativeDriver: true }),
-          Animated.timing(updatedTranslate, { toValue: 0, duration: 160, useNativeDriver: true }),
-        ]),
-        Animated.delay(900),
-        Animated.parallel([
-          Animated.timing(updatedOpacity, { toValue: 0, duration: 220, useNativeDriver: true }),
-          Animated.timing(updatedTranslate, { toValue: -10, duration: 220, useNativeDriver: true }),
-        ]),
-      ]).start();
     }
   };
 
   return (
     <View style={{ flex: 1 }}>
-      {/* Indicador personalizado (solo si no usamos el nativo) */}
-      {showCustomIndicator && refreshing && (
-        <View
-          pointerEvents="none"
-          style={{
-            position: "absolute",
-            top: topOffset,
-            left: 0,
-            right: 0,
-            zIndex: 10,
-            elevation: 10,
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          <ActivityIndicator
-            size={(iconSize as number) <= 24 ? "small" : "large"}
-            color={accentColor ?? "#EF233C"}
-          />
-        </View>
-      )}
-
-      {/* Banner Actualizado */}
-      <Animated.View
-        pointerEvents="none"
-        style={{
-          position: "absolute",
-          top: bannerOffset,
-          left: 0,
-          right: 0,
-          zIndex: 9,
-          elevation: 9,
-          alignItems: "center",
-          opacity: updatedOpacity,
-          transform: [{ translateY: updatedTranslate }],
-        }}
-      >
-        <View
-          style={{
-            paddingHorizontal: 12,
-            paddingVertical: 6,
-            backgroundColor: bannerColor ?? "#22c55e",
-            borderRadius: 16,
-          }}
-        >
-          <Text style={{ color: "#fff", fontWeight: "600" }}>
-            {language === "es" ? "Actualizado" : "Updated"}
-          </Text>
-        </View>
-      </Animated.View>
-
       <ScrollView
         style={style}
         contentContainerStyle={contentContainerStyle}
@@ -204,20 +113,20 @@ export default function PullToRefresh({
           ) : undefined
         }
         onScroll={(e) => {
+          if (useNativeControl) return; // el nativo maneja el gesto
           const y = e.nativeEvent.contentOffset.y;
           if (y < 0) {
-            const d = -y;
-            pullY.setValue(d);
-            lastPullRef.current = d;
+            lastPullRef.current = -y;
           } else {
-            pullY.setValue(0);
             lastPullRef.current = 0;
           }
         }}
         onScrollEndDrag={() => {
-          // Si usamos el control nativo, no disparamos manual para evitar duplicidad
-          if (!useNativeControl && !refreshing && lastPullRef.current > threshold) {
-            try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch {}
+          if (useNativeControl) return;
+          if (!refreshing && lastPullRef.current > threshold) {
+            try {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            } catch {}
             doRefresh();
           }
           lastPullRef.current = 0;
@@ -227,6 +136,44 @@ export default function PullToRefresh({
         bounces={bounces}
         overScrollMode={overScrollMode}
       >
+        {!useNativeControl && refreshing && (
+          <View
+            style={{
+              paddingTop: topPad,
+              paddingBottom: 8,
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <View
+              style={{
+                paddingHorizontal: 14,
+                paddingVertical: 10,
+                borderRadius: 14,
+                backgroundColor: dark
+                  ? "rgba(22,22,22,0.92)"
+                  : "rgba(255,255,255,0.96)",
+                borderWidth: StyleSheet.hairlineWidth,
+                borderColor: (accentColor ?? "#EF233C") + "22",
+                // Sombra iOS
+                shadowColor: "#000",
+                shadowOpacity: 0.15,
+                shadowRadius: 12,
+                shadowOffset: { width: 0, height: 6 },
+                // Elevación Android
+                elevation: 12,
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <ActivityIndicator
+                size={(iconSize as number) <= 24 ? "small" : "large"}
+                color={accentColor ?? "#EF233C"}
+              />
+            </View>
+          </View>
+        )}
+
         {children}
       </ScrollView>
     </View>
