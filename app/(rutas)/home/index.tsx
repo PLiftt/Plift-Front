@@ -228,7 +228,6 @@ const HomeScreen: React.FC = () => {
     fetchProfile();
   }, []);
 
-
   if (loading) {
     return (
       <View style={[styles.centered, { backgroundColor: palette.background }]}>
@@ -296,7 +295,10 @@ const HomeScreen: React.FC = () => {
         <View
           style={[
             styles.hero,
-            { backgroundColor: palette.surface, borderBottomColor: palette.borderSoft },
+            {
+              backgroundColor: palette.surface,
+              borderBottomColor: palette.borderSoft,
+            },
           ]}
         >
           <Text style={[styles.greeting, { color: palette.subtext }]}>
@@ -369,7 +371,10 @@ const HomeScreen: React.FC = () => {
             />
 
             <TouchableOpacity
-              style={[styles.generateButton, { backgroundColor: palette.success }]}
+              style={[
+                styles.generateButton,
+                { backgroundColor: palette.success },
+              ]}
               onPress={handleGenerateCode}
             >
               <Text style={styles.generateButtonText}>
@@ -405,12 +410,15 @@ const HomeScreen: React.FC = () => {
             <View
               style={[
                 styles.progressCard,
-                { backgroundColor: palette.surface, borderColor: palette.border },
+                {
+                  backgroundColor: palette.surface,
+                  borderColor: palette.border,
+                },
               ]}
             >
               <BarChart
                 data={progressData}
-                width={chartWidth}   // 👈 ancho real del gráfico dentro del card
+                width={chartWidth} // 👈 ancho real del gráfico dentro del card
                 height={220}
                 fromZero
                 yAxisSuffix="kg"
@@ -421,7 +429,9 @@ const HomeScreen: React.FC = () => {
                   decimalPlaces: 0,
                   color: (opacity = 1) => `rgba(239, 35, 60, ${opacity})`,
                   labelColor: (opacity = 1) =>
-                    `rgba(${isDarkMode ? "255,255,255" : "17,17,17"}, ${opacity})`,
+                    `rgba(${
+                      isDarkMode ? "255,255,255" : "17,17,17"
+                    }, ${opacity})`,
                   propsForBackgroundLines: { stroke: palette.border },
                   barPercentage: 0.6,
                 }}
@@ -448,7 +458,11 @@ const HomeScreen: React.FC = () => {
         <View style={styles.section}>
           <View style={[styles.sectionHeader, styles.headerGapLarge]}>
             <View style={{ flexDirection: "row", alignItems: "center" }}>
-              <Ionicons name="calculator-outline" size={18} color={palette.accent} />
+              <Ionicons
+                name="calculator-outline"
+                size={18}
+                color={palette.accent}
+              />
               <Text
                 style={[
                   styles.sectionTitle,
@@ -474,7 +488,11 @@ const HomeScreen: React.FC = () => {
             ]}
             activeOpacity={0.85}
           >
-            <Ionicons name="calculator-outline" size={28} color={palette.accent} />
+            <Ionicons
+              name="calculator-outline"
+              size={28}
+              color={palette.accent}
+            />
             <View style={{ marginLeft: 16 }}>
               <Text style={[styles.cardValue, { color: palette.text }]}>
                 {language === "es" ? "Calcular 1RM" : "Calculate 1RM"}
@@ -556,7 +574,9 @@ const HomeScreen: React.FC = () => {
 
           {/* Hidratación */}
           <View style={[styles.sectionHeader, styles.headerGap]}>
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+            <View
+              style={{ flexDirection: "row", alignItems: "center", gap: 8 }}
+            >
               <Ionicons name="water-outline" size={18} color={palette.accent} />
               <Text
                 style={[
@@ -564,7 +584,8 @@ const HomeScreen: React.FC = () => {
                   { marginBottom: 0, color: palette.text },
                 ]}
               >
-                {language === "es" ? "Hidratación" : "Hydration"} — {fmtWater(waterMl)}
+                {language === "es" ? "Hidratación" : "Hydration"} —{" "}
+                {fmtWater(waterMl)}
               </Text>
             </View>
 
@@ -572,7 +593,10 @@ const HomeScreen: React.FC = () => {
               onPress={confirmResetWater}
               style={[
                 styles.resetBtn,
-                { backgroundColor: palette.surface, borderColor: palette.border },
+                {
+                  backgroundColor: palette.surface,
+                  borderColor: palette.border,
+                },
               ]}
             >
               <Text style={[styles.resetBtnText, { color: palette.accent }]}>
@@ -605,7 +629,9 @@ const HomeScreen: React.FC = () => {
               <Text style={[styles.bigDropText, { color: palette.accent }]}>
                 +200 ml
               </Text>
-              <Text style={{ fontSize: 11, color: palette.subtext, marginTop: 4 }}>
+              <Text
+                style={{ fontSize: 11, color: palette.subtext, marginTop: 4 }}
+              >
                 {language === "es"
                   ? "Mantén presionado para -200 ml"
                   : "Long-press for −200 ml"}
@@ -616,7 +642,12 @@ const HomeScreen: React.FC = () => {
       </PullToRefresh>
 
       {/* burbuja de chat IA */}
-      <AIChatWidget userName={profile.first_name || profile.email} role={profile.role} />
+      {profile.role?.toUpperCase() === "ATHLETE" && (
+        <AIChatWidget
+          userName={profile.first_name || profile.email}
+          role={profile.role}
+        />
+      )}
 
       <BottomNav />
     </View>
@@ -645,7 +676,11 @@ const styles = StyleSheet.create({
   // Secciones / títulos
   section: { marginHorizontal: 20, marginVertical: 15 },
   sectionTitle: { fontSize: 20, fontWeight: "bold", marginBottom: 10 },
-  sectionHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+  sectionHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
   headerGap: { marginBottom: 8 },
   headerGapLarge: { marginBottom: 12 },
 
@@ -666,7 +701,12 @@ const styles = StyleSheet.create({
 
   // Inputs
   input: { borderWidth: 1, borderRadius: 10, padding: 10, fontSize: 14 },
-  generateButton: { paddingVertical: 12, borderRadius: 12, alignItems: "center", marginTop: 15 },
+  generateButton: {
+    paddingVertical: 12,
+    borderRadius: 12,
+    alignItems: "center",
+    marginTop: 15,
+  },
   generateButtonText: { color: "#fff", fontWeight: "600", fontSize: 16 },
 
   // Stats / cards
@@ -687,12 +727,30 @@ const styles = StyleSheet.create({
   cardLabel: { fontSize: 14, marginTop: 4 },
 
   // Tarjetas
-  mobilityCard: { borderRadius: 16, borderWidth: 1, padding: 16, marginTop: 0, marginBottom: 12 },
+  mobilityCard: {
+    borderRadius: 16,
+    borderWidth: 1,
+    padding: 16,
+    marginTop: 0,
+    marginBottom: 12,
+  },
   challengeText: { fontSize: 16, lineHeight: 22 },
 
   // Hidratación
-  hydrationCard: { borderRadius: 16, borderWidth: 1, padding: 20, marginTop: 0, alignItems: "center", justifyContent: "center" },
-  resetBtn: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 10, borderWidth: 1 },
+  hydrationCard: {
+    borderRadius: 16,
+    borderWidth: 1,
+    padding: 20,
+    marginTop: 0,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  resetBtn: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 10,
+    borderWidth: 1,
+  },
   resetBtnText: { fontWeight: "700", fontSize: 12 },
 
   bigDrop: {
@@ -706,7 +764,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     borderWidth: 1,
     paddingVertical: 8,
-    paddingHorizontal: CHART_CARD_SIDE_PADDING, 
-    overflow: "hidden", 
+    paddingHorizontal: CHART_CARD_SIDE_PADDING,
+    overflow: "hidden",
   },
 });
