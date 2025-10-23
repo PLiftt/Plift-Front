@@ -7,7 +7,6 @@ import {
   Platform,
   ActivityIndicator,
   StyleSheet,
-  Dimensions,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter, usePathname, useLocalSearchParams } from "expo-router";
@@ -18,21 +17,13 @@ type Props = {
   onRefresh?: () => Promise<void> | void;
   children: React.ReactNode;
   accentColor?: string;
-  bannerColor?: string;
   isDarkMode?: boolean;
-
-  /** Por defecto AHORA es true para usar el control nativo en ambas plataformas */
   useNativeControl?: boolean;
-
-  /** Solo para modo custom */
   threshold?: number;
   progressViewOffset?: number;
   indicatorSize?: number;
   indicatorTopOffset?: number;
-
-  /** Si no quieres el replace() post-refresh, pon false */
   hardRemount?: boolean;
-
   contentContainerStyle?: ScrollViewProps["contentContainerStyle"];
   style?: ScrollViewProps["style"];
   showsVerticalScrollIndicator?: boolean;
@@ -45,12 +36,8 @@ export default function PullToRefresh({
   onRefresh,
   children,
   accentColor,
-  bannerColor,
   isDarkMode,
-
-  // ✅ ahora nativo por defecto (mejor UX cross-platform)
-  useNativeControl = true,
-
+  useNativeControl = false,
   threshold = 70,
   progressViewOffset,
   indicatorSize,
@@ -59,12 +46,8 @@ export default function PullToRefresh({
   contentContainerStyle,
   style,
   showsVerticalScrollIndicator = false,
-
-  // iOS: se recomienda true
   alwaysBounceVertical = true,
   bounces = true,
-
-  // Android: se recomienda "always"
   overScrollMode = "always",
 }: Props) {
   const { isDarkMode: ctxDark } = useAppContext();
@@ -77,17 +60,8 @@ export default function PullToRefresh({
   const [refreshing, setRefreshing] = useState(false);
   const lastPullRef = useRef(0);
 
-  const { height: winH } = Dimensions.get("window");
-
-  // Colores con fallback
-  const accent = accentColor ?? "#EF233C";
-  const banner = bannerColor ?? "#22c55e";
-
-  // Tamaño/offsets por plataforma
   const iconSize =
     indicatorSize ?? Platform.select({ ios: 24, android: 28, default: 26 });
-
-  // offset de la ruedita nativa considerando notch/statusbar
   const topOffsetBase =
     indicatorTopOffset ?? (Platform.OS === "ios" ? insets.top : insets.top + 4);
 
@@ -120,35 +94,19 @@ export default function PullToRefresh({
     }
   };
 
-  // 👇 Asegura que el scroll “tire” aunque el contenido sea corto
-  const mergedContentContainerStyle = [
-    { minHeight: winH + 1, paddingBottom: 0 },
-    contentContainerStyle,
-  ];
-
   return (
     <View style={{ flex: 1 }}>
       <ScrollView
         style={style}
-        contentContainerStyle={mergedContentContainerStyle}
+        contentContainerStyle={contentContainerStyle}
         showsVerticalScrollIndicator={showsVerticalScrollIndicator}
-        keyboardShouldPersistTaps="handled"
-        // iOS: que el push-to-refresh funcione suave
-        alwaysBounceVertical={alwaysBounceVertical}
-        bounces={bounces}
-        // Android: habilita overscroll
-        overScrollMode={overScrollMode}
-        // Android nested scroll (seguro aunque no lo necesites)
-        nestedScrollEnabled={true}
         refreshControl={
           useNativeControl ? (
             <RefreshControl
               refreshing={refreshing}
               onRefresh={doRefresh}
-              // iOS spinner color:
-              tintColor={accent}
-              // Android spinner/color de progreso:
-              colors={[accent]}
+              tintColor={accentColor ?? "#EF233C"}
+              colors={[accentColor ?? "#EF233C"]}
               progressBackgroundColor={dark ? "#1E1E1E" : "#FFFFFF"}
               progressViewOffset={nativeOffset}
             />
@@ -157,7 +115,11 @@ export default function PullToRefresh({
         onScroll={(e) => {
           if (useNativeControl) return; // el nativo maneja el gesto
           const y = e.nativeEvent.contentOffset.y;
-          lastPullRef.current = y < 0 ? -y : 0;
+          if (y < 0) {
+            lastPullRef.current = -y;
+          } else {
+            lastPullRef.current = 0;
+          }
         }}
         onScrollEndDrag={() => {
           if (useNativeControl) return;
@@ -170,8 +132,10 @@ export default function PullToRefresh({
           lastPullRef.current = 0;
         }}
         scrollEventThrottle={16}
+        alwaysBounceVertical={alwaysBounceVertical}
+        bounces={bounces}
+        overScrollMode={overScrollMode}
       >
-        {/* Indicador visual en modo custom */}
         {!useNativeControl && refreshing && (
           <View
             style={{
@@ -181,18 +145,6 @@ export default function PullToRefresh({
               justifyContent: "center",
             }}
           >
-            {/* barrita/banner superior */}
-            <View
-              style={{
-                height: 6,
-                backgroundColor: banner,
-                borderRadius: 999,
-                marginBottom: 10,
-                marginHorizontal: 20,
-                alignSelf: "stretch",
-              }}
-            />
-            {/* pill con spinner */}
             <View
               style={{
                 paddingHorizontal: 14,
@@ -202,11 +154,13 @@ export default function PullToRefresh({
                   ? "rgba(22,22,22,0.92)"
                   : "rgba(255,255,255,0.96)",
                 borderWidth: StyleSheet.hairlineWidth,
-                borderColor: banner + "66",
+                borderColor: (accentColor ?? "#EF233C") + "22",
+                // Sombra iOS
                 shadowColor: "#000",
                 shadowOpacity: 0.15,
                 shadowRadius: 12,
                 shadowOffset: { width: 0, height: 6 },
+                // Elevación Android
                 elevation: 12,
                 alignItems: "center",
                 justifyContent: "center",
@@ -214,7 +168,7 @@ export default function PullToRefresh({
             >
               <ActivityIndicator
                 size={(iconSize as number) <= 24 ? "small" : "large"}
-                color={accent}
+                color={accentColor ?? "#EF233C"}
               />
             </View>
           </View>

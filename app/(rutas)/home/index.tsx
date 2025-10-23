@@ -290,7 +290,6 @@ const HomeScreen: React.FC = () => {
           await loadTodayWater();
         }}
         accentColor={palette.accent}
-        bannerColor={palette.success}
         isDarkMode={isDarkMode}
       >
         {/* Hero */}
