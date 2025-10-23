@@ -7,6 +7,7 @@ import {
   Platform,
   ActivityIndicator,
   StyleSheet,
+  Alert,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter, usePathname, useLocalSearchParams } from "expo-router";
@@ -46,9 +47,9 @@ export default function PullToRefresh({
   contentContainerStyle,
   style,
   showsVerticalScrollIndicator = false,
-  alwaysBounceVertical = Platform.OS === "ios", // 🔥 sólo iOS necesita bounce
+  alwaysBounceVertical = Platform.OS === "ios",
   bounces = Platform.OS === "ios",
-  overScrollMode = Platform.OS === "android" ? "always" : "auto", // 🔥 clave Android
+  overScrollMode = Platform.OS === "android" ? "always" : "auto",
 }: Props) {
   const { isDarkMode: ctxDark } = useAppContext();
   const dark = isDarkMode ?? ctxDark;
@@ -80,11 +81,13 @@ export default function PullToRefresh({
       setRefreshing(false);
 
       // ⚙️ Evita router.replace en Android (bug de scroll)
-      if (hardRemount && Platform.OS === "ios") {
+      if (hardRemount) {
         try {
           const stamp = Date.now().toString();
           const params: Record<string, any> = { ...searchParams, _r: stamp };
-          router.replace({ pathname, params } as any);
+          setTimeout(() => {
+            router.replace({ pathname, params } as any);
+          }, 150); // 🔥 pequeño delay para no romper el gesto
           return;
         } catch {}
       }
@@ -101,7 +104,10 @@ export default function PullToRefresh({
     <View style={{ flex: 1 }}>
       <ScrollView
         style={style}
-        contentContainerStyle={contentContainerStyle}
+        contentContainerStyle={[
+          { flexGrow: 1, paddingTop: 2 }, // 🔥 asegura scroll mínimo en Android
+          contentContainerStyle,
+        ]}
         showsVerticalScrollIndicator={showsVerticalScrollIndicator}
         refreshControl={
           useNativeControl ? (
@@ -139,6 +145,9 @@ export default function PullToRefresh({
         bounces={bounces}
         overScrollMode={overScrollMode}
       >
+        {/* 🔥 Truco para Android: asegura desplazamiento inicial */}
+        <View style={{ height: 0.5 }} />
+
         {/* Indicador custom (cuando no se usa el nativo) */}
         {!useNativeControl && refreshing && (
           <View
