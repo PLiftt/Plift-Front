@@ -37,7 +37,7 @@ export default function PullToRefresh({
   children,
   accentColor,
   isDarkMode,
-  useNativeControl = false,
+  useNativeControl = Platform.OS === "android", // 🔥 fuerza nativo en Android
   threshold = 70,
   progressViewOffset,
   indicatorSize,
@@ -46,9 +46,9 @@ export default function PullToRefresh({
   contentContainerStyle,
   style,
   showsVerticalScrollIndicator = false,
-  alwaysBounceVertical = true,
-  bounces = true,
-  overScrollMode = "always",
+  alwaysBounceVertical = Platform.OS === "ios", // 🔥 sólo iOS necesita bounce
+  bounces = Platform.OS === "ios",
+  overScrollMode = Platform.OS === "android" ? "always" : "auto", // 🔥 clave Android
 }: Props) {
   const { isDarkMode: ctxDark } = useAppContext();
   const dark = isDarkMode ?? ctxDark;
@@ -78,7 +78,9 @@ export default function PullToRefresh({
       }
     } finally {
       setRefreshing(false);
-      if (hardRemount) {
+
+      // ⚙️ Evita router.replace en Android (bug de scroll)
+      if (hardRemount && Platform.OS === "ios") {
         try {
           const stamp = Date.now().toString();
           const params: Record<string, any> = { ...searchParams, _r: stamp };
@@ -86,6 +88,7 @@ export default function PullToRefresh({
           return;
         } catch {}
       }
+
       try {
         await Haptics.notificationAsync(
           Haptics.NotificationFeedbackType.Success
@@ -136,6 +139,7 @@ export default function PullToRefresh({
         bounces={bounces}
         overScrollMode={overScrollMode}
       >
+        {/* Indicador custom (cuando no se usa el nativo) */}
         {!useNativeControl && refreshing && (
           <View
             style={{
@@ -155,12 +159,12 @@ export default function PullToRefresh({
                   : "rgba(255,255,255,0.96)",
                 borderWidth: StyleSheet.hairlineWidth,
                 borderColor: (accentColor ?? "#EF233C") + "22",
-                // Sombra iOS
+                // sombra iOS
                 shadowColor: "#000",
                 shadowOpacity: 0.15,
                 shadowRadius: 12,
                 shadowOffset: { width: 0, height: 6 },
-                // Elevación Android
+                // elevación Android
                 elevation: 12,
                 alignItems: "center",
                 justifyContent: "center",
