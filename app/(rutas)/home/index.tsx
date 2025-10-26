@@ -20,6 +20,10 @@ import { createInvitation } from "../../../services/invitationService";
 import BottomNav from "../../components/bottomNav";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useAppContext } from "app/context/appContext";
+import {
+  registerForPushNotificationsAsync,
+  sendPushTokenToBackend,
+} from "services/notificationService";
 import { BarChart } from "react-native-chart-kit"; // ⬅️ gráfico de barras
 
 // ⬇️ Burbuja de chat IA
@@ -113,6 +117,24 @@ const HomeScreen: React.FC = () => {
       console.warn("No se pudo cargar agua total:", e);
     }
   };
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const alreadySent = await AsyncStorage.getItem("expo_token_sent");
+        if (alreadySent === "true") return;
+
+        const token = await registerForPushNotificationsAsync();
+        if (token) {
+          await sendPushTokenToBackend(token);
+          await AsyncStorage.setItem("expo_token_sent", "true");
+          console.log("✅ Token Expo enviado al backend correctamente");
+        }
+      } catch (error) {
+        console.error("❌ Error registrando token Expo:", error);
+      }
+    })();
+  }, []);
 
   useEffect(() => {
     loadTodayWater();

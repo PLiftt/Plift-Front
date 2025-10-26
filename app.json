@@ -22,7 +22,10 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.anonymous.pliftfront"
+      "package": "com.anonymous.pliftfront",
+      "permissions": [
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "web": {
       "favicon": "./assets/logoplift.png"
@@ -37,6 +40,13 @@
           "cameraPermission": "Necesitamos usar la cámara para tomar fotos."
         }
       ]
-    ]
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "e291c1ec-713c-4355-8356-64e13deae4b6"
+      }
+    },
+    "owner": "plift"
   }
 }
