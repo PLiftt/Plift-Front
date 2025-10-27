@@ -17,6 +17,8 @@ import { getUserProfile } from "services/userService";
 import { API_URL } from "@env";
 import { ArrowLeft } from "lucide-react-native";
 import { useAppContext } from "app/context/appContext";
+import { triggerAthleteNotification } from "services/notificationService";
+import { emit } from "app/lib/eventBus";
 
 interface Session {
   id?: number;

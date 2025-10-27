@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import {
   View,
   Text,
@@ -14,6 +14,7 @@ import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import * as Clipboard from "expo-clipboard"; // ⬅️ NUEVO
 import { useRouter } from "expo-router";
+import { useFocusEffect } from "@react-navigation/native";
 import { getUserProfile } from "../../../services/userService";
 import { deleteToken, getToken } from "../../../services/secureStore";
 import { createInvitation } from "../../../services/invitationService";
@@ -25,6 +26,9 @@ import { BarChart } from "react-native-chart-kit"; // ⬅️ gráfico de barras
 // ⬇️ Burbuja de chat IA
 import AIChatWidget from "../../components/AIChatWidget";
 import PullToRefresh from "../../components/PullToRefresh";
+import { API_URL } from "@env";
+import { scheduleLocalNotification } from "services/notificationService";
+import { useToast } from "app/components/TopToast";
 
 const { width } = Dimensions.get("window");
 // 👇 padding interno del card y ancho real del chart (evita que "coma" el borde derecho)
@@ -58,6 +62,8 @@ const HomeScreen: React.FC = () => {
 
   const router = useRouter();
   const { isDarkMode, language } = useAppContext();
+  const shownWelcomeRef = useRef(false);
+  const toast = useToast();
 
   const palette = isDarkMode
     ? {
@@ -117,6 +123,154 @@ const HomeScreen: React.FC = () => {
   useEffect(() => {
     loadTodayWater();
   }, [WATER_KEY]);
+
+  // Chequear nuevos bloques al entrar a Home (solo ATHLETE)
+  const checkNewBlocks = useCallback(async () => {
+    try {
+      if (!profile || String(profile.role).toUpperCase() !== "ATHLETE") return;
+      const token = await getToken("accessToken");
+      if (!token) return;
+      const res = await fetch(`${API_URL.replace(/\/$/, "")}/blocks/`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) return;
+      const data: Array<{ id?: number }> = await res.json();
+      const ids = (data || []).map((b) => Number(b.id || 0)).filter((n) => Number.isFinite(n));
+      const newCount = ids.length;
+      const newMaxId = ids.length ? Math.max(...ids) : 0;
+
+      const COUNT_KEY = "blocks_seen_count";
+      const MAXID_KEY = "blocks_seen_max_id";
+      const [storedCountRaw, storedMaxRaw] = await Promise.all([
+        AsyncStorage.getItem(COUNT_KEY),
+        AsyncStorage.getItem(MAXID_KEY),
+      ]);
+      const storedCount = storedCountRaw ? Number(storedCountRaw) : null;
+      const storedMaxId = storedMaxRaw ? Number(storedMaxRaw) : null;
+
+      if (storedCount === null || storedMaxId === null) {
+        await AsyncStorage.multiSet([
+          [COUNT_KEY, String(newCount)],
+          [MAXID_KEY, String(newMaxId)],
+        ]);
+        return;
+      }
+
+      const hasNew = newCount > storedCount || newMaxId > storedMaxId;
+      if (hasNew) {
+        const title = language === "es" ? "Nuevo bloque asignado" : "New block assigned";
+        const body = language === "es" ? "Tu coach ha creado un nuevo bloque." : "Your coach created a new block.";
+        toast.show(title, { type: "success" });
+        await scheduleLocalNotification(title, body, { event: "NEW_BLOCK" });
+        await AsyncStorage.multiSet([
+          [COUNT_KEY, String(newCount)],
+          [MAXID_KEY, String(newMaxId)],
+        ]);
+      }
+    } catch {}
+  }, [profile, language]);
+
+  // Chequear nuevas sesiones al entrar a Home (solo ATHLETE)
+  const checkNewSessions = useCallback(async () => {
+    try {
+      if (!profile || String(profile.role).toUpperCase() !== "ATHLETE") return;
+      const token = await getToken("accessToken");
+      if (!token) return;
+      // Obtener bloques primero
+      const resBlocks = await fetch(`${API_URL.replace(/\/$/, "")}/blocks/`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!resBlocks.ok) return;
+      const blocks: Array<{ id?: number }> = await resBlocks.json();
+      const blockIds = (blocks || [])
+        .map((b) => Number(b.id || 0))
+        .filter((n) => Number.isFinite(n));
+      if (!blockIds.length) return;
+
+      // Consultar sesiones de todos los bloques en paralelo
+      const sessArrays = await Promise.all(
+        blockIds.map(async (bid) => {
+          try {
+            const r = await fetch(
+              `${API_URL.replace(/\/$/, "")}/sessions/?block=${bid}`,
+              { headers: { Authorization: `Bearer ${token}` } }
+            );
+            if (!r.ok) return [] as Array<{ id?: number }>;
+            return (await r.json()) as Array<{ id?: number }>;
+          } catch {
+            return [] as Array<{ id?: number }>;
+          }
+        })
+      );
+      const allSessions = sessArrays.flat();
+      const sessIds = allSessions
+        .map((s) => Number(s.id || 0))
+        .filter((n) => Number.isFinite(n));
+      const newCount = sessIds.length;
+      const newMaxId = sessIds.length ? Math.max(...sessIds) : 0;
+
+      const COUNT_KEY = "sessions_seen_count";
+      const MAXID_KEY = "sessions_seen_max_id";
+      const [storedCountRaw, storedMaxRaw] = await Promise.all([
+        AsyncStorage.getItem(COUNT_KEY),
+        AsyncStorage.getItem(MAXID_KEY),
+      ]);
+      const storedCount = storedCountRaw ? Number(storedCountRaw) : null;
+      const storedMaxId = storedMaxRaw ? Number(storedMaxRaw) : null;
+
+      if (storedCount === null || storedMaxId === null) {
+        await AsyncStorage.multiSet([
+          [COUNT_KEY, String(newCount)],
+          [MAXID_KEY, String(newMaxId)],
+        ]);
+        return;
+      }
+
+      const hasNew = newCount > storedCount || newMaxId > storedMaxId;
+      if (hasNew) {
+        const title = language === "es" ? "Nueva sesión disponible" : "New session available";
+        const body = language === "es" ? "Tu coach ha agregado una nueva sesión." : "Your coach added a new session.";
+        toast.show(title, { type: "info" });
+        await scheduleLocalNotification(title, body, { event: "NEW_SESSION" });
+        await AsyncStorage.multiSet([
+          [COUNT_KEY, String(newCount)],
+          [MAXID_KEY, String(newMaxId)],
+        ]);
+      }
+    } catch {}
+  }, [profile, language]);
+
+  // Al entrar a Home por PRIMERA vez (persistente), muestra una alerta de bienvenida
+  useFocusEffect(
+    useCallback(() => {
+      let cancelled = false;
+      const run = async () => {
+        try {
+          const FLAG_KEY = "welcome_alert_shown";
+          const already = await AsyncStorage.getItem(FLAG_KEY);
+          if (!already && !shownWelcomeRef.current && !cancelled) {
+            Alert.alert(
+              language === "es" ? "Notificaciones activadas" : "Notifications enabled",
+              language === "es"
+                ? "Verás alertas cuando tu coach cree bloques o sesiones."
+                : "You’ll see alerts when your coach creates blocks or sessions.",
+              [{ text: "OK" }]
+            );
+            shownWelcomeRef.current = true;
+            await AsyncStorage.setItem(FLAG_KEY, "true");
+          }
+        } catch {}
+        if (!cancelled) {
+          await checkNewBlocks();
+          await checkNewSessions();
+        }
+      };
+      run();
+      return () => {
+        cancelled = true;
+      };
+    }, [language, checkNewBlocks])
+  );
 
   const fmtWater = (ml: number) =>
     ml >= 1000 ? `${(ml / 1000).toFixed(1)} L` : `${ml} ml`;
@@ -768,3 +922,4 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
 });
+

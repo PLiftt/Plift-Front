@@ -22,7 +22,11 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.anonymous.pliftfront"
+      "package": "com.anonymous.pliftfront",
+      "notification": {
+        "icon": "./assets/notif-icon.png",
+        "color": "#EF233C"
+      }
     },
     "web": {
       "favicon": "./assets/logoplift.png"
@@ -36,7 +40,8 @@
           "photosPermission": "Necesitamos acceder a tus fotos para enviar imágenes.",
           "cameraPermission": "Necesitamos usar la cámara para tomar fotos."
         }
-      ]
+      ],
+      "expo-notifications"
     ]
   }
 }

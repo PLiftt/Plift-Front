@@ -10,7 +10,6 @@ import {
   TextInput,
   Alert,
   StyleSheet,
-  // ScrollView,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { getToken } from "services/secureStore";
@@ -19,6 +18,8 @@ import { API_URL } from "@env";
 import BottomNav from "../../components/bottomNav";
 import PullToRefresh from "../../components/PullToRefresh";
 import { useAppContext } from "app/context/appContext";
+import { triggerAthleteNotification } from "services/notificationService";
+import { on, off, CoachEventPayload, emit } from "app/lib/eventBus";
 
 interface Block {
   id?: number;
@@ -48,7 +49,6 @@ export default function BlocksScreen() {
 
   const { isDarkMode, language } = useAppContext();
 
-  // 🎨 Paleta por tema (no cambia tu lógica)
   const palette = isDarkMode
     ? {
         background: "#0F0F0F",
@@ -81,13 +81,13 @@ export default function BlocksScreen() {
         chipOff: "#FFFFFF",
       };
 
-  // 🗣️ Textos
   const T = {
     title: language === "es" ? "Bloques de entrenamiento" : "Training Blocks",
     addBlock: language === "es" ? "+ Añadir bloque" : "+ Add block",
-    empty: language === "es"
-      ? "Aún no tienes bloques de entrenamiento asignados"
-      : "You don't have assigned training blocks yet",
+    empty:
+      language === "es"
+        ? "Aún no tienes bloques de entrenamiento asignados"
+        : "You don't have assigned training blocks yet",
     period: language === "es" ? "Periodo" : "Periodization",
     start: language === "es" ? "Inicio" : "Start",
     end: language === "es" ? "Fin" : "End",
@@ -122,6 +122,20 @@ export default function BlocksScreen() {
 
   useEffect(() => {
     fetchRoleAndAthletes();
+  }, []);
+
+  // Refresca la lista cuando llega una notificación de NEW_BLOCK
+  useEffect(() => {
+    const handler = (data: CoachEventPayload) => {
+      if (data?.event === "NEW_BLOCK") {
+        fetchBlocks();
+      }
+    };
+    const unsubscribe = on("coach-event", handler);
+    return () => {
+      unsubscribe?.();
+      off("coach-event", handler);
+    };
   }, []);
 
   const fetchRoleAndAthletes = async () => {
@@ -203,10 +217,26 @@ export default function BlocksScreen() {
         Alert.alert("Error", JSON.stringify(errData));
         return;
       }
+      const saved = await res.json().catch(() => null);
+
+      // Notificar al atleta cuando el coach crea un nuevo bloque
+      if (method === "POST" && role === "coach" && selectedAthleteId) {
+        triggerAthleteNotification({
+          event: "NEW_BLOCK",
+          athleteId: selectedAthleteId,
+          blockId: saved?.id,
+        }).catch(() => {});
+      }
+
+      // Feedback local inmediato (banner) — lo marcamos como __local para evitar ecos
+      if (method === "POST") {
+        emit("coach-event", { event: "NEW_BLOCK", blockId: saved?.id, __local: true });
+      }
+
       setModalVisible(false);
       setCurrentBlock(null);
       setSelectedAthleteId(null);
-      fetchBlocks();
+      // NO llamamos fetchBlocks aquí: llegará el evento y actualizará.
     } catch (err) {
       console.error(err);
       Alert.alert("Error", T.errSave);
@@ -456,57 +486,18 @@ export default function BlocksScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   center: { flex: 1, justifyContent: "center", alignItems: "center" },
-
   title: { fontSize: 22, fontWeight: "bold", marginBottom: 16, marginTop: 16 },
-
-  addButton: {
-    marginBottom: 16,
-    padding: 12,
-    borderRadius: 8,
-    alignItems: "center",
-  },
+  addButton: { marginBottom: 16, padding: 12, borderRadius: 8, alignItems: "center" },
   addButtonText: { color: "#fff", fontWeight: "bold" },
-
   card: { padding: 16, marginBottom: 10, borderRadius: 8 },
-
   blockName: { fontSize: 16, fontWeight: "600" },
-
-  buttonsRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: 10,
-  },
-
-  modalBackground: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-
+  buttonsRow: { flexDirection: "row", justifyContent: "space-between", marginTop: 10 },
+  modalBackground: { flex: 1, justifyContent: "center", alignItems: "center" },
   modalContent: { width: "90%", padding: 16, borderRadius: 8 },
-
   modalTitle: { fontSize: 18, fontWeight: "bold", marginBottom: 12 },
-
   input: { borderWidth: 1, borderRadius: 6, padding: 8, marginBottom: 12 },
-
-  athleteItem: {
-    padding: 10,
-    marginVertical: 4,
-    borderRadius: 6,
-    borderWidth: 1,
-  },
-
-  modalButtons: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: 16,
-  },
-  modalBtn: {
-    flex: 1,
-    marginHorizontal: 5,
-    padding: 12,
-    borderRadius: 6,
-    alignItems: "center",
-  },
+  athleteItem: { padding: 10, marginVertical: 4, borderRadius: 6, borderWidth: 1 },
+  modalButtons: { flexDirection: "row", justifyContent: "space-between", marginTop: 16 },
+  modalBtn: { flex: 1, marginHorizontal: 5, padding: 12, borderRadius: 6, alignItems: "center" },
   modalBtnText: { color: "#fff", fontWeight: "bold" },
 });
