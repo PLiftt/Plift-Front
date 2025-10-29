@@ -43,7 +43,9 @@ export default function BlocksScreen() {
   const [loading, setLoading] = useState(true);
   const [role, setRole] = useState<string | null>(null);
   const [athletes, setAthletes] = useState<Athlete[]>([]);
-  const [selectedAthleteId, setSelectedAthleteId] = useState<number | null>(null);
+  const [selectedAthleteId, setSelectedAthleteId] = useState<number | null>(
+    null
+  );
   const [modalVisible, setModalVisible] = useState(false);
   const [currentBlock, setCurrentBlock] = useState<Block | null>(null);
 
@@ -97,7 +99,8 @@ export default function BlocksScreen() {
     no: language === "es" ? "No" : "No",
     edit: language === "es" ? "Editar" : "Edit",
     del: language === "es" ? "Eliminar" : "Delete",
-    confirmDel: language === "es" ? "Confirmar eliminación" : "Confirm deletion",
+    confirmDel:
+      language === "es" ? "Confirmar eliminación" : "Confirm deletion",
     confirmDelMsg: (name: string) =>
       language === "es"
         ? `¿Estás seguro de que deseas eliminar el bloque "${name}"?`
@@ -105,19 +108,44 @@ export default function BlocksScreen() {
     modalTitleAdd: language === "es" ? "Agregar Bloque" : "Add Block",
     modalTitleEdit: language === "es" ? "Editar Bloque" : "Edit Block",
     namePh: language === "es" ? "Nombre" : "Name",
-    periodPh: language === "es" ? "Periodización (LINEAL, DUP, BLOQUES)" : "Periodization (LINEAL, DUP, BLOCKS)",
-    startPh: language === "es" ? "Fecha inicio YYYY-MM-DD" : "Start date YYYY-MM-DD",
+    periodPh:
+      language === "es"
+        ? "Periodización (LINEAL, DUP, BLOQUES)"
+        : "Periodization (LINEAL, DUP, BLOCKS)",
+    startPh:
+      language === "es" ? "Fecha inicio YYYY-MM-DD" : "Start date YYYY-MM-DD",
     endPh: language === "es" ? "Fecha fin YYYY-MM-DD" : "End date YYYY-MM-DD",
-    goalPh: language === "es" ? "Fecha objetivo YYYY-MM-DD (opcional)" : "Target date YYYY-MM-DD (optional)",
+    goalPh:
+      language === "es"
+        ? "Fecha objetivo YYYY-MM-DD (opcional)"
+        : "Target date YYYY-MM-DD (optional)",
     athletes: language === "es" ? "Atletas" : "Athletes",
     cancel: language === "es" ? "Cancelar" : "Cancel",
     save: language === "es" ? "Guardar" : "Save",
-    errProfile: language === "es" ? "No se pudo cargar perfil y atletas" : "Could not load profile and athletes",
-    errLoadBlocks: language === "es" ? "No se pudieron cargar los bloques" : "Could not load blocks",
-    errSave: language === "es" ? "No se pudo guardar el bloque" : "Could not save block",
-    errDelete: language === "es" ? "No se pudo eliminar el bloque" : "Could not delete block",
-    required: language === "es" ? "Debes completar todos los campos obligatorios" : "You must complete all required fields",
-    needAthlete: language === "es" ? "Debes seleccionar un atleta" : "You must select an athlete",
+    errProfile:
+      language === "es"
+        ? "No se pudo cargar perfil y atletas"
+        : "Could not load profile and athletes",
+    errLoadBlocks:
+      language === "es"
+        ? "No se pudieron cargar los bloques"
+        : "Could not load blocks",
+    errSave:
+      language === "es"
+        ? "No se pudo guardar el bloque"
+        : "Could not save block",
+    errDelete:
+      language === "es"
+        ? "No se pudo eliminar el bloque"
+        : "Could not delete block",
+    required:
+      language === "es"
+        ? "Debes completar todos los campos obligatorios"
+        : "You must complete all required fields",
+    needAthlete:
+      language === "es"
+        ? "Debes seleccionar un atleta"
+        : "You must select an athlete",
   };
 
   useEffect(() => {
@@ -176,7 +204,11 @@ export default function BlocksScreen() {
 
   const saveBlock = async () => {
     if (!currentBlock) return;
-    if (!currentBlock.name || !currentBlock.start_date || !currentBlock.end_date) {
+    if (
+      !currentBlock.name ||
+      !currentBlock.start_date ||
+      !currentBlock.end_date
+    ) {
       Alert.alert("Error", T.required);
       return;
     }
@@ -211,32 +243,23 @@ export default function BlocksScreen() {
         },
         body: JSON.stringify(payload),
       });
+
       if (!res.ok) {
         const errData = await res.json();
         console.error("Error guardando bloque:", errData);
         Alert.alert("Error", JSON.stringify(errData));
         return;
       }
-      const saved = await res.json().catch(() => null);
 
-      // Notificar al atleta cuando el coach crea un nuevo bloque
-      if (method === "POST" && role === "coach" && selectedAthleteId) {
-        triggerAthleteNotification({
-          event: "NEW_BLOCK",
-          athleteId: selectedAthleteId,
-          blockId: saved?.id,
-        }).catch(() => {});
-      }
+      await res.json().catch(() => null);
 
-      // Feedback local inmediato (banner) — lo marcamos como __local para evitar ecos
-      if (method === "POST") {
-        emit("coach-event", { event: "NEW_BLOCK", blockId: saved?.id, __local: true });
-      }
+      // 💬 Ya no usamos emit() ni eventos duplicados
+      // Solo recargamos una vez localmente
+      await fetchBlocks();
 
       setModalVisible(false);
       setCurrentBlock(null);
       setSelectedAthleteId(null);
-      // NO llamamos fetchBlocks aquí: llegará el evento y actualizará.
     } catch (err) {
       console.error(err);
       Alert.alert("Error", T.errSave);
@@ -271,7 +294,9 @@ export default function BlocksScreen() {
         contentContainerStyle={{ paddingBottom: 120, paddingHorizontal: 16 }}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={[styles.title, { color: palette.text, textAlign: "center" }]}>
+        <Text
+          style={[styles.title, { color: palette.text, textAlign: "center" }]}
+        >
           {T.title}
         </Text>
 
@@ -298,7 +323,14 @@ export default function BlocksScreen() {
 
         <View style={{ flexGrow: 1 }}>
           {blocks.length === 0 ? (
-            <View style={{ flex: 1, justifyContent: "center", alignItems: "center", height: 300 }}>
+            <View
+              style={{
+                flex: 1,
+                justifyContent: "center",
+                alignItems: "center",
+                height: 300,
+              }}
+            >
               <Text
                 style={{
                   color: palette.text,
@@ -316,7 +348,9 @@ export default function BlocksScreen() {
           ) : (
             <FlatList
               data={blocks}
-              keyExtractor={(item, index) => (item?.id ? item.id!.toString() : index.toString())}
+              keyExtractor={(item, index) =>
+                item?.id ? item.id!.toString() : index.toString()
+              }
               scrollEnabled={false}
               renderItem={({ item }) => (
                 <TouchableOpacity
@@ -336,7 +370,9 @@ export default function BlocksScreen() {
                   onPress={() => router.push(`/fit/${item.id}`)}
                   activeOpacity={0.8}
                 >
-                  <Text style={[styles.blockName, { color: palette.text }]}>{item.name}</Text>
+                  <Text style={[styles.blockName, { color: palette.text }]}>
+                    {item.name}
+                  </Text>
                   <Text style={{ color: palette.subtext }}>
                     {T.period}: {item.periodization}
                   </Text>
@@ -360,7 +396,12 @@ export default function BlocksScreen() {
                   {role === "coach" && (
                     <View style={styles.buttonsRow}>
                       <TouchableOpacity
-                        style={[styles.modalBtn, { backgroundColor: isDarkMode ? "#3F3F46" : "#374151" }]}
+                        style={[
+                          styles.modalBtn,
+                          {
+                            backgroundColor: isDarkMode ? "#3F3F46" : "#374151",
+                          },
+                        ]}
                         onPress={() => {
                           setCurrentBlock(item);
                           setSelectedAthleteId(item.athlete || null);
@@ -370,12 +411,23 @@ export default function BlocksScreen() {
                         <Text style={styles.modalBtnText}>{T.edit}</Text>
                       </TouchableOpacity>
                       <TouchableOpacity
-                        style={[styles.modalBtn, { backgroundColor: palette.accent }]}
+                        style={[
+                          styles.modalBtn,
+                          { backgroundColor: palette.accent },
+                        ]}
                         onPress={() => {
-                          Alert.alert(T.confirmDel, T.confirmDelMsg(item.name), [
-                            { text: T.cancel, style: "cancel" },
-                            { text: T.del, style: "destructive", onPress: () => deleteBlock(item.id!) },
-                          ]);
+                          Alert.alert(
+                            T.confirmDel,
+                            T.confirmDelMsg(item.name),
+                            [
+                              { text: T.cancel, style: "cancel" },
+                              {
+                                text: T.del,
+                                style: "destructive",
+                                onPress: () => deleteBlock(item.id!),
+                              },
+                            ]
+                          );
                         }}
                       >
                         <Text style={styles.modalBtnText}>{T.del}</Text>
@@ -391,8 +443,12 @@ export default function BlocksScreen() {
 
       {/* Modal */}
       <Modal visible={modalVisible} animationType="slide" transparent>
-        <View style={[styles.modalBackground, { backgroundColor: palette.overlay }]}>
-          <View style={[styles.modalContent, { backgroundColor: palette.surface }]}>
+        <View
+          style={[styles.modalBackground, { backgroundColor: palette.overlay }]}
+        >
+          <View
+            style={[styles.modalContent, { backgroundColor: palette.surface }]}
+          >
             <Text style={[styles.modalTitle, { color: palette.text }]}>
               {currentBlock?.id ? T.modalTitleEdit : T.modalTitleAdd}
             </Text>
@@ -401,43 +457,106 @@ export default function BlocksScreen() {
             <TextInput
               placeholder={T.namePh}
               placeholderTextColor={palette.subtext}
-              style={[styles.input, { color: palette.text, borderColor: palette.inputBorder, backgroundColor: palette.surfaceAlt }]}
+              style={[
+                styles.input,
+                {
+                  color: palette.text,
+                  borderColor: palette.inputBorder,
+                  backgroundColor: palette.surfaceAlt,
+                },
+              ]}
               value={currentBlock?.name}
-              onChangeText={(text) => setCurrentBlock((prev) => (prev ? { ...prev, name: text } : null))}
+              onChangeText={(text) =>
+                setCurrentBlock((prev) =>
+                  prev ? { ...prev, name: text } : null
+                )
+              }
             />
             <TextInput
               placeholder={T.periodPh}
               placeholderTextColor={palette.subtext}
-              style={[styles.input, { color: palette.text, borderColor: palette.inputBorder, backgroundColor: palette.surfaceAlt }]}
+              style={[
+                styles.input,
+                {
+                  color: palette.text,
+                  borderColor: palette.inputBorder,
+                  backgroundColor: palette.surfaceAlt,
+                },
+              ]}
               value={currentBlock?.periodization}
-              onChangeText={(text) => setCurrentBlock((prev) => (prev ? { ...prev, periodization: text } : null))}
+              onChangeText={(text) =>
+                setCurrentBlock((prev) =>
+                  prev ? { ...prev, periodization: text } : null
+                )
+              }
             />
             <TextInput
               placeholder={T.startPh}
               placeholderTextColor={palette.subtext}
-              style={[styles.input, { color: palette.text, borderColor: palette.inputBorder, backgroundColor: palette.surfaceAlt }]}
+              style={[
+                styles.input,
+                {
+                  color: palette.text,
+                  borderColor: palette.inputBorder,
+                  backgroundColor: palette.surfaceAlt,
+                },
+              ]}
               value={currentBlock?.start_date}
-              onChangeText={(text) => setCurrentBlock((prev) => (prev ? { ...prev, start_date: text } : null))}
+              onChangeText={(text) =>
+                setCurrentBlock((prev) =>
+                  prev ? { ...prev, start_date: text } : null
+                )
+              }
             />
             <TextInput
               placeholder={T.endPh}
               placeholderTextColor={palette.subtext}
-              style={[styles.input, { color: palette.text, borderColor: palette.inputBorder, backgroundColor: palette.surfaceAlt }]}
+              style={[
+                styles.input,
+                {
+                  color: palette.text,
+                  borderColor: palette.inputBorder,
+                  backgroundColor: palette.surfaceAlt,
+                },
+              ]}
               value={currentBlock?.end_date}
-              onChangeText={(text) => setCurrentBlock((prev) => (prev ? { ...prev, end_date: text } : null))}
+              onChangeText={(text) =>
+                setCurrentBlock((prev) =>
+                  prev ? { ...prev, end_date: text } : null
+                )
+              }
             />
             <TextInput
               placeholder={T.goalPh}
               placeholderTextColor={palette.subtext}
-              style={[styles.input, { color: palette.text, borderColor: palette.inputBorder, backgroundColor: palette.surfaceAlt }]}
+              style={[
+                styles.input,
+                {
+                  color: palette.text,
+                  borderColor: palette.inputBorder,
+                  backgroundColor: palette.surfaceAlt,
+                },
+              ]}
               value={currentBlock?.goal_competition_date}
-              onChangeText={(text) => setCurrentBlock((prev) => (prev ? { ...prev, goal_competition_date: text } : null))}
+              onChangeText={(text) =>
+                setCurrentBlock((prev) =>
+                  prev ? { ...prev, goal_competition_date: text } : null
+                )
+              }
             />
 
             {/* Atletas */}
             {role === "coach" && athletes.length > 0 && (
               <>
-                <Text style={{ color: palette.subtext, fontSize: 12, marginBottom: 4 }}>{T.athletes}</Text>
+                <Text
+                  style={{
+                    color: palette.subtext,
+                    fontSize: 12,
+                    marginBottom: 4,
+                  }}
+                >
+                  {T.athletes}
+                </Text>
                 <FlatList
                   data={athletes}
                   keyExtractor={(item) => item.id.toString()}
@@ -447,8 +566,14 @@ export default function BlocksScreen() {
                       style={[
                         styles.athleteItem,
                         {
-                          borderColor: selectedAthleteId === item.id ? palette.accent : palette.inputBorder,
-                          backgroundColor: selectedAthleteId === item.id ? palette.chipOn : palette.chipOff,
+                          borderColor:
+                            selectedAthleteId === item.id
+                              ? palette.accent
+                              : palette.inputBorder,
+                          backgroundColor:
+                            selectedAthleteId === item.id
+                              ? palette.chipOn
+                              : palette.chipOff,
                         },
                       ]}
                       onPress={() => setSelectedAthleteId(item.id)}
@@ -462,7 +587,10 @@ export default function BlocksScreen() {
 
             <View style={styles.modalButtons}>
               <TouchableOpacity
-                style={[styles.modalBtn, { backgroundColor: isDarkMode ? "#3F3F46" : "#374151" }]}
+                style={[
+                  styles.modalBtn,
+                  { backgroundColor: isDarkMode ? "#3F3F46" : "#374151" },
+                ]}
                 onPress={() => setModalVisible(false)}
               >
                 <Text style={styles.modalBtnText}>{T.cancel}</Text>
@@ -487,17 +615,41 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   center: { flex: 1, justifyContent: "center", alignItems: "center" },
   title: { fontSize: 22, fontWeight: "bold", marginBottom: 16, marginTop: 16 },
-  addButton: { marginBottom: 16, padding: 12, borderRadius: 8, alignItems: "center" },
+  addButton: {
+    marginBottom: 16,
+    padding: 12,
+    borderRadius: 8,
+    alignItems: "center",
+  },
   addButtonText: { color: "#fff", fontWeight: "bold" },
   card: { padding: 16, marginBottom: 10, borderRadius: 8 },
   blockName: { fontSize: 16, fontWeight: "600" },
-  buttonsRow: { flexDirection: "row", justifyContent: "space-between", marginTop: 10 },
+  buttonsRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 10,
+  },
   modalBackground: { flex: 1, justifyContent: "center", alignItems: "center" },
   modalContent: { width: "90%", padding: 16, borderRadius: 8 },
   modalTitle: { fontSize: 18, fontWeight: "bold", marginBottom: 12 },
   input: { borderWidth: 1, borderRadius: 6, padding: 8, marginBottom: 12 },
-  athleteItem: { padding: 10, marginVertical: 4, borderRadius: 6, borderWidth: 1 },
-  modalButtons: { flexDirection: "row", justifyContent: "space-between", marginTop: 16 },
-  modalBtn: { flex: 1, marginHorizontal: 5, padding: 12, borderRadius: 6, alignItems: "center" },
+  athleteItem: {
+    padding: 10,
+    marginVertical: 4,
+    borderRadius: 6,
+    borderWidth: 1,
+  },
+  modalButtons: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 16,
+  },
+  modalBtn: {
+    flex: 1,
+    marginHorizontal: 5,
+    padding: 12,
+    borderRadius: 6,
+    alignItems: "center",
+  },
   modalBtnText: { color: "#fff", fontWeight: "bold" },
 });

@@ -5,7 +5,11 @@ import { StatusBar } from "expo-status-bar";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { Platform } from "react-native";
 import * as Notifications from "expo-notifications";
-import type { Subscription, Notification as ExpoNotification, NotificationResponse } from "expo-notifications";
+import type {
+  Subscription,
+  Notification as ExpoNotification,
+  NotificationResponse,
+} from "expo-notifications";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import { AppProvider } from "app/context/appContext";
@@ -14,12 +18,13 @@ import { useAppContext } from "app/context/appContext";
 import { emit } from "./lib/eventBus";
 import { ToastProvider } from "./components/TopToast";
 import { registerForPushNotificationsAsync } from "services/notificationService";
+import { API_URL } from "@env";
 
 // ✅ Handler actualizado (sin shouldShowAlert deprecado)
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldShowBanner: true, // iOS
-    shouldShowList: true,   // iOS
+    shouldShowList: true, // iOS
     shouldPlaySound: true,
     shouldSetBadge: false,
   }),
@@ -39,37 +44,67 @@ function InnerLayout() {
 
     (async () => {
       try {
-        // 1) Obtener Expo Push Token (Opción B)
+        // 1️⃣ Obtener token de notificaciones
         const token = await registerForPushNotificationsAsync();
-        if (token) {
-          // 2) Guardar localmente (si quieres mostrarlo/compartir)
-          await AsyncStorage.setItem("my_expo_push_token", token);
 
-          // 3) Avisar al resto de la app (opcional)
-          emit("push-token-ready", { token });
+        if (token) {
+          // 2️⃣ Guardar localmente
+          await AsyncStorage.setItem("my_expo_push_token", token);
+          console.log("Expo push token:", token);
+
+          // 3️⃣ Enviar token al backend
+          const accessToken = await AsyncStorage.getItem("accessToken"); // o usa getToken("accessToken") si ya lo tienes importado
+          if (accessToken) {
+            try {
+              const res = await fetch(
+                `${API_URL.replace(/\/$/, "")}/notifications/register-token/`,
+                {
+                  method: "POST",
+                  headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                    "Content-Type": "application/json",
+                  },
+                  body: JSON.stringify({ token }),
+                }
+              );
+
+              if (!res.ok) {
+                console.warn(
+                  "Error registrando token en backend:",
+                  await res.text()
+                );
+              } else {
+                console.log("✅ Token registrado en backend correctamente");
+              }
+            } catch (err) {
+              console.warn("Error de red al registrar token:", err);
+            }
+          }
         }
       } catch (e) {
         console.warn("No se pudo obtener el push token:", e);
       }
     })();
 
-    // 4) Listener: notificación recibida en foreground
-    receivedSub.current = Notifications.addNotificationReceivedListener((n: ExpoNotification) => {
-      const data: any = n.request.content.data;
-      // ⛔ evita eco si marcaste notificaciones locales
-      if (data?.__local) return;
-      emit("coach-event", data);
-    });
+    // 4️⃣ Listener: notificación recibida en foreground
+    receivedSub.current = Notifications.addNotificationReceivedListener(
+      (n: ExpoNotification) => {
+        const data: any = n.request.content.data;
+        if (data?.__local) return; // evita eco
+        emit("coach-event", data);
+      }
+    );
 
-    // 5) Listener: usuario tocó la notificación
-    responseSub.current = Notifications.addNotificationResponseReceivedListener((r: NotificationResponse) => {
-      const data: any = r.notification.request.content.data;
-      if (data?.__local) return; // ⛔ evita eco
-      emit("coach-event", data);
-      // si envías { route, params } desde el push, puedes navegar:
-      // import { router } from "expo-router";
-      // if (data?.route) router.push(data?.params ? { pathname: data.route, params: data.params } : data.route);
-    });
+    // 5️⃣ Listener: usuario tocó la notificación
+    responseSub.current = Notifications.addNotificationResponseReceivedListener(
+      (r: NotificationResponse) => {
+        const data: any = r.notification.request.content.data;
+        if (data?.__local) return;
+        emit("coach-event", data);
+        // Si quieres redirigir al tocar la notificación:
+        // if (data?.route) router.push(data.route);
+      }
+    );
 
     return () => {
       receivedSub.current?.remove();
@@ -85,7 +120,12 @@ function InnerLayout() {
 
   return (
     <>
-      <StatusBar style={barStyle} backgroundColor={bg} translucent={false} hidden={false} />
+      <StatusBar
+        style={barStyle}
+        backgroundColor={bg}
+        translucent={false}
+        hidden={false}
+      />
       <SafeAreaView style={{ flex: 1, backgroundColor: bg }} edges={["top"]}>
         <Slot />
       </SafeAreaView>
