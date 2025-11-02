@@ -75,3 +75,22 @@ export async function deleteExercise(id: number) {
     headers: await authHeaders(),
   });
 }
+
+// Servicios para progreso por bloque y graficos de la evolucion de fuerza
+
+export async function getBlockProgress(blockId: number) {
+  const res = await fetch(`${API_URL}/progress/block_progress/?block=${blockId}`, {
+    headers: await authHeaders(),
+  });
+  return res.json();
+}
+
+export async function getStrengthChart() {
+  const res = await fetch(`${API_URL}/progress/strength_chart/`, {
+    headers: await authHeaders(),
+  });
+  return res.json();
+}
+
+
+
