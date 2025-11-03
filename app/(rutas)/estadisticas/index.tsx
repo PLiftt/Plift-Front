@@ -1,3 +1,4 @@
+// app/tu-ruta/StrengthProgressScreen.tsx
 import React, { useEffect, useState } from "react";
 import {
   ScrollView,
@@ -10,8 +11,12 @@ import {
   Alert,
 } from "react-native";
 import { LineChart } from "react-native-chart-kit";
-import { getAthleteProgressReport, getStrengthChart } from "services/trainingService";
+import {
+  getAthleteProgressReport,
+  getStrengthChart,
+} from "services/trainingService";
 import { getProfile } from "services/userService";
+import BottomNav from "../../components/bottomNav";
 
 const screenWidth = Dimensions.get("window").width;
 
@@ -27,12 +32,29 @@ interface Profile {
   athletes?: Athlete[];
 }
 
+type ChartShape = {
+  labels: string[];
+  datasets: { label?: string; data: number[] }[];
+};
+
+type BlockReport = {
+  block_name: string;
+  start_date?: string;
+  end_date?: string;
+  // puede venir en cualquiera de las dos formas:
+  labels?: string[];
+  datasets?: { label?: string; data: number[] }[];
+  chart_data?: ChartShape;
+};
+
 export default function StrengthProgressScreen() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [loadingAthlete, setLoadingAthlete] = useState<number | null>(null);
-  const [athleteCharts, setAthleteCharts] = useState<Record<number, any>>({});
+  const [athleteCharts, setAthleteCharts] = useState<
+    Record<number, BlockReport[]>
+  >({});
   const [selfChart, setSelfChart] = useState<any>(null);
 
   useEffect(() => {
@@ -41,10 +63,10 @@ export default function StrengthProgressScreen() {
         const profileRes = await getProfile();
         setProfile(profileRes);
 
-        // Si es atleta, usa su endpoint propio
         if (profileRes.role === "athlete") {
           const chartRes = await getStrengthChart();
-          if (chartRes.detail) setError(chartRes.detail);
+          // para atleta sigue igual (un solo bloque actual)
+          if (chartRes?.detail) setError(chartRes.detail);
           else setSelfChart(chartRes);
         }
       } catch (e) {
@@ -61,7 +83,9 @@ export default function StrengthProgressScreen() {
     try {
       setLoadingAthlete(athleteId);
       const data = await getAthleteProgressReport(athleteId);
-      setAthleteCharts((prev) => ({ ...prev, [athleteId]: data }));
+      // Aseguramos array (el endpoint nuevo retorna array de bloques)
+      const blocks: BlockReport[] = Array.isArray(data) ? data : [data];
+      setAthleteCharts((prev) => ({ ...prev, [athleteId]: blocks }));
     } catch (err: any) {
       console.error("Error cargando gráfico del atleta:", err);
       Alert.alert("Error", "No se pudo obtener el reporte del atleta");
@@ -71,7 +95,13 @@ export default function StrengthProgressScreen() {
   };
 
   if (loading)
-    return <ActivityIndicator size="large" color="#3b82f6" style={{ marginTop: 50 }} />;
+    return (
+      <ActivityIndicator
+        size="large"
+        color="#3b82f6"
+        style={{ marginTop: 50 }}
+      />
+    );
 
   if (error)
     return (
@@ -87,34 +117,57 @@ export default function StrengthProgressScreen() {
     return (
       <ScrollView style={styles.container}>
         <Text style={styles.title}>Progreso de Fuerza por Atleta</Text>
+
         {athletes.length === 0 ? (
           <Text style={styles.noDataText}>No hay atletas disponibles</Text>
         ) : (
-          athletes.map((a) => (
-            <View key={a.athlete} style={styles.athleteContainer}>
-              <View style={styles.athleteHeader}>
-                <Text style={styles.athleteName}>{a.athlete_name}</Text>
-                <Button
-                  title="Ver progreso"
-                  onPress={() => handleViewReport(a.athlete)}
-                  color="#2563eb"
-                  disabled={loadingAthlete === a.athlete}
-                />
+          athletes.map((a) => {
+            const blocks = athleteCharts[a.athlete] || [];
+            return (
+              <View key={a.athlete} style={styles.athleteContainer}>
+                <View style={styles.athleteHeader}>
+                  <Text style={styles.athleteName}>{a.athlete_name}</Text>
+                  <Button
+                    title="Ver progreso"
+                    onPress={() => handleViewReport(a.athlete)}
+                    color="#2563eb"
+                    disabled={loadingAthlete === a.athlete}
+                  />
+                </View>
+
+                {loadingAthlete === a.athlete && (
+                  <ActivityIndicator
+                    size="small"
+                    color="#3b82f6"
+                    style={{ marginVertical: 8 }}
+                  />
+                )}
+
+                {/* Bloques */}
+                {Array.isArray(blocks) && blocks.length > 0 ? (
+                  blocks.map((block, idx) => (
+                    <View
+                      key={`${a.athlete}-${idx}`}
+                      style={styles.blockContainer}
+                    >
+                      <Text style={styles.blockTitle}>{block.block_name}</Text>
+                      {renderChart(block.chart_data ?? block)}
+                    </View>
+                  ))
+                ) : (
+                  <View style={{ paddingVertical: 8 }}>
+                    <Text style={styles.errorText}>No existen datos</Text>
+                  </View>
+                )}
               </View>
-
-              {loadingAthlete === a.athlete && (
-                <ActivityIndicator size="small" color="#3b82f6" style={{ marginVertical: 8 }} />
-              )}
-
-              {athleteCharts[a.athlete] && renderChart(athleteCharts[a.athlete])}
-            </View>
-          ))
+            );
+          })
         )}
       </ScrollView>
     );
   }
 
-  // === ATHLETE ===
+  // === ATHLETE === (se mantiene como estaba)
   if (!selfChart)
     return (
       <View style={styles.center}>
@@ -176,13 +229,17 @@ export default function StrengthProgressScreen() {
   );
 }
 
-// === FUNCIÓN PARA RENDERIZAR GRÁFICO DE ATLETAS ===
-function renderChart(chart: any) {
+/** RENDER CHART ROBUSTO:
+ * acepta tanto {labels, datasets} como {chart_data: {labels, datasets}}
+ */
+function renderChart(input: any) {
+  const chart: ChartShape | null = input?.chart_data ? input.chart_data : input;
+
   if (
     !chart ||
-    !chart.labels ||
+    !Array.isArray(chart.labels) ||
     chart.labels.length === 0 ||
-    !chart.datasets ||
+    !Array.isArray(chart.datasets) ||
     chart.datasets.length === 0
   ) {
     return (
@@ -192,19 +249,25 @@ function renderChart(chart: any) {
     );
   }
 
-  const colors = ["#e74c3c", "#3498db", "#2ecc71"];
+  const colors = ["#e74c3c", "#3498db", "#2ecc71", "#8e44ad", "#16a085"];
+
+  // Asegurar que datasets tengan arrays numéricos (evitar undefined/NaN)
+  const safeDatasets = chart.datasets.map((d) => ({
+    data: (d?.data ?? []).map((v) => Number(v || 0)),
+    label: d?.label ?? "",
+  }));
 
   return (
-    <View style={{ marginBottom: 30 }}>
+    <View style={{ marginBottom: 20 }}>
       <LineChart
         data={{
           labels: chart.labels,
-          datasets: chart.datasets.map((d: any, i: number) => ({
+          datasets: safeDatasets.map((d, i) => ({
             data: d.data,
             color: () => colors[i % colors.length],
             strokeWidth: 2,
           })),
-          legend: chart.datasets.map((d: any) => d.label),
+          legend: safeDatasets.map((d) => d.label),
         }}
         width={screenWidth - 32}
         height={260}
@@ -222,8 +285,9 @@ function renderChart(chart: any) {
         bezier
       />
 
+      {/* Leyenda */}
       <View style={styles.legendContainer}>
-        {chart.datasets.map((d: any, i: number) => (
+        {safeDatasets.map((d, i) => (
           <View key={i} style={styles.legendItem}>
             <View
               style={[
@@ -231,7 +295,7 @@ function renderChart(chart: any) {
                 { backgroundColor: colors[i % colors.length] },
               ]}
             />
-            <Text>{d.label}</Text>
+            <Text>{d.label || `Serie ${i + 1}`}</Text>
           </View>
         ))}
       </View>
@@ -241,11 +305,29 @@ function renderChart(chart: any) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 16, backgroundColor: "#fff" },
-  center: { flex: 1, justifyContent: "center", alignItems: "center", padding: 16 },
-  title: { fontSize: 20, fontWeight: "bold", textAlign: "center", marginBottom: 4 },
-  subtitle: { fontSize: 14, textAlign: "center", color: "#555", marginBottom: 16 },
+  center: {
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 16,
+  },
+  title: {
+    fontSize: 20,
+    fontWeight: "bold",
+    textAlign: "center",
+    marginBottom: 4,
+  },
+  subtitle: {
+    fontSize: 14,
+    textAlign: "center",
+    color: "#555",
+    marginBottom: 16,
+  },
   chart: { borderRadius: 12, marginVertical: 8, alignSelf: "center" },
-  legendContainer: { flexDirection: "row", justifyContent: "space-around", marginTop: 12 },
+  legendContainer: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    marginTop: 12,
+  },
   legendItem: { flexDirection: "row", alignItems: "center" },
   legendDot: { width: 12, height: 12, borderRadius: 6, marginRight: 6 },
   athleteContainer: {
@@ -264,4 +346,15 @@ const styles = StyleSheet.create({
   athleteName: { fontSize: 16, fontWeight: "500" },
   errorText: { textAlign: "center", color: "#ef4444", fontSize: 16 },
   noDataText: { textAlign: "center", marginTop: 20, fontSize: 16 },
+  blockContainer: {
+    backgroundColor: "#fff",
+    borderRadius: 10,
+    padding: 8,
+    marginTop: 6,
+  },
+  blockTitle: {
+    textAlign: "center",
+    fontWeight: "600",
+    marginVertical: 6,
+  },
 });
