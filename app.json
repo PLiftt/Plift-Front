@@ -41,7 +41,8 @@
           "cameraPermission": "Necesitamos usar la cámara para tomar fotos."
         }
       ],
-      "expo-notifications"
+      "expo-notifications",
+      "expo-web-browser"
     ]
   }
 }

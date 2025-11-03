@@ -53,5 +53,6 @@
     "**/*.js",
     "**/*.jsx"
   ],
-  "exclude": ["node_modules", "dist", "android"]
+  "exclude": ["node_modules", "dist", "android"],
+
 }

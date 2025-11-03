@@ -1,6 +1,11 @@
 // services/trainingService.ts
 import { API_URL } from "@env";
 import { getToken } from "./secureStore";
+import * as FileSystem from 'expo-file-system';
+import * as Sharing from 'expo-sharing';
+import { Alert } from "react-native";
+import * as WebBrowser from 'expo-web-browser';
+
 
 async function authHeaders() {
   const token = await getToken("accessToken");
@@ -92,5 +97,20 @@ export async function getStrengthChart() {
   return res.json();
 }
 
+// Descargar reporte de progreso en PDF
 
+export async function getAthleteProgressReport(athleteId: number) {
+  const headers = await authHeaders();
+  const url = `${API_URL}/progress/progress_report/?athlete=${athleteId}`;
 
+  const response = await fetch(url, {
+    method: "GET",
+    headers,
+  });
+
+  if (!response.ok) {
+    throw new Error("Error al obtener el reporte");
+  }
+
+  return response.json(); // ← devuelve JSON con bloques y ejercicios
+}
