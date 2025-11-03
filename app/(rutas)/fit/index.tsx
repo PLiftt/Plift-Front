@@ -10,6 +10,7 @@ import {
   TextInput,
   Alert,
   StyleSheet,
+  Platform,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { getToken } from "services/secureStore";
@@ -18,8 +19,8 @@ import { API_URL } from "@env";
 import BottomNav from "../../components/bottomNav";
 import PullToRefresh from "../../components/PullToRefresh";
 import { useAppContext } from "app/context/appContext";
-import { triggerAthleteNotification } from "services/notificationService";
 import { on, off, CoachEventPayload, emit } from "app/lib/eventBus";
+import { Picker } from "@react-native-picker/picker";
 
 interface Block {
   id?: number;
@@ -50,6 +51,8 @@ export default function BlocksScreen() {
   const [currentBlock, setCurrentBlock] = useState<Block | null>(null);
 
   const { isDarkMode, language } = useAppContext();
+
+  const BLOCK_TYPE = ["LINEAL", "DUP", "BLOCKS"];
 
   const palette = isDarkMode
     ? {
@@ -472,24 +475,7 @@ export default function BlocksScreen() {
                 )
               }
             />
-            <TextInput
-              placeholder={T.periodPh}
-              placeholderTextColor={palette.subtext}
-              style={[
-                styles.input,
-                {
-                  color: palette.text,
-                  borderColor: palette.inputBorder,
-                  backgroundColor: palette.surfaceAlt,
-                },
-              ]}
-              value={currentBlock?.periodization}
-              onChangeText={(text) =>
-                setCurrentBlock((prev) =>
-                  prev ? { ...prev, periodization: text } : null
-                )
-              }
-            />
+
             <TextInput
               placeholder={T.startPh}
               placeholderTextColor={palette.subtext}
@@ -508,6 +494,7 @@ export default function BlocksScreen() {
                 )
               }
             />
+
             <TextInput
               placeholder={T.endPh}
               placeholderTextColor={palette.subtext}
@@ -526,6 +513,7 @@ export default function BlocksScreen() {
                 )
               }
             />
+
             <TextInput
               placeholder={T.goalPh}
               placeholderTextColor={palette.subtext}
@@ -545,7 +533,53 @@ export default function BlocksScreen() {
               }
             />
 
-            {/* Atletas */}
+            {/* Periodización */}
+            <View
+              style={{
+                borderWidth: 1,
+                borderColor: palette.inputBorder,
+                borderRadius: 8,
+                marginBottom: 12,
+                ...Platform.select({
+                  ios: {
+                    backgroundColor: "transparent",
+                    overflow: "hidden", // necesario solo en iOS
+                  },
+                  android: {
+                    backgroundColor: palette.surfaceAlt,
+                  },
+                }),
+              }}
+            >
+              <Picker
+                selectedValue={currentBlock?.periodization || "LINEAL"}
+                onValueChange={(value) =>
+                  setCurrentBlock((prev) =>
+                    prev ? { ...prev, periodization: value } : null
+                  )
+                }
+                style={{
+                  color: palette.text,
+                  fontSize: 15,
+                  ...Platform.select({
+                    ios: {
+                      height: 180, // Wheel nativo
+                    },
+                    android: {
+                      height: 50, // suficiente espacio sin recorte
+                    },
+                  }),
+                }}
+                dropdownIconColor={palette.text}
+                mode="dropdown"
+              >
+                {BLOCK_TYPE.map((type) => (
+                  <Picker.Item key={type} label={type} value={type} />
+                ))}
+              </Picker>
+            </View>
+
+            {/* Lista de atletas */}
             {role === "coach" && athletes.length > 0 && (
               <>
                 <Text
@@ -585,6 +619,7 @@ export default function BlocksScreen() {
               </>
             )}
 
+            {/* Botones */}
             <View style={styles.modalButtons}>
               <TouchableOpacity
                 style={[
@@ -632,7 +667,14 @@ const styles = StyleSheet.create({
   modalBackground: { flex: 1, justifyContent: "center", alignItems: "center" },
   modalContent: { width: "90%", padding: 16, borderRadius: 8 },
   modalTitle: { fontSize: 18, fontWeight: "bold", marginBottom: 12 },
-  input: { borderWidth: 1, borderRadius: 6, padding: 8, marginBottom: 12 },
+  input: {
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    marginBottom: 12,
+    fontSize: 15,
+  },
   athleteItem: {
     padding: 10,
     marginVertical: 4,
