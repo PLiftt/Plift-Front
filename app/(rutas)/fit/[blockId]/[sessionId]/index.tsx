@@ -401,7 +401,10 @@ export default function ExercisesScreen() {
                       hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
                       onPress={() => setCurrentExercise(item)}
                     >
-                      <Text style={styles.modalBtnText} allowFontScaling={false}>
+                      <Text
+                        style={styles.modalBtnText}
+                        allowFontScaling={false}
+                      >
                         {T.viewSession}
                       </Text>
                     </TouchableOpacity>
@@ -414,7 +417,10 @@ export default function ExercisesScreen() {
                       hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
                       onPress={() => setCurrentExercise(item)}
                     >
-                      <Text style={styles.modalBtnText} allowFontScaling={false}>
+                      <Text
+                        style={styles.modalBtnText}
+                        allowFontScaling={false}
+                      >
                         {language === "es" ? "Editar" : "Edit"}
                       </Text>
                     </TouchableOpacity>
@@ -444,7 +450,10 @@ export default function ExercisesScreen() {
                         );
                       }}
                     >
-                      <Text style={styles.modalBtnText} allowFontScaling={false}>
+                      <Text
+                        style={styles.modalBtnText}
+                        allowFontScaling={false}
+                      >
                         {T.del}
                       </Text>
                     </TouchableOpacity>
@@ -459,8 +468,11 @@ export default function ExercisesScreen() {
                       activeOpacity={0.85}
                       hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
                       onPress={() => setCurrentExercise(item)}
+                    >
+                      <Text
+                        style={styles.modalBtnText}
+                        allowFontScaling={false}
                       >
-                      <Text style={styles.modalBtnText} allowFontScaling={false}>
                         {T.viewSession}
                       </Text>
                     </TouchableOpacity>
@@ -562,7 +574,10 @@ export default function ExercisesScreen() {
                       hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
                       onPress={() => setCurrentExercise(item)}
                     >
-                      <Text style={styles.modalBtnText} allowFontScaling={false}>
+                      <Text
+                        style={styles.modalBtnText}
+                        allowFontScaling={false}
+                      >
                         {T.viewSession}
                       </Text>
                     </TouchableOpacity>
@@ -575,7 +590,10 @@ export default function ExercisesScreen() {
                       hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
                       onPress={() => setCurrentExercise(item)}
                     >
-                      <Text style={styles.modalBtnText} allowFontScaling={false}>
+                      <Text
+                        style={styles.modalBtnText}
+                        allowFontScaling={false}
+                      >
                         {language === "es" ? "Editar" : "Edit"}
                       </Text>
                     </TouchableOpacity>
@@ -605,7 +623,10 @@ export default function ExercisesScreen() {
                         );
                       }}
                     >
-                      <Text style={styles.modalBtnText} allowFontScaling={false}>
+                      <Text
+                        style={styles.modalBtnText}
+                        allowFontScaling={false}
+                      >
                         {T.del}
                       </Text>
                     </TouchableOpacity>
@@ -620,8 +641,11 @@ export default function ExercisesScreen() {
                       activeOpacity={0.85}
                       hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
                       onPress={() => setCurrentExercise(item)}
+                    >
+                      <Text
+                        style={styles.modalBtnText}
+                        allowFontScaling={false}
                       >
-                      <Text style={styles.modalBtnText} allowFontScaling={false}>
                         {T.viewSession}
                       </Text>
                     </TouchableOpacity>
@@ -885,7 +909,7 @@ export default function ExercisesScreen() {
                   activeOpacity={0.85}
                   hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
                   onPress={saveExercise}
-                  >
+                >
                   <Text style={styles.modalBtnText} allowFontScaling={false}>
                     {T.save}
                   </Text>

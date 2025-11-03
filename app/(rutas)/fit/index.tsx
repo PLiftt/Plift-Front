@@ -10,6 +10,7 @@ import {
   TextInput,
   Alert,
   StyleSheet,
+  Platform,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { getToken } from "services/secureStore";
@@ -18,8 +19,9 @@ import { API_URL } from "@env";
 import BottomNav from "../../components/bottomNav";
 import PullToRefresh from "../../components/PullToRefresh";
 import { useAppContext } from "app/context/appContext";
-import { triggerAthleteNotification } from "services/notificationService";
 import { on, off, CoachEventPayload, emit } from "app/lib/eventBus";
+import { Picker } from "@react-native-picker/picker";
+import DateTimePicker from "@react-native-community/datetimepicker";
 
 interface Block {
   id?: number;
@@ -38,6 +40,10 @@ interface Athlete {
 }
 
 export default function BlocksScreen() {
+  const [showStartPicker, setShowStartPicker] = useState(false);
+  const [showEndPicker, setShowEndPicker] = useState(false);
+  const [showGoalPicker, setShowGoalPicker] = useState(false);
+
   const router = useRouter();
   const [blocks, setBlocks] = useState<Block[]>([]);
   const [loading, setLoading] = useState(true);
@@ -50,6 +56,8 @@ export default function BlocksScreen() {
   const [currentBlock, setCurrentBlock] = useState<Block | null>(null);
 
   const { isDarkMode, language } = useAppContext();
+
+  const BLOCK_TYPE = ["LINEAL", "DUP", "BLOQUES"];
 
   const palette = isDarkMode
     ? {
@@ -472,80 +480,395 @@ export default function BlocksScreen() {
                 )
               }
             />
-            <TextInput
-              placeholder={T.periodPh}
-              placeholderTextColor={palette.subtext}
-              style={[
-                styles.input,
-                {
-                  color: palette.text,
-                  borderColor: palette.inputBorder,
-                  backgroundColor: palette.surfaceAlt,
-                },
-              ]}
-              value={currentBlock?.periodization}
-              onChangeText={(text) =>
-                setCurrentBlock((prev) =>
-                  prev ? { ...prev, periodization: text } : null
-                )
-              }
-            />
-            <TextInput
-              placeholder={T.startPh}
-              placeholderTextColor={palette.subtext}
-              style={[
-                styles.input,
-                {
-                  color: palette.text,
-                  borderColor: palette.inputBorder,
-                  backgroundColor: palette.surfaceAlt,
-                },
-              ]}
-              value={currentBlock?.start_date}
-              onChangeText={(text) =>
-                setCurrentBlock((prev) =>
-                  prev ? { ...prev, start_date: text } : null
-                )
-              }
-            />
-            <TextInput
-              placeholder={T.endPh}
-              placeholderTextColor={palette.subtext}
-              style={[
-                styles.input,
-                {
-                  color: palette.text,
-                  borderColor: palette.inputBorder,
-                  backgroundColor: palette.surfaceAlt,
-                },
-              ]}
-              value={currentBlock?.end_date}
-              onChangeText={(text) =>
-                setCurrentBlock((prev) =>
-                  prev ? { ...prev, end_date: text } : null
-                )
-              }
-            />
-            <TextInput
-              placeholder={T.goalPh}
-              placeholderTextColor={palette.subtext}
-              style={[
-                styles.input,
-                {
-                  color: palette.text,
-                  borderColor: palette.inputBorder,
-                  backgroundColor: palette.surfaceAlt,
-                },
-              ]}
-              value={currentBlock?.goal_competition_date}
-              onChangeText={(text) =>
-                setCurrentBlock((prev) =>
-                  prev ? { ...prev, goal_competition_date: text } : null
-                )
-              }
-            />
 
-            {/* Atletas */}
+            {/* 📅 Fecha de inicio */}
+            <TouchableOpacity
+              onPress={() => setShowStartPicker(true)}
+              style={[
+                styles.input,
+                {
+                  borderColor: palette.inputBorder,
+                  backgroundColor: palette.surfaceAlt,
+                  justifyContent: "center",
+                },
+              ]}
+            >
+              <Text
+                style={{
+                  color: currentBlock?.start_date
+                    ? palette.text
+                    : palette.subtext,
+                  fontSize: 15,
+                }}
+              >
+                {currentBlock?.start_date
+                  ? new Date(currentBlock.start_date).toLocaleDateString()
+                  : language === "es"
+                  ? "Selecciona fecha de inicio"
+                  : "Select start date"}
+              </Text>
+            </TouchableOpacity>
+
+            {showStartPicker &&
+              (Platform.OS === "ios" ? (
+                <Modal
+                  transparent
+                  animationType="slide"
+                  visible={showStartPicker}
+                >
+                  <View style={styles.modalBackdrop}>
+                    <View
+                      style={{
+                        backgroundColor: palette.surface,
+                        padding: 20,
+                        borderRadius: 16,
+                        width: "90%",
+                        alignSelf: "center",
+                        marginBottom: 20,
+                      }}
+                    >
+                      <DateTimePicker
+                        value={
+                          currentBlock?.start_date
+                            ? new Date(currentBlock.start_date)
+                            : new Date()
+                        }
+                        mode="date"
+                        display="spinner"
+                        onChange={(_, selectedDate) => {
+                          if (selectedDate)
+                            setCurrentBlock((prev) =>
+                              prev
+                                ? {
+                                    ...prev,
+                                    start_date: selectedDate
+                                      .toISOString()
+                                      .split("T")[0],
+                                  }
+                                : null
+                            );
+                        }}
+                      />
+                      <TouchableOpacity
+                        onPress={() => setShowStartPicker(false)}
+                        style={{
+                          padding: 10,
+                          alignItems: "center",
+                          borderTopWidth: 1,
+                          borderColor: palette.border,
+                          marginTop: 10,
+                        }}
+                      >
+                        <Text
+                          style={{ color: palette.accent, fontWeight: "bold" }}
+                        >
+                          Confirmar
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                </Modal>
+              ) : (
+                <DateTimePicker
+                  value={
+                    currentBlock?.start_date
+                      ? new Date(currentBlock.start_date)
+                      : new Date()
+                  }
+                  mode="date"
+                  display="default"
+                  onChange={(_, selectedDate) => {
+                    setShowStartPicker(false);
+                    if (selectedDate)
+                      setCurrentBlock((prev) =>
+                        prev
+                          ? {
+                              ...prev,
+                              start_date: selectedDate
+                                .toISOString()
+                                .split("T")[0],
+                            }
+                          : null
+                      );
+                  }}
+                />
+              ))}
+
+            {/* 📅 Fecha de fin */}
+            <TouchableOpacity
+              onPress={() => setShowEndPicker(true)}
+              style={[
+                styles.input,
+                {
+                  borderColor: palette.inputBorder,
+                  backgroundColor: palette.surfaceAlt,
+                  justifyContent: "center",
+                },
+              ]}
+            >
+              <Text
+                style={{
+                  color: currentBlock?.end_date
+                    ? palette.text
+                    : palette.subtext,
+                  fontSize: 15,
+                }}
+              >
+                {currentBlock?.end_date
+                  ? new Date(currentBlock.end_date).toLocaleDateString()
+                  : language === "es"
+                  ? "Selecciona fecha de fin"
+                  : "Select end date"}
+              </Text>
+            </TouchableOpacity>
+
+            {showEndPicker &&
+              (Platform.OS === "ios" ? (
+                <Modal
+                  transparent
+                  animationType="slide"
+                  visible={showEndPicker}
+                >
+                  <View style={styles.modalBackdrop}>
+                    <View
+                      style={{
+                        backgroundColor: palette.surface,
+                        padding: 20,
+                        borderRadius: 16,
+                        width: "90%",
+                        alignSelf: "center",
+                        marginBottom: 20,
+                      }}
+                    >
+                      <DateTimePicker
+                        value={
+                          currentBlock?.end_date
+                            ? new Date(currentBlock.end_date)
+                            : new Date()
+                        }
+                        mode="date"
+                        display="spinner"
+                        onChange={(_, selectedDate) => {
+                          if (selectedDate)
+                            setCurrentBlock((prev) =>
+                              prev
+                                ? {
+                                    ...prev,
+                                    end_date: selectedDate
+                                      .toISOString()
+                                      .split("T")[0],
+                                  }
+                                : null
+                            );
+                        }}
+                      />
+                      <TouchableOpacity
+                        onPress={() => setShowEndPicker(false)}
+                        style={{
+                          padding: 10,
+                          alignItems: "center",
+                          borderTopWidth: 1,
+                          borderColor: palette.border,
+                          marginTop: 10,
+                        }}
+                      >
+                        <Text
+                          style={{ color: palette.accent, fontWeight: "bold" }}
+                        >
+                          Confirmar
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                </Modal>
+              ) : (
+                <DateTimePicker
+                  value={
+                    currentBlock?.end_date
+                      ? new Date(currentBlock.end_date)
+                      : new Date()
+                  }
+                  mode="date"
+                  display="default"
+                  onChange={(_, selectedDate) => {
+                    setShowEndPicker(false);
+                    if (selectedDate)
+                      setCurrentBlock((prev) =>
+                        prev
+                          ? {
+                              ...prev,
+                              end_date: selectedDate
+                                .toISOString()
+                                .split("T")[0],
+                            }
+                          : null
+                      );
+                  }}
+                />
+              ))}
+
+            {/* 📅 Fecha objetivo */}
+            <TouchableOpacity
+              onPress={() => setShowGoalPicker(true)}
+              style={[
+                styles.input,
+                {
+                  borderColor: palette.inputBorder,
+                  backgroundColor: palette.surfaceAlt,
+                  justifyContent: "center",
+                },
+              ]}
+            >
+              <Text
+                style={{
+                  color: currentBlock?.goal_competition_date
+                    ? palette.text
+                    : palette.subtext,
+                  fontSize: 15,
+                }}
+              >
+                {currentBlock?.goal_competition_date
+                  ? new Date(
+                      currentBlock.goal_competition_date
+                    ).toLocaleDateString()
+                  : language === "es"
+                  ? "Selecciona fecha objetivo (opcional)"
+                  : "Select goal date (optional)"}
+              </Text>
+            </TouchableOpacity>
+
+            {showGoalPicker &&
+              (Platform.OS === "ios" ? (
+                <Modal
+                  transparent
+                  animationType="slide"
+                  visible={showGoalPicker}
+                >
+                  <View style={styles.modalBackdrop}>
+                    <View
+                      style={{
+                        backgroundColor: palette.surface,
+                        padding: 20,
+                        borderRadius: 16,
+                        width: "90%",
+                        alignSelf: "center",
+                        marginBottom: 20,
+                      }}
+                    >
+                      <DateTimePicker
+                        value={
+                          currentBlock?.goal_competition_date
+                            ? new Date(currentBlock.goal_competition_date)
+                            : new Date()
+                        }
+                        mode="date"
+                        display="spinner"
+                        onChange={(_, selectedDate) => {
+                          if (selectedDate)
+                            setCurrentBlock((prev) =>
+                              prev
+                                ? {
+                                    ...prev,
+                                    goal_competition_date: selectedDate
+                                      .toISOString()
+                                      .split("T")[0],
+                                  }
+                                : null
+                            );
+                        }}
+                      />
+                      <TouchableOpacity
+                        onPress={() => setShowGoalPicker(false)}
+                        style={{
+                          padding: 10,
+                          alignItems: "center",
+                          borderTopWidth: 1,
+                          borderColor: palette.border,
+                          marginTop: 10,
+                        }}
+                      >
+                        <Text
+                          style={{ color: palette.accent, fontWeight: "bold" }}
+                        >
+                          Confirmar
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                </Modal>
+              ) : (
+                <DateTimePicker
+                  value={
+                    currentBlock?.goal_competition_date
+                      ? new Date(currentBlock.goal_competition_date)
+                      : new Date()
+                  }
+                  mode="date"
+                  display="default"
+                  onChange={(_, selectedDate) => {
+                    setShowGoalPicker(false);
+                    if (selectedDate)
+                      setCurrentBlock((prev) =>
+                        prev
+                          ? {
+                              ...prev,
+                              goal_competition_date: selectedDate
+                                .toISOString()
+                                .split("T")[0],
+                            }
+                          : null
+                      );
+                  }}
+                />
+              ))}
+
+            {/* Periodización */}
+            <View
+              style={{
+                borderWidth: 1,
+                borderColor: palette.inputBorder,
+                borderRadius: 8,
+                marginBottom: 12,
+                ...Platform.select({
+                  ios: {
+                    backgroundColor: "transparent",
+                    overflow: "hidden", // necesario solo en iOS
+                  },
+                  android: {
+                    backgroundColor: palette.surfaceAlt,
+                  },
+                }),
+              }}
+            >
+              <Picker
+                selectedValue={currentBlock?.periodization || "LINEAL"}
+                onValueChange={(value) =>
+                  setCurrentBlock((prev) =>
+                    prev ? { ...prev, periodization: value } : null
+                  )
+                }
+                style={{
+                  color: palette.text,
+                  fontSize: 15,
+                  ...Platform.select({
+                    ios: {
+                      height: 180, // Wheel nativo
+                    },
+                    android: {
+                      height: 50, // suficiente espacio sin recorte
+                    },
+                  }),
+                }}
+                dropdownIconColor={palette.text}
+                mode="dropdown"
+              >
+                {BLOCK_TYPE.map((type) => (
+                  <Picker.Item key={type} label={type} value={type} />
+                ))}
+              </Picker>
+            </View>
+
+            {/* Lista de atletas */}
             {role === "coach" && athletes.length > 0 && (
               <>
                 <Text
@@ -585,6 +908,7 @@ export default function BlocksScreen() {
               </>
             )}
 
+            {/* Botones */}
             <View style={styles.modalButtons}>
               <TouchableOpacity
                 style={[
@@ -632,7 +956,14 @@ const styles = StyleSheet.create({
   modalBackground: { flex: 1, justifyContent: "center", alignItems: "center" },
   modalContent: { width: "90%", padding: 16, borderRadius: 8 },
   modalTitle: { fontSize: 18, fontWeight: "bold", marginBottom: 12 },
-  input: { borderWidth: 1, borderRadius: 6, padding: 8, marginBottom: 12 },
+  input: {
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    marginBottom: 12,
+    fontSize: 15,
+  },
   athleteItem: {
     padding: 10,
     marginVertical: 4,
@@ -651,5 +982,11 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     alignItems: "center",
   },
+  modalBackdrop: {
+    flex: 1,
+    justifyContent: "flex-end",
+    backgroundColor: "rgba(0,0,0,0.3)",
+  },
+
   modalBtnText: { color: "#fff", fontWeight: "bold" },
 });
