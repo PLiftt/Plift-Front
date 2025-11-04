@@ -103,14 +103,19 @@ export async function getAthleteProgressReport(athleteId: number) {
   const headers = await authHeaders();
   const url = `${API_URL}/progress/progress_report/?athlete=${athleteId}`;
 
-  const response = await fetch(url, {
-    method: "GET",
-    headers,
-  });
+  const response = await fetch(url, { method: "GET", headers });
 
   if (!response.ok) {
-    throw new Error("Error al obtener el reporte");
+    const errorDetail = await response.text();
+    throw new Error(`Error al obtener el reporte: ${errorDetail}`);
   }
 
-  return response.json(); // ← devuelve JSON con bloques y ejercicios
+  const data = await response.json();
+
+  // El endpoint devuelve un array de bloques
+  if (!Array.isArray(data)) {
+    return [];
+  }
+
+  return data;
 }

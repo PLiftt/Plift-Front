@@ -38,13 +38,13 @@ type ChartShape = {
 };
 
 type BlockReport = {
-  block_name: string;
-  start_date?: string;
-  end_date?: string;
-  // puede venir en cualquiera de las dos formas:
-  labels?: string[];
-  datasets?: { label?: string; data: number[] }[];
-  chart_data?: ChartShape;
+  block: {
+    id: number;
+    name: string;
+    start_date: string;
+    end_date: string;
+  };
+  chart_data: ChartShape;
 };
 
 export default function StrengthProgressScreen() {
@@ -150,8 +150,10 @@ export default function StrengthProgressScreen() {
                       key={`${a.athlete}-${idx}`}
                       style={styles.blockContainer}
                     >
-                      <Text style={styles.blockTitle}>{block.block_name}</Text>
-                      {renderChart(block.chart_data ?? block)}
+                      <Text style={styles.blockTitle}>
+                        {block.block?.name || "Bloque sin nombre"}
+                      </Text>
+                      {renderChart(block.chart_data)}
                     </View>
                   ))
                 ) : (
